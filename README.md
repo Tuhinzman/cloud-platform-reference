@@ -28,6 +28,7 @@ The foundation documents are the place to start:
 
 - [Project Charter](docs/project-charter.md): why the project exists and what governs it
 - [Platform Capability Model](docs/capability-model.md): what the platform must be able to do
+- [Requirements Baseline](docs/requirements-baseline.md): the measurable conditions the platform must satisfy
 
 Decisions are recorded in [docs/decisions](docs/decisions/), starting with the working
 method itself ([ADR-0001](docs/decisions/0001-adopt-an-architecture-first-evidence-backed-delivery-method.md)).
@@ -39,9 +40,9 @@ Validation → Evidence → Lessons Learned
 
 ## Current Status
 
-Foundation documents are in place: the project charter, the platform capability
-model, and the first decision record. The requirements baseline is next;
-architecture and implementation have not started.
+Foundation documents are in place: the project charter, platform capability model,
+requirements baseline, and the first decision record. System context and logical
+architecture are next; implementation has not started.
 
 ## License
 

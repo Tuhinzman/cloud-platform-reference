@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document states what the platform must be able to do. It sits between the [Project Charter](project-charter.md), which explains why the project exists, and the requirements baseline, which will attach measurable conditions to what is written here.
+This document states what the platform must be able to do. It sits between the [Project Charter](project-charter.md), which explains why the project exists, and the [Requirements Baseline](requirements-baseline.md), which attaches measurable conditions to what is written here.
 
 Capabilities are separated from implementation so the architecture can be judged on whether it satisfies them.
 
@@ -12,7 +12,7 @@ A capability describes what the platform must be able to do without prescribing 
 
 Each capability has an identifier of the form `CAP-<domain-code>-NN`, numbered sequentially inside its domain. Every capability has one owning domain; where another domain depends on it, the text points to the owner.
 
-Every capability in this document is a target; the measurable conditions each must satisfy will be defined in `requirements-baseline.md`.
+Every capability in this document is a target; the measurable conditions each must satisfy are defined in the [Requirements Baseline](requirements-baseline.md).
 
 ## Domain Overview
 
