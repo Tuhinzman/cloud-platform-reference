@@ -1,7 +1,7 @@
 # Cloud Platform Reference
 
 A production-inspired cloud platform, designed and documented from first
-principles, then implemented step by step with evidence.
+principles, to be implemented step by step with evidence.
 
 ## Why This Project Exists
 
@@ -15,24 +15,33 @@ claim stands without captured evidence.
 
 ## Who This Is For
 
-- **Recruiters and hiring managers**: a quick read on scope, technology
-  choices, and engineering quality.
+- **Recruiters and hiring managers**: a quick read on scope, engineering
+  decisions, and engineering quality.
 - **Senior engineers**: architecture, decision records, and operational
-  evidence, in enough depth to judge the work.
+  evidence as they are added, in enough depth to judge the work.
 - **Engineers learning platform work**: the reasoning behind each choice,
   not just the commands.
 
 ## How This Repository Is Organized
 
-Every topic follows the same documentation flow:
+The foundation documents are the place to start:
+
+- [Project Charter](docs/project-charter.md): why the project exists and what governs it
+- [Platform Capability Model](docs/capability-model.md): what the platform must be able to do
+
+Decisions are recorded in [docs/decisions](docs/decisions/), starting with the working
+method itself ([ADR-0001](docs/decisions/0001-adopt-an-architecture-first-evidence-backed-delivery-method.md)).
+
+Each platform topic follows the same documentation flow:
 
 Why → Requirements → Architecture → Decision → Diagram → Implementation →
 Validation → Evidence → Lessons Learned
 
 ## Current Status
 
-Repository foundation. Architecture planning has not started yet; designs,
-decisions, and evidence will appear as they are made and reviewed.
+Foundation documents are in place: the project charter, the platform capability
+model, and the first decision record. The requirements baseline is next;
+architecture and implementation have not started.
 
 ## License
 
