@@ -30,6 +30,7 @@ The foundation documents are the place to start:
 - [Platform Capability Model](docs/capability-model.md): what the platform must be able to do
 - [Requirements Baseline](docs/requirements-baseline.md): the measurable conditions the platform must satisfy
 - [System Context](docs/system-context.md): who interacts with the platform and where its boundary sits
+- [Logical Architecture](docs/logical-architecture.md): how the platform decomposes into logical responsibilities and how they interact
 
 Decisions are recorded in [docs/decisions](docs/decisions/), starting with the working
 method itself ([ADR-0001](docs/decisions/0001-adopt-an-architecture-first-evidence-backed-delivery-method.md)).
@@ -41,9 +42,10 @@ Validation → Evidence → Lessons Learned
 
 ## Current Status
 
-Foundation documents are in place: the project charter, platform capability model,
-requirements baseline, system context, and the first decision record. Logical
-architecture is next; implementation and technology selection have not started.
+The architecture foundation is complete: the project charter, platform capability
+model, requirements baseline, system context, logical architecture, and the first
+decision record are in place. Technology decision records are next; implementation
+has not started, and no provider, product, or runtime has been selected.
 
 ## License
 
