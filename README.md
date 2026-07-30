@@ -42,6 +42,8 @@ Terraform and remote state management for the platform's infrastructure.
 the environment and account topology.
 [ADR-0005](docs/decisions/0005-adopt-centralized-identity-and-least-privilege-access.md)
 adopts centralized identity and least-privilege access.
+[ADR-0006](docs/decisions/0006-adopt-amazon-eks-as-the-workload-runtime.md) adopts
+Amazon EKS as the workload runtime.
 
 Each platform topic follows the same documentation flow:
 
@@ -57,8 +59,9 @@ working-method decision record are in place. AWS is the cloud provider
 and ADR-0004 defines the environment and account topology: one dedicated AWS
 account in us-east-1, with a persistent Dev environment and ephemeral
 Validation and Production Validation environments. ADR-0005 records the
-identity and access strategy. Implementation has not started and no AWS
-resource exists. The remaining technology decisions come next.
+identity and access strategy, and ADR-0006 records Amazon EKS as the
+workload runtime. Implementation has not started and no AWS resource
+exists. The remaining architecture decisions come next.
 
 ## License
 
