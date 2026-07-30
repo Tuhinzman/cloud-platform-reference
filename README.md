@@ -38,6 +38,8 @@ The first technology decision, [ADR-0002](docs/decisions/0002-select-aws-as-the-
 selects AWS as the cloud provider while deferring service and implementation choices.
 [ADR-0003](docs/decisions/0003-adopt-terraform-and-remote-state-management.md) adopts
 Terraform and remote state management for the platform's infrastructure.
+[ADR-0004](docs/decisions/0004-define-the-environment-and-account-topology.md) defines
+the environment and account topology.
 
 Each platform topic follows the same documentation flow:
 
@@ -49,10 +51,12 @@ Validation → Evidence → Lessons Learned
 The architecture foundation is complete: the project charter, platform capability
 model, requirements baseline, system context, logical architecture, and the
 working-method decision record are in place. AWS is the cloud provider
-(ADR-0002), and ADR-0003 records the Terraform and remote state management
-decision, with us-east-1 selected as the primary AWS region. Implementation
-has not started and no AWS resource exists. The remaining technology
-decisions come next.
+(ADR-0002), Terraform and remote state management are recorded in ADR-0003,
+and ADR-0004 defines the environment and account topology: one dedicated AWS
+account in us-east-1, with a persistent Dev environment and ephemeral
+Validation and Production Validation environments. Implementation has not
+started and no AWS resource exists. The remaining technology decisions come
+next.
 
 ## License
 
