@@ -44,6 +44,8 @@ the environment and account topology.
 adopts centralized identity and least-privilege access.
 [ADR-0006](docs/decisions/0006-adopt-amazon-eks-as-the-workload-runtime.md) adopts
 Amazon EKS as the workload runtime.
+[ADR-0007](docs/decisions/0007-define-networking-and-traffic-boundaries.md) defines
+the networking and traffic boundaries.
 
 Each platform topic follows the same documentation flow:
 
@@ -60,8 +62,9 @@ and ADR-0004 defines the environment and account topology: one dedicated AWS
 account in us-east-1, with a persistent Dev environment and ephemeral
 Validation and Production Validation environments. ADR-0005 records the
 identity and access strategy, and ADR-0006 records Amazon EKS as the
-workload runtime. Implementation has not started and no AWS resource
-exists. The remaining architecture decisions come next.
+workload runtime. ADR-0007 records the proposed networking and traffic
+boundaries. Implementation has not started and no AWS resource exists.
+The remaining architecture decisions come next.
 
 ## License
 
