@@ -36,6 +36,8 @@ Decisions are recorded in [docs/decisions](docs/decisions/), starting with the w
 method itself ([ADR-0001](docs/decisions/0001-adopt-an-architecture-first-evidence-backed-delivery-method.md)).
 The first technology decision, [ADR-0002](docs/decisions/0002-select-aws-as-the-cloud-provider.md),
 selects AWS as the cloud provider while deferring service and implementation choices.
+[ADR-0003](docs/decisions/0003-adopt-terraform-and-remote-state-management.md) adopts
+Terraform and remote state management for the platform's infrastructure.
 
 Each platform topic follows the same documentation flow:
 
@@ -46,10 +48,11 @@ Validation → Evidence → Lessons Learned
 
 The architecture foundation is complete: the project charter, platform capability
 model, requirements baseline, system context, logical architecture, and the
-working-method decision record are in place. The cloud provider decision is
-recorded: AWS (ADR-0002). The remaining technology decisions come next;
-implementation has not started, and no AWS service, runtime, environment
-topology, or implementation tool has been selected.
+working-method decision record are in place. AWS is the cloud provider
+(ADR-0002), and ADR-0003 records the Terraform and remote state management
+decision, with us-east-1 selected as the primary AWS region. Implementation
+has not started and no AWS resource exists. The remaining technology
+decisions come next.
 
 ## License
 
