@@ -50,7 +50,7 @@ the networking and traffic boundaries.
 defines the secrets and workload identity model.
 [ADR-0009](docs/decisions/0009-define-the-software-delivery-model.md) defines
 the software delivery model.
-[ADR-0010](docs/decisions/0010-define-the-observability-model.md) proposes
+[ADR-0010](docs/decisions/0010-define-the-observability-model.md) defines
 the observability model.
 
 Each platform topic follows the same documentation flow:
@@ -71,7 +71,7 @@ identity and access strategy, and ADR-0006 records Amazon EKS as the
 workload runtime. ADR-0007 records the accepted networking and traffic
 boundaries. ADR-0008 records the accepted secrets and workload identity
 model. ADR-0009 records the accepted software delivery model.
-ADR-0010, the observability model, is proposed and under review.
+ADR-0010 records the accepted observability model.
 Implementation has not started and no AWS resource exists. The
 remaining architecture decisions come next.
 
