@@ -48,7 +48,7 @@ Amazon EKS as the workload runtime.
 the networking and traffic boundaries.
 [ADR-0008](docs/decisions/0008-define-the-secrets-and-workload-identity-model.md)
 defines the secrets and workload identity model.
-[ADR-0009](docs/decisions/0009-define-the-software-delivery-model.md) proposes
+[ADR-0009](docs/decisions/0009-define-the-software-delivery-model.md) defines
 the software delivery model.
 
 Each platform topic follows the same documentation flow:
@@ -68,8 +68,8 @@ Validation and Production Validation environments. ADR-0005 records the
 identity and access strategy, and ADR-0006 records Amazon EKS as the
 workload runtime. ADR-0007 records the accepted networking and traffic
 boundaries. ADR-0008 records the accepted secrets and workload identity
-model. ADR-0009, the software delivery model, is proposed and under
-review. Implementation has not started and no AWS resource exists. The
+model. ADR-0009 records the accepted software delivery model.
+Implementation has not started and no AWS resource exists. The
 remaining architecture decisions come next.
 
 ## License
