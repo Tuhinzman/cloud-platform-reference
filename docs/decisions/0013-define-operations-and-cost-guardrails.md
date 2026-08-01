@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (2026-08-01)
+Accepted (2026-08-01)
 
 Supersedes the continuous Dev runtime portion of ADR-0004. The rest of
 ADR-0004 stands unchanged. The same assumption is restated in ADR-0006

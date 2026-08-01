@@ -56,8 +56,8 @@ the observability model.
 the backup and recovery model.
 [ADR-0012](docs/decisions/0012-formalize-the-reference-workload.md) formalizes
 the reference workload.
-[ADR-0013](docs/decisions/0013-define-operations-and-cost-guardrails.md) is
-proposed and defines operations and cost guardrails. It supersedes the
+[ADR-0013](docs/decisions/0013-define-operations-and-cost-guardrails.md)
+defines operations and cost guardrails. It supersedes the
 continuous Dev runtime assumption that originates in ADR-0004 and is
 restated in ADR-0006 and ADR-0007. The rest of those records stands, and
 ADR-0013 itself states the exact reach of the supersession.
@@ -83,9 +83,10 @@ model. ADR-0009 records the accepted software delivery model.
 ADR-0010 records the accepted observability model.
 ADR-0011 records the accepted backup and recovery model.
 ADR-0012 records the accepted reference workload formalization.
-ADR-0013 is proposed, not yet accepted, and defines operations and cost
-guardrails. Implementation has not started and no AWS resource exists.
-The remaining architecture decisions come next.
+ADR-0013 records the accepted operations and cost guardrails, which
+supersede the continuous Dev runtime assumption while the rest of the
+environment architecture stands. Implementation has not started and no
+AWS resource exists. The remaining architecture decisions come next.
 
 ## License
 
