@@ -63,7 +63,7 @@ Identity is the platform's primary security boundary: trust is granted to verifi
 
 ## Application Runtime
 
-Container-based workloads are the platform's workload boundary; the runtime that provides this is a later, recorded decision. Which application the platform will run also remains open, and these capabilities apply regardless.
+Container-based workloads are the platform's workload boundary. The runtime that provides this is Amazon EKS ([ADR-0006](decisions/0006-adopt-amazon-eks-as-the-workload-runtime.md)), and the application it runs is the reference workload formalized in [ADR-0012](decisions/0012-formalize-the-reference-workload.md). These capabilities are stated independently of both and would survive a change to either.
 
 - **CAP-RT-01 — Run container-based workloads.** Workloads packaged as containers can be run and scheduled onto available capacity without manual placement, receiving their environment-specific configuration at runtime.
 - **CAP-RT-02 — Health evaluation.** Workload health is continuously evaluated. Instances that fail evaluation are replaced without waiting for an operator.

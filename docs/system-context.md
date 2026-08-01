@@ -75,9 +75,9 @@ flowchart LR
 ## Assumptions and Open Decisions
 
 - Container-based workloads are the approved workload boundary.
-- Still open: the actual application choice, the runtime implementation, provider and product choices, and the final environment topology.
+- Nothing on this list is open any more. The application, the runtime, the provider, the environment topology, and every product choice this context deferred are settled in the [decision records](decisions/), and the actor and interaction model above held without amendment as each one landed. That is the useful result: the boundary was drawn correctly before the technology was known.
 - Organizational separation of duties is not demonstrated by this solo project.
 
 ## Relationship to Logical Architecture
 
-The logical architecture will decompose the single platform boundary shown here into logical responsibilities and their interactions. Every element it introduces should serve one of the interactions above; anything that serves none of them does not belong. That document does not exist yet, and this context is its input.
+The [Logical Architecture](logical-architecture.md) decomposes the single platform boundary shown here into eight logical responsibilities and their interactions. Every element it introduces serves one of the interactions above, and anything that served none of them would not belong. This context is its input.

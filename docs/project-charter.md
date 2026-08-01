@@ -57,7 +57,9 @@ The project intends to cover the full path from goals to evidence:
 - Controlled software delivery, identity-based access, observability of platform and workload state, documented operations, and validated recovery.
 - Evidence for every material claim, including cost visibility and teardown for anything that bills.
 
-One implementation decision is still open: whether the platform runs an existing workload or a smaller purpose-built one. The comparison will weigh realism, cost, maintainability, delivery value, observability value, and reproducibility, and the outcome will be recorded.
+The workload question this charter once left open, whether the platform runs an existing application or a smaller purpose-built one, was settled in [ADR-0012](decisions/0012-formalize-the-reference-workload.md). The platform runs a capability-derived subset of an existing multi-service application, chosen because a purpose-built workload would have meant writing instrumentation, service dependencies, and failure modes by hand before any platform validation could begin. The workload is an instrument for validating the platform, never a deliverable of its own.
+
+How the platform is operated and what it is allowed to cost are settled in [ADR-0013](decisions/0013-define-operations-and-cost-guardrails.md): one operating owner, a three-level monthly AWS budget, and one create-to-cleanup lifecycle for every environment role. That record also replaced the assumption that a development environment stays continuously running, which is where this project's cost constraint stopped being a principle and became a design change.
 
 ### Intentionally Out of Scope
 

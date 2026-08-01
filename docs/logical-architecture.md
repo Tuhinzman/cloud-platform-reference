@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The [System Context](system-context.md) draws a single boundary around the platform and deliberately stops there. This document opens that boundary: it decomposes the platform into eight technology-neutral responsibility groups, states what each group owns and does not own, and shows how the groups interact to satisfy the [Requirements Baseline](requirements-baseline.md). It assigns responsibility and nothing else. Every technology that eventually implements a group will be selected in its own decision record.
+The [System Context](system-context.md) draws a single boundary around the platform and deliberately stops there. This document opens that boundary: it decomposes the platform into eight technology-neutral responsibility groups, states what each group owns and does not own, and shows how the groups interact to satisfy the [Requirements Baseline](requirements-baseline.md). It assigns responsibility and nothing else. Every technology that implements a group was selected in its own decision record, and the closing section maps each area to the record that settled it.
 
 ## Decomposition Rules
 
@@ -210,27 +210,30 @@ Each requirement has exactly one primary owning group; supporting groups partici
 
 Container-based workloads remain the approved workload boundary, and nothing in this model is implemented.
 
-Still open, to be settled in future decision records: the workload application; the cloud provider; the infrastructure-definition and state-management approach; the environment model and topology; and every implementation choice for identity, workload identity and secrets, the runtime, networking, delivery, observability, and recovery. The closing section lists the decision areas these fall into.
+Every decision area this document once listed as open has been settled, and the closing section records where each one landed. The responsibility assignments above were not amended as that happened, which is the claim this model was making: ownership boundaries drawn from requirements should survive the arrival of the technology that implements them.
 
 Organizational separation of duties is not demonstrated by this solo project.
 
 ## Relationship to Decisions and Implementation
 
-Future decision records select an implementation for a logical group or a declared interface; implementation then realizes the responsibilities exactly as assigned here, and validation evidence for each requirement is collected against its primary owner. This document defines ownership and contracts. It names no tool and prescribes no procedure.
+A decision record selects an implementation for a logical group or a declared interface. Implementation then realizes the responsibilities exactly as assigned here, and validation evidence for each requirement is collected against its primary owner. This document defines ownership and contracts. It names no tool and prescribes no procedure.
 
-Twelve decision areas are expected:
+Twelve decision areas were expected. All are settled, and the record that settled each one is named below. The count of records is thirteen because a thirteenth area, operations and cost, was added once the architecture was complete enough to price.
 
-1. Cloud provider selection
-2. Infrastructure-definition and state-management approach
-3. Environment model and topology
-4. Human identity integration and privileged-access mechanism
-5. Workload identity and secret-retrieval mechanism
-6. Workload runtime or orchestration selection
-7. Networking, ingress, egress, naming, and traffic-routing implementation
-8. Build, delivery, and artifact-storage system
-9. Progressive-release mechanism
-10. Observability implementation and alert destination
-11. Backup and recovery implementation
-12. Workload application selection
+| Decision area | Record |
+|---|---|
+| Cloud provider selection | [ADR-0002](decisions/0002-select-aws-as-the-cloud-provider.md) |
+| Infrastructure-definition and state-management approach | [ADR-0003](decisions/0003-adopt-terraform-and-remote-state-management.md) |
+| Environment model and topology | [ADR-0004](decisions/0004-define-the-environment-and-account-topology.md), with its continuous-Dev assumption superseded by [ADR-0013](decisions/0013-define-operations-and-cost-guardrails.md) |
+| Human identity integration and privileged-access mechanism | [ADR-0005](decisions/0005-adopt-centralized-identity-and-least-privilege-access.md) |
+| Workload identity and secret-retrieval mechanism | [ADR-0008](decisions/0008-define-the-secrets-and-workload-identity-model.md) |
+| Workload runtime or orchestration selection | [ADR-0006](decisions/0006-adopt-amazon-eks-as-the-workload-runtime.md) |
+| Networking, ingress, egress, naming, and traffic-routing implementation | [ADR-0007](decisions/0007-define-networking-and-traffic-boundaries.md) |
+| Build, delivery, and artifact-storage system | [ADR-0009](decisions/0009-define-the-software-delivery-model.md) |
+| Progressive-release mechanism | [ADR-0009](decisions/0009-define-the-software-delivery-model.md), which selects rolling updates and records that traffic-directed release is deferred rather than claimed |
+| Observability implementation and alert destination | [ADR-0010](decisions/0010-define-the-observability-model.md) |
+| Backup and recovery implementation | [ADR-0011](decisions/0011-define-the-backup-and-recovery-model.md) |
+| Workload application selection | [ADR-0012](decisions/0012-formalize-the-reference-workload.md) |
+| Operations model and cost guardrails | [ADR-0013](decisions/0013-define-operations-and-cost-guardrails.md) |
 
 Cost attribution is deliberately not a separate decision record at this stage: it is an attribution convention carried in the platform definitions, a review duty of Platform Operations, and an evidence obligation under REQ-019.

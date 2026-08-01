@@ -31,36 +31,32 @@ The foundation documents are the place to start:
 - [Requirements Baseline](docs/requirements-baseline.md): the measurable conditions the platform must satisfy
 - [System Context](docs/system-context.md): who interacts with the platform and where its boundary sits
 - [Logical Architecture](docs/logical-architecture.md): how the platform decomposes into logical responsibilities and how they interact
+- [Architecture Baseline](docs/architecture-baseline.md): the two platform-wide facts no single decision owns, which are why the platform standardizes on one region and which resources survive environment teardown
 
-Decisions are recorded in [docs/decisions](docs/decisions/), starting with the working
-method itself ([ADR-0001](docs/decisions/0001-adopt-an-architecture-first-evidence-backed-delivery-method.md)).
-The first technology decision, [ADR-0002](docs/decisions/0002-select-aws-as-the-cloud-provider.md),
-selects AWS as the cloud provider while deferring service and implementation choices.
-[ADR-0003](docs/decisions/0003-adopt-terraform-and-remote-state-management.md) adopts
-Terraform and remote state management for the platform's infrastructure.
-[ADR-0004](docs/decisions/0004-define-the-environment-and-account-topology.md) defines
-the environment and account topology.
-[ADR-0005](docs/decisions/0005-adopt-centralized-identity-and-least-privilege-access.md)
-adopts centralized identity and least-privilege access.
-[ADR-0006](docs/decisions/0006-adopt-amazon-eks-as-the-workload-runtime.md) adopts
-Amazon EKS as the workload runtime.
-[ADR-0007](docs/decisions/0007-define-networking-and-traffic-boundaries.md) defines
-the networking and traffic boundaries.
-[ADR-0008](docs/decisions/0008-define-the-secrets-and-workload-identity-model.md)
-defines the secrets and workload identity model.
-[ADR-0009](docs/decisions/0009-define-the-software-delivery-model.md) defines
-the software delivery model.
-[ADR-0010](docs/decisions/0010-define-the-observability-model.md) defines
-the observability model.
-[ADR-0011](docs/decisions/0011-define-the-backup-and-recovery-model.md) defines
-the backup and recovery model.
-[ADR-0012](docs/decisions/0012-formalize-the-reference-workload.md) formalizes
-the reference workload.
-[ADR-0013](docs/decisions/0013-define-operations-and-cost-guardrails.md)
-defines operations and cost guardrails. It supersedes the
-continuous Dev runtime assumption that originates in ADR-0004 and is
-restated in ADR-0006 and ADR-0007. The rest of those records stands, and
-ADR-0013 itself states the exact reach of the supersession.
+Every significant choice is recorded in [docs/decisions](docs/decisions/), one decision per
+record, each with its alternatives, consequences, and a revisit trigger. All thirteen are
+accepted.
+
+| Record | Decision |
+|---|---|
+| [ADR-0001](docs/decisions/0001-adopt-an-architecture-first-evidence-backed-delivery-method.md) | Architecture-first, evidence-backed delivery method. The working method itself, decided before any technology. |
+| [ADR-0002](docs/decisions/0002-select-aws-as-the-cloud-provider.md) | AWS as the cloud provider, deferring every service and implementation choice. |
+| [ADR-0003](docs/decisions/0003-adopt-terraform-and-remote-state-management.md) | Terraform with per-environment remote state, and a reviewed plan on every change. |
+| [ADR-0004](docs/decisions/0004-define-the-environment-and-account-topology.md) | One AWS account, three environment roles, and a declared promotion order. |
+| [ADR-0005](docs/decisions/0005-adopt-centralized-identity-and-least-privilege-access.md) | Central federated sign-in and no long-lived human credential anywhere. |
+| [ADR-0006](docs/decisions/0006-adopt-amazon-eks-as-the-workload-runtime.md) | Amazon EKS as the runtime, one cluster per active environment. |
+| [ADR-0007](docs/decisions/0007-define-networking-and-traffic-boundaries.md) | One VPC per environment, private nodes, one managed public entry with TLS. |
+| [ADR-0008](docs/decisions/0008-define-the-secrets-and-workload-identity-model.md) | Workload identity per service and one system of record for secrets. |
+| [ADR-0009](docs/decisions/0009-define-the-software-delivery-model.md) | Build once, promote the same digest, and treat promotion and rollback as Git changes. |
+| [ADR-0010](docs/decisions/0010-define-the-observability-model.md) | Per-environment telemetry with one correlation contract across platform and workload. |
+| [ADR-0011](docs/decisions/0011-define-the-backup-and-recovery-model.md) | Rebuild first, back up only what has no other source, and prove recovery by exercise. |
+| [ADR-0012](docs/decisions/0012-formalize-the-reference-workload.md) | The reference workload as an instrument for validating the platform, not a deliverable. |
+| [ADR-0013](docs/decisions/0013-define-operations-and-cost-guardrails.md) | Who operates the platform and what it may cost. A three-level monthly budget, one create-to-cleanup lifecycle for every environment, and a development environment that is recreated on demand rather than left running. |
+
+ADR-0013 also supersedes part of what came before it. The assumption that a development
+environment runs continuously originates in ADR-0004 and is restated in ADR-0006 and
+ADR-0007. Accepted records are never edited here, so ADR-0013 is the single place that
+states how far that supersession reaches and what in those three records is untouched.
 
 Each platform topic follows the same documentation flow:
 
@@ -69,24 +65,27 @@ Validation → Evidence → Lessons Learned
 
 ## Current Status
 
-The architecture foundation is complete: the project charter, platform capability
-model, requirements baseline, system context, logical architecture, and the
-working-method decision record are in place. AWS is the cloud provider
-(ADR-0002), Terraform and remote state management are recorded in ADR-0003,
-and ADR-0004 defines the environment and account topology: one dedicated AWS
-account in us-east-1, with a persistent Dev environment and ephemeral
-Validation and Production Validation environments. ADR-0005 records the
-identity and access strategy, and ADR-0006 records Amazon EKS as the
-workload runtime. ADR-0007 records the accepted networking and traffic
-boundaries. ADR-0008 records the accepted secrets and workload identity
-model. ADR-0009 records the accepted software delivery model.
-ADR-0010 records the accepted observability model.
-ADR-0011 records the accepted backup and recovery model.
-ADR-0012 records the accepted reference workload formalization.
-ADR-0013 records the accepted operations and cost guardrails, which
-supersede the continuous Dev runtime assumption while the rest of the
-environment architecture stands. Implementation has not started and no
-AWS resource exists. The remaining architecture decisions come next.
+Architecture planning is complete. The foundation documents are in place, all thirteen
+decision records are accepted, and the table above is the whole of it. Nothing is
+implemented: no AWS resource exists, no infrastructure definition has been applied, and
+every completion claim this repository will eventually make is still unproven.
+
+The platform the records describe is one AWS account in `us-east-1` running three
+environment roles, each with its own VPC, its own EKS cluster, and its own telemetry,
+built from version-controlled Terraform and reached through one managed HTTPS entry
+point. Application change moves as an immutable artifact promoted by digest through Git,
+and recovery is rebuilt from authoritative sources rather than restored, with backup
+reserved for the four things that have no other source.
+
+Two properties are worth knowing before reading further, because they shape everything
+else. Cost is treated as an engineering constraint with a stated monthly target, a review
+threshold, and a ceiling that stops work rather than a single number nobody honors. And
+no environment is left running: every one of the three roles is created for an approved
+window, validated, evidenced, destroyed, and verified clean. Both are decided in
+[ADR-0013](docs/decisions/0013-define-operations-and-cost-guardrails.md).
+
+Implementation comes next, and it begins with the repositories and the Terraform state
+backend rather than with a cluster.
 
 ## License
 
