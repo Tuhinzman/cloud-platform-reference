@@ -52,6 +52,8 @@ defines the secrets and workload identity model.
 the software delivery model.
 [ADR-0010](docs/decisions/0010-define-the-observability-model.md) defines
 the observability model.
+[ADR-0011](docs/decisions/0011-define-the-backup-and-recovery-model.md) proposes
+the backup and recovery model.
 
 Each platform topic follows the same documentation flow:
 
@@ -72,6 +74,7 @@ workload runtime. ADR-0007 records the accepted networking and traffic
 boundaries. ADR-0008 records the accepted secrets and workload identity
 model. ADR-0009 records the accepted software delivery model.
 ADR-0010 records the accepted observability model.
+ADR-0011, the backup and recovery model, is proposed and under review.
 Implementation has not started and no AWS resource exists. The
 remaining architecture decisions come next.
 
