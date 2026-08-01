@@ -54,6 +54,8 @@ the software delivery model.
 the observability model.
 [ADR-0011](docs/decisions/0011-define-the-backup-and-recovery-model.md) defines
 the backup and recovery model.
+[ADR-0012](docs/decisions/0012-formalize-the-reference-workload.md) proposes
+the reference workload formalization.
 
 Each platform topic follows the same documentation flow:
 
@@ -75,7 +77,8 @@ boundaries. ADR-0008 records the accepted secrets and workload identity
 model. ADR-0009 records the accepted software delivery model.
 ADR-0010 records the accepted observability model.
 ADR-0011 records the accepted backup and recovery model.
-Implementation has not started and no AWS resource exists. The
+ADR-0012, the reference workload formalization, is proposed and under
+review. Implementation has not started and no AWS resource exists. The
 remaining architecture decisions come next.
 
 ## License
