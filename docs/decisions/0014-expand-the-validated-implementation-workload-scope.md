@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (2026-08-01)
+Accepted (2026-08-01)
 
 Supersedes one rule in ADR-0012: the limit of approximately four to six
 owner-built services. Everything else ADR-0012 decided stands, and it

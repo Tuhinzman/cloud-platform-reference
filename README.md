@@ -34,8 +34,8 @@ The foundation documents are the place to start:
 - [Architecture Baseline](docs/architecture-baseline.md): the two platform-wide facts no single decision owns, which are why the platform standardizes on one region and which resources survive environment teardown
 
 Every significant choice is recorded in [docs/decisions](docs/decisions/), one decision per
-record, each with its alternatives, consequences, and a revisit trigger. Thirteen are
-accepted. A fourteenth is proposed and under review.
+record, each with its alternatives, consequences, and a revisit trigger. All fourteen are
+accepted.
 
 | Record | Decision |
 |---|---|
@@ -52,7 +52,7 @@ accepted. A fourteenth is proposed and under review.
 | [ADR-0011](docs/decisions/0011-define-the-backup-and-recovery-model.md) | Rebuild first, back up only what has no other source, and prove recovery by exercise. |
 | [ADR-0012](docs/decisions/0012-formalize-the-reference-workload.md) | The reference workload as an instrument for validating the platform, not a deliverable. |
 | [ADR-0013](docs/decisions/0013-define-operations-and-cost-guardrails.md) | Who operates the platform and what it may cost. A three-level monthly budget, one create-to-cleanup lifecycle for every environment, and a development environment that is recreated on demand rather than left running. |
-| [ADR-0014](docs/decisions/0014-expand-the-validated-implementation-workload-scope.md) | **Proposed, under review.** Widens the implemented workload to the complete justified application fleet so that delivery, reconciliation, telemetry attribution, and teardown are exercised across breadth rather than a handful of services. Supersedes only the service-count limit in ADR-0012. |
+| [ADR-0014](docs/decisions/0014-expand-the-validated-implementation-workload-scope.md) | Widens the implemented workload to the complete justified application fleet, so that delivery, reconciliation, telemetry attribution, and teardown are exercised across breadth rather than a handful of services. Supersedes only the service-count limit in ADR-0012. |
 
 ADR-0013 also supersedes part of what came before it. The assumption that a development
 environment runs continuously originates in ADR-0004 and is restated in ADR-0006 and
@@ -66,7 +66,7 @@ Validation → Evidence → Lessons Learned
 
 ## Current Status
 
-Architecture planning is complete. The foundation documents are in place, thirteen
+Architecture planning is complete. The foundation documents are in place, fourteen
 decision records are accepted, and the table above is the whole of it. Nothing is
 implemented: no AWS resource exists, no infrastructure definition has been applied, and
 every completion claim this repository will eventually make is still unproven.
@@ -85,9 +85,11 @@ no environment is left running: every one of the three roles is created for an a
 window, validated, evidenced, destroyed, and verified clean. Both are decided in
 [ADR-0013](docs/decisions/0013-define-operations-and-cost-guardrails.md).
 
-One decision is open. [ADR-0014](docs/decisions/0014-expand-the-validated-implementation-workload-scope.md)
-is proposed and under review, and it would widen the workload the platform runs without
-changing any requirement or any other accepted record.
+The workload the platform runs is the complete justified application fleet rather than a
+handful of services, so that one delivery pipeline, one reconciliation model, and one
+teardown are exercised across breadth. That is decided in
+[ADR-0014](docs/decisions/0014-expand-the-validated-implementation-workload-scope.md),
+which changed no requirement and no other accepted record.
 
 Implementation comes next, and it begins with the repositories and the Terraform state
 backend rather than with a cluster.
