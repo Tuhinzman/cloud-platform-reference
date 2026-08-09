@@ -14,3 +14,19 @@
 
 # Temporary files
 tmp/
+
+# Terraform working directories and local state
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# Saved plan files. A plan file carries resource attributes and every variable
+# value in clear text, so it never enters the repository.
+*.tfplan
+tfplan
+
+# Real variable and backend values. The .example files stay tracked.
+# The JSON form is listed separately because *.tfvars does not match it.
+*.tfvars
+*.tfvars.json
+backend.hcl

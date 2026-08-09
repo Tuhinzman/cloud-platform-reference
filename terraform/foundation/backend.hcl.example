@@ -1,0 +1,7 @@
+# Copy to backend.hcl and set the real value, then pass it with
+# terraform init -backend-config. The filled copy stays untracked.
+#
+# This is the Terraform state bucket the bootstrap root created. It is not the
+# evidence bucket this root creates. Putting the evidence bucket name here would
+# point this root's state at the wrong place.
+bucket = "example-platform-tfstate-000000"

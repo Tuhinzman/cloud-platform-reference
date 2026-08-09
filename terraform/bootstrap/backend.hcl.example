@@ -1,0 +1,4 @@
+# Copy to backend.hcl and set the state bucket name used by this root.
+# The filled copy stays untracked and is passed to Terraform with
+# -backend-config=backend.hcl.
+bucket = "example-platform-tfstate-000000"

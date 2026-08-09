@@ -1,0 +1,11 @@
+# Copy to terraform.tfvars and set values you own. The filled copy stays
+# untracked. S3 bucket names are globally unique, so the name below is a
+# placeholder and will not be available.
+#
+# This is the evidence bucket, not the Terraform state bucket. The two names
+# must differ.
+evidence_bucket_name = "example-platform-evidence-000000"
+
+# The dedicated project account. The provider refuses to act on any other
+# account. The value below is a placeholder, not an account.
+allowed_account_id = "000000000000"
