@@ -1,0 +1,6 @@
+# Copy to terraform.tfvars and set the value you own. The filled copy stays
+# untracked.
+#
+# The dedicated project account. The provider refuses to act on any other
+# account. The value below is a placeholder, not an account.
+allowed_account_id = "000000000000"
