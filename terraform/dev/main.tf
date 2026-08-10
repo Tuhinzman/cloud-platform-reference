@@ -38,6 +38,15 @@ resource "aws_vpc" "dev" {
   # added later needs hostnames on.
   enable_dns_support   = true
   enable_dns_hostnames = true
+
+  # Name is not one of the six mandatory tags of ADR-0013. It is here because
+  # the console and the CLI list these resources by Name, and an operator
+  # inspecting, troubleshooting or tearing this environment down has to
+  # identify the right resource without cross-referencing IDs. It identifies,
+  # it does not classify, so it replaces none of the six.
+  tags = {
+    Name = "cloud-platform-reference-dev-vpc"
+  }
 }
 
 # The address plan is written out rather than derived, so a reviewer reads it
@@ -60,6 +69,7 @@ resource "aws_subnet" "private_a" {
   map_public_ip_on_launch = false
 
   tags = {
+    Name                              = "cloud-platform-reference-dev-private-a"
     "kubernetes.io/role/internal-elb" = "1"
   }
 }
@@ -71,6 +81,7 @@ resource "aws_subnet" "private_b" {
   map_public_ip_on_launch = false
 
   tags = {
+    Name                              = "cloud-platform-reference-dev-private-b"
     "kubernetes.io/role/internal-elb" = "1"
   }
 }
@@ -82,6 +93,7 @@ resource "aws_subnet" "public_a" {
   map_public_ip_on_launch = false
 
   tags = {
+    Name                     = "cloud-platform-reference-dev-public-a"
     "kubernetes.io/role/elb" = "1"
   }
 }
@@ -93,16 +105,25 @@ resource "aws_subnet" "public_b" {
   map_public_ip_on_launch = false
 
   tags = {
+    Name                     = "cloud-platform-reference-dev-public-b"
     "kubernetes.io/role/elb" = "1"
   }
 }
 
 resource "aws_internet_gateway" "dev" {
   vpc_id = aws_vpc.dev.id
+
+  tags = {
+    Name = "cloud-platform-reference-dev-igw"
+  }
 }
 
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.dev.id
+
+  tags = {
+    Name = "cloud-platform-reference-dev-public-rt"
+  }
 }
 
 resource "aws_route" "public_default" {
@@ -118,6 +139,10 @@ resource "aws_route" "public_default" {
 # and the endpoint below adds the S3 prefix-list route to it.
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.dev.id
+
+  tags = {
+    Name = "cloud-platform-reference-dev-private-rt"
+  }
 }
 
 # Every subnet in this root is associated explicitly. A subnet with no
@@ -159,4 +184,8 @@ resource "aws_vpc_endpoint" "s3" {
   service_name      = "com.amazonaws.us-east-1.s3"
   vpc_endpoint_type = "Gateway"
   route_table_ids   = [aws_route_table.private.id]
+
+  tags = {
+    Name = "cloud-platform-reference-dev-s3-endpoint"
+  }
 }
