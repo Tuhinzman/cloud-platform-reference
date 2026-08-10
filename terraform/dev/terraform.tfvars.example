@@ -4,3 +4,9 @@
 # The dedicated project account. The provider refuses to act on any other
 # account. The value below is a placeholder, not an account.
 allowed_account_id = "000000000000"
+
+# The one public IPv4 CIDR allowed to reach the EKS public API endpoint. Use
+# your own address as a /32. It changes whenever you work from a different
+# network, so expect to update the filled copy and re-apply. The value below is
+# from the RFC 5737 documentation range and reaches nothing.
+operator_cidr = "203.0.113.10/32"

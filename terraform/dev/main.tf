@@ -8,15 +8,15 @@ provider "aws" {
   allowed_account_ids = [var.allowed_account_id]
 
   # The six mandatory tags of ADR-0013. Unlike the two foundation roots, most of
-  # what this root declares is taggable, so these reach the VPC, the four
-  # subnets, the internet gateway, both route tables and the endpoint. The route
-  # and the four associations expose no AWS tags of their own and are left that
-  # way rather than given a tagging workaround.
+  # what this root declares is taggable. The routes and the four associations
+  # expose no AWS tags of their own and are left that way rather than given a
+  # tagging workaround.
   #
   # Environment is "dev" and Lifecycle is "ephemeral" because these resources
   # belong to an environment role rather than to a persistent shared foundation.
-  # Component is "network" for the whole root, which stays accurate only while
-  # this root holds networking alone.
+  # Component is "network" as the root default, and the cluster, the node group
+  # and the two IAM roles override it to "runtime" on themselves, because cost
+  # attribution reads this tag and they are not networking.
   default_tags {
     tags = {
       Project     = "cloud-platform-reference"
@@ -132,11 +132,10 @@ resource "aws_route" "public_default" {
   gateway_id             = aws_internet_gateway.dev.id
 }
 
-# No default route is declared for the private side. This slice creates no NAT
-# gateway, so private egress does not exist yet and starting it is a separate
-# cost decision. A private table that looks empty is the intended state rather
-# than an omission: it still carries the VPC local route AWS maintains itself,
-# and the endpoint below adds the S3 prefix-list route to it.
+# Three routes reach this table and none of them is declared inside it: the VPC
+# local route AWS maintains itself, the S3 prefix-list route the gateway
+# endpoint installs, and the default route to the NAT gateway declared further
+# down as its own resource.
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.dev.id
 
@@ -187,5 +186,350 @@ resource "aws_vpc_endpoint" "s3" {
 
   tags = {
     Name = "cloud-platform-reference-dev-s3-endpoint"
+  }
+}
+
+# Private egress. This is the first hourly resource the root creates, and it is
+# one gateway rather than one per Availability Zone. ADR-0007 took that
+# trade-off deliberately: a single NAT halves both the hourly charge and the
+# per-gigabyte processing charge, and in exchange losing us-east-1a takes
+# private egress away from both zones, while traffic leaving private-b crosses
+# an AZ boundary to reach it. A tenant with an availability target would pay for
+# the second gateway.
+resource "aws_eip" "nat" {
+  domain = "vpc"
+
+  tags = {
+    Name = "cloud-platform-reference-dev-nat-eip"
+  }
+}
+
+resource "aws_nat_gateway" "dev" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public_a.id
+
+  tags = {
+    Name = "cloud-platform-reference-dev-nat"
+  }
+
+  # The arguments above name the address and the subnet, and neither of them
+  # names the internet gateway, so Terraform sees no reason to order the two.
+  # A NAT gateway is only reachable onward through an attached internet
+  # gateway, and this root has to behave the same way on a rebuild into an
+  # empty account as it does today, where the gateway happens to exist already.
+  depends_on = [aws_internet_gateway.dev]
+}
+
+# The default route arrives as its own resource rather than as an inline block
+# on aws_route_table.private, so the live route table is not modified and the
+# plan shows one route added instead of a change to an existing resource.
+resource "aws_route" "private_default" {
+  route_table_id         = aws_route_table.private.id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.dev.id
+}
+
+# Two service roles. Each trusts exactly one AWS service and carries only AWS
+# managed policies, so nothing declared here grants a workload anything.
+resource "aws_iam_role" "eks_cluster" {
+  name = "cloud-platform-reference-dev-eks-cluster"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = "sts:AssumeRole"
+        Principal = {
+          Service = "eks.amazonaws.com"
+        }
+      },
+    ]
+  })
+
+  tags = {
+    Component = "runtime"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
+  role       = aws_iam_role.eks_cluster.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+}
+
+resource "aws_iam_role" "eks_node" {
+  name = "cloud-platform-reference-dev-eks-node"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = "sts:AssumeRole"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      },
+    ]
+  })
+
+  tags = {
+    Component = "runtime"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "eks_node_worker" {
+  role       = aws_iam_role.eks_node.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+}
+
+# The CNI permissions sit on the node role, which means every pod that can reach
+# the instance metadata service inherits them. That is a bootstrap choice for
+# this phase, not the end state: AWS supports it while the VPC CNI is not yet
+# running under its own identity, and recommends EKS Pod Identity for add-on
+# IAM. The identity phase revisits it, and the README records the limitation.
+resource "aws_iam_role_policy_attachment" "eks_node_cni" {
+  role       = aws_iam_role.eks_node.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+}
+
+# PullOnly rather than ReadOnly. A managed node has to pull images; it has no
+# reason to describe repositories or read registry metadata beyond that, and
+# PullOnly is the narrower of the two policies that satisfy the requirement.
+resource "aws_iam_role_policy_attachment" "eks_node_ecr_pull" {
+  role       = aws_iam_role.eks_node.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly"
+}
+
+resource "aws_eks_cluster" "dev" {
+  name     = "cloud-platform-reference-dev"
+  version  = "1.36"
+  role_arn = aws_iam_role.eks_cluster.arn
+
+  vpc_config {
+    # All four subnets are offered to the control plane so it can place its
+    # cross-account network interfaces in either tier. Where the nodes run is a
+    # separate decision, made on the node group, and stays private.
+    subnet_ids = [
+      aws_subnet.private_a.id,
+      aws_subnet.private_b.id,
+      aws_subnet.public_a.id,
+      aws_subnet.public_b.id,
+    ]
+
+    # Both endpoints are enabled. The private one keeps node and in-cluster API
+    # traffic inside the VPC; the public one is what lets the operator reach the
+    # API without a bastion or a VPN. The public side is narrowed to a single
+    # operator CIDR, because the AWS default of 0.0.0.0/0 would put the API
+    # server on the internet with authentication as the only barrier.
+    endpoint_public_access  = true
+    endpoint_private_access = true
+    public_access_cidrs     = [var.operator_cidr]
+  }
+
+  access_config {
+    authentication_mode                         = "API"
+    bootstrap_cluster_creator_admin_permissions = true
+  }
+
+  tags = {
+    Component = "runtime"
+  }
+
+  # The cluster references the role but not the policy attached to it, so
+  # without this Terraform can create the cluster before AmazonEKSClusterPolicy
+  # is on the role and the control plane cannot manage its own interfaces.
+  depends_on = [aws_iam_role_policy_attachment.eks_cluster_policy]
+}
+
+# A managed node group tags itself. Those tags do not reach the EC2 instances it
+# launches or their root volumes, and neither does the provider's default_tags,
+# so without this template the workers would run untagged and the ADR-0013 cost
+# attribution and orphan scans would not see them.
+#
+# That is the only reason it exists. It carries no AMI, no user data, no
+# security group, no network interface, no instance type and no subnet: EKS
+# supplies all of those for a managed node group, and taking any of them over
+# here would mean owning the node bootstrap contract too.
+resource "aws_launch_template" "eks_node" {
+  name_prefix = "cloud-platform-reference-dev-node-"
+
+  # A node group cannot set disk_size while a launch template is attached, so
+  # the root volume is configured here instead.
+  block_device_mappings {
+    device_name = "/dev/xvda"
+
+    ebs {
+      volume_size           = 20
+      volume_type           = "gp3"
+      delete_on_termination = true
+      encrypted             = true
+    }
+  }
+
+  # ADR-0008 closes the path from a pod to the node's credentials, and leaving
+  # this to the AMI or account default would leave that closure unstated.
+  #
+  # The endpoint stays enabled because the node itself needs it. Requiring
+  # tokens turns off IMDSv1, whose unauthenticated GET is what makes a
+  # server-side request forgery in a pod enough to read credentials. The hop
+  # limit is the part that does the work here: a pod in its own network
+  # namespace is one hop further away than the host, so a limit of 1 answers the
+  # host and drops the pod. AWS often suggests 2 so that containers can reach
+  # IMDS, which is exactly what this project does not want, because workload AWS
+  # access belongs to EKS Pod Identity rather than to the node role.
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 1
+  }
+
+  tag_specifications {
+    resource_type = "instance"
+
+    tags = {
+      Project     = "cloud-platform-reference"
+      Environment = "dev"
+      Component   = "runtime"
+      Lifecycle   = "ephemeral"
+      Owner       = "platform-engineer"
+      ManagedBy   = "terraform"
+      Name        = "cloud-platform-reference-dev-node"
+    }
+  }
+
+  # The volume carries the six mandatory tags and no Name. An orphaned volume is
+  # found through the mandatory tags, and it answers no operational question a
+  # Name would answer that its instance does not answer already.
+  tag_specifications {
+    resource_type = "volume"
+
+    tags = {
+      Project     = "cloud-platform-reference"
+      Environment = "dev"
+      Component   = "runtime"
+      Lifecycle   = "ephemeral"
+      Owner       = "platform-engineer"
+      ManagedBy   = "terraform"
+    }
+  }
+
+  tags = {
+    Component = "runtime"
+  }
+}
+
+resource "aws_eks_node_group" "dev" {
+  cluster_name    = aws_eks_cluster.dev.name
+  node_group_name = "cloud-platform-reference-dev-nodes"
+  node_role_arn   = aws_iam_role.eks_node.arn
+
+  # Private subnets only. ADR-0007 puts no node in a public subnet, so the two
+  # public subnets are absent here even though the control plane was given them.
+  subnet_ids = [
+    aws_subnet.private_a.id,
+    aws_subnet.private_b.id,
+  ]
+
+  instance_types = ["m6a.large"]
+  ami_type       = "AL2023_x86_64_STANDARD"
+  capacity_type  = "ON_DEMAND"
+
+  # Tracking latest_version means an edit to the template is a node group
+  # update, so a tag or root-volume change reaches the running nodes through a
+  # rolling replacement rather than only the next ones to launch.
+  launch_template {
+    id      = aws_launch_template.eks_node.id
+    version = aws_launch_template.eks_node.latest_version
+  }
+
+  # Fixed at two. No autoscaler exists in this slice, so min and max match
+  # desired and a capacity change is a reviewed code change rather than a
+  # runtime event.
+  scaling_config {
+    desired_size = 2
+    min_size     = 2
+    max_size     = 2
+  }
+
+  update_config {
+    max_unavailable = 1
+  }
+
+  tags = {
+    Component = "runtime"
+  }
+
+  # Terraform cannot infer either of these prerequisites from the arguments
+  # above. The node role is referenced but its policy attachments are not, and
+  # a node needs those permissions in place before it boots or it never
+  # registers with the cluster. The private route is referenced by nothing here
+  # at all, yet node registration, image pulls and AWS service calls all leave
+  # through the NAT path this root selected, so that route has to exist before
+  # the first node comes up. Relative AWS creation times are not a guarantee.
+  depends_on = [
+    aws_iam_role_policy_attachment.eks_node_worker,
+    aws_iam_role_policy_attachment.eks_node_cni,
+    aws_iam_role_policy_attachment.eks_node_ecr_pull,
+    aws_route.private_default,
+  ]
+}
+
+# The four managed add-ons of ADR-0006, each pinned to an exact version. AWS
+# publishes new add-on revisions continuously, and an unpinned resource would
+# let one arrive during an unrelated apply. Pinned, an upgrade is a reviewed
+# code change with a diff, which is what ADR-0006 asks for.
+#
+# EKS installs its own self-managed copies of vpc-cni, coredns and kube-proxy
+# when a cluster comes up. The three resources below deliberately take those
+# over as Terraform-managed add-ons, and OVERWRITE is what settles the field
+# conflicts that transition produces at create time. The Pod Identity agent is
+# not part of that bootstrap set, so it needs no conflict resolution.
+resource "aws_eks_addon" "vpc_cni" {
+  cluster_name                = aws_eks_cluster.dev.name
+  addon_name                  = "vpc-cni"
+  addon_version               = "v1.22.3-eksbuild.1"
+  resolve_conflicts_on_create = "OVERWRITE"
+
+  tags = {
+    Component = "runtime"
+  }
+}
+
+resource "aws_eks_addon" "coredns" {
+  cluster_name                = aws_eks_cluster.dev.name
+  addon_name                  = "coredns"
+  addon_version               = "v1.14.3-eksbuild.3"
+  resolve_conflicts_on_create = "OVERWRITE"
+
+  tags = {
+    Component = "runtime"
+  }
+
+  # CoreDNS is scheduled onto nodes rather than run as a per-node DaemonSet, so
+  # it needs schedulable capacity before it can become healthy. The add-on
+  # references the cluster and nothing else, so Terraform has no way to see
+  # that the node group is a prerequisite for the health it will wait on.
+  depends_on = [aws_eks_node_group.dev]
+}
+
+resource "aws_eks_addon" "kube_proxy" {
+  cluster_name                = aws_eks_cluster.dev.name
+  addon_name                  = "kube-proxy"
+  addon_version               = "v1.36.0-eksbuild.13"
+  resolve_conflicts_on_create = "OVERWRITE"
+
+  tags = {
+    Component = "runtime"
+  }
+}
+
+resource "aws_eks_addon" "pod_identity_agent" {
+  cluster_name  = aws_eks_cluster.dev.name
+  addon_name    = "eks-pod-identity-agent"
+  addon_version = "v1.3.10-eksbuild.3"
+
+  tags = {
+    Component = "runtime"
   }
 }
