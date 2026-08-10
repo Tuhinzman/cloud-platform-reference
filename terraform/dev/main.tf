@@ -306,15 +306,16 @@ resource "aws_eks_cluster" "dev" {
   version  = "1.36"
   role_arn = aws_iam_role.eks_cluster.arn
 
+  # This environment is created for an approved window and destroyed afterwards,
+  # so whether a destroy can reach the control plane is stated here rather than
+  # left to a provider or AWS default.
+  deletion_protection = false
+
   vpc_config {
-    # All four subnets are offered to the control plane so it can place its
-    # cross-account network interfaces in either tier. Where the nodes run is a
-    # separate decision, made on the node group, and stays private.
+    # ADR-0007: control-plane ENIs stay in private subnets
     subnet_ids = [
       aws_subnet.private_a.id,
       aws_subnet.private_b.id,
-      aws_subnet.public_a.id,
-      aws_subnet.public_b.id,
     ]
 
     # Both endpoints are enabled. The private one keeps node and in-cluster API
@@ -424,8 +425,8 @@ resource "aws_eks_node_group" "dev" {
   node_group_name = "cloud-platform-reference-dev-nodes"
   node_role_arn   = aws_iam_role.eks_node.arn
 
-  # Private subnets only. ADR-0007 puts no node in a public subnet, so the two
-  # public subnets are absent here even though the control plane was given them.
+  # Private subnets only, the same two the control plane uses. ADR-0007 puts no
+  # node in a public subnet.
   subnet_ids = [
     aws_subnet.private_a.id,
     aws_subnet.private_b.id,
