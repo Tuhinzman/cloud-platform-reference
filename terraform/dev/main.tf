@@ -534,3 +534,119 @@ resource "aws_eks_addon" "pod_identity_agent" {
     Component = "runtime"
   }
 }
+
+# The four resources below are environment-scoped, not cluster-scoped. They
+# survive a runtime teardown and are removed with the Dev environment, which is
+# the boundary docs/architecture-baseline.md records for workload IAM roles and
+# for an environment's secret entries. That is why they sit in this root beside
+# the network rather than in a foundation root, and why the targeted runtime
+# destroy does not name them. Component is "identity" rather than the root
+# default, because cost attribution and orphan scans read that tag and these are
+# neither networking nor runtime.
+
+# The secret container only. No aws_secretsmanager_secret_version is declared,
+# because a version resource writes the value into Terraform state, where marking
+# an input sensitive hides console output and changes nothing about what is
+# stored. The value is placed out of band, and the later rotation exercise works
+# the same path.
+#
+# The recovery window is what answers an accidental delete, so it is stated
+# rather than inherited. Seven days is the owner-approved figure.
+#
+# No kms_key_id, so the AWS-managed key encrypts this secret. A customer-managed
+# key would add a resource with its own lifecycle and charge, and nothing in this
+# slice needs one.
+resource "aws_secretsmanager_secret" "workload" {
+  name                    = "cloud-platform-reference-dev-workload-secret"
+  recovery_window_in_days = 7
+
+  tags = {
+    Component = "identity"
+  }
+}
+
+# Non-secret configuration. String rather than SecureString on purpose: ADR-0008
+# puts sensitive values in the secret above and non-secret configuration here,
+# and a SecureString would blur that split and add a KMS dependency to a value
+# that does not need one. The tier is stated because it decides both the size
+# limit and whether the parameter carries a charge.
+resource "aws_ssm_parameter" "workload" {
+  name  = "cloud-platform-reference-dev-workload-environment"
+  type  = "String"
+  tier  = "Standard"
+  value = "dev"
+
+  tags = {
+    Component = "identity"
+  }
+}
+
+# The workload identity for EKS Pod Identity. The trust names one service
+# principal and nothing else: no account principal, no OIDC provider, no IRSA
+# condition and no wildcard. That is what keeps the role cluster-independent,
+# because pods.eks.amazonaws.com is generic where an IRSA trust names a specific
+# cluster's OIDC issuer and would have to be rewritten on every cluster
+# recreation. ADR-0008 selected Pod Identity for that property.
+#
+# sts:TagSession sits beside sts:AssumeRole because the Pod Identity flow tags
+# the session it creates, and the assume call fails without it.
+#
+# Nothing is associated with this role yet. aws_eks_pod_identity_association
+# needs a live cluster and belongs to the later runtime slice; the role is
+# authored here so the identity outlives the cluster rather than following it.
+resource "aws_iam_role" "workload" {
+  name = "cloud-platform-reference-dev-workload"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "sts:AssumeRole",
+          "sts:TagSession",
+        ]
+        Principal = {
+          Service = "pods.eks.amazonaws.com"
+        }
+      },
+    ]
+  })
+
+  tags = {
+    Component = "identity"
+  }
+}
+
+# Inline rather than a managed policy. One role consumes it, so a standalone
+# aws_iam_policy plus an attachment would be two resources and a reusable object
+# for a permission set with no second consumer.
+#
+# Both statements take the ARN Terraform computed for the resource above, so no
+# account ID is written here and the grant cannot widen if a name changes. The
+# Secrets Manager ARN also carries a suffix AWS generates at creation, which no
+# hand-assembled ARN could reproduce.
+#
+# An inline role policy is not a taggable AWS object, so it carries no tags of
+# its own. The routes and the route table associations in this root are left the
+# same way rather than given a tagging workaround.
+resource "aws_iam_role_policy" "workload" {
+  name = "cloud-platform-reference-dev-workload-read"
+  role = aws_iam_role.workload.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "secretsmanager:GetSecretValue"
+        Resource = aws_secretsmanager_secret.workload.arn
+      },
+      {
+        Effect   = "Allow"
+        Action   = "ssm:GetParameter"
+        Resource = aws_ssm_parameter.workload.arn
+      },
+    ]
+  })
+}
