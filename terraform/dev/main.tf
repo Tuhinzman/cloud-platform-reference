@@ -535,14 +535,16 @@ resource "aws_eks_addon" "pod_identity_agent" {
   }
 }
 
-# The four resources below are environment-scoped, not cluster-scoped. They
-# survive a runtime teardown and are removed with the Dev environment, which is
+# The identity and configuration resources below, down to the external-secrets
+# inline policy, are environment-scoped, not cluster-scoped. They survive a
+# runtime teardown and are removed with the Dev environment, which is
 # the boundary docs/architecture-baseline.md records for workload IAM roles and
 # for an environment's secret entries. That is why they sit in this root beside
 # the network rather than in a foundation root, and why the targeted runtime
 # destroy does not name them. Component is "identity" rather than the root
 # default, because cost attribution and orphan scans read that tag and these are
-# neither networking nor runtime.
+# neither networking nor runtime. The Pod Identity association at the end of
+# this file is cluster-scoped and follows the cluster instead.
 
 # The secret container only. No aws_secretsmanager_secret_version is declared,
 # because a version resource writes the value into Terraform state, where marking
@@ -551,7 +553,9 @@ resource "aws_eks_addon" "pod_identity_agent" {
 # the same path.
 #
 # The recovery window is what answers an accidental delete, so it is stated
-# rather than inherited. Seven days is the owner-approved figure.
+# rather than inherited. Seven days is the shortest recovery window the API
+# accepts, which preserves the recovery path while limiting how long the deleted
+# secret's name stays reserved.
 #
 # No kms_key_id, so the AWS-managed key encrypts this secret. A customer-managed
 # key would add a resource with its own lifecycle and charge, and nothing in this
@@ -589,7 +593,8 @@ resource "aws_ssm_parameter" "workload" {
 # recreation. ADR-0008 selected Pod Identity for that property.
 #
 # sts:TagSession sits beside sts:AssumeRole because the Pod Identity flow tags
-# the session it creates, and the assume call fails without it.
+# the session it creates, so the trust allows session tagging as well as role
+# assumption.
 #
 # Nothing is associated with this role yet. aws_eks_pod_identity_association
 # needs a live cluster and belongs to the later runtime slice; the role is
@@ -656,11 +661,6 @@ resource "aws_iam_role_policy" "workload" {
 # role would widen whichever of them needs less. The trust names only the generic
 # Pod Identity service principal, so the role outlives any cluster that happens to
 # run the controller.
-#
-# No aws_eks_pod_identity_association is declared here. An association binds a
-# role to an exact namespace and ServiceAccount, and those names come from the
-# pinned chart and its values, which are not selected yet. Authoring it now would
-# encode a guess.
 resource "aws_iam_role" "external_secrets" {
   name = "cloud-platform-reference-dev-external-secrets"
 
@@ -707,4 +707,29 @@ resource "aws_iam_role_policy" "external_secrets" {
       },
     ]
   })
+}
+
+# The namespace and the ServiceAccount name are read from the rendered External
+# Secrets chart 2.9.0 rather than assumed. That chart renders three
+# ServiceAccounts and only external-secrets runs the controller that reads
+# Secrets Manager, so the webhook and the cert controller are left without an AWS
+# identity.
+#
+# AWS accepts an association naming a namespace and a ServiceAccount that do not
+# exist in Kubernetes yet, so the cluster this resource references is its only
+# real prerequisite, and that is also why this one is cluster-scoped where the
+# resources above are environment-scoped: a runtime teardown takes the
+# association and leaves the role. Installing the chart after the association
+# exists is what lets the controller pods start on this identity, because a pod
+# admitted while no association matches it comes up without one and needs a
+# restart to pick it up.
+resource "aws_eks_pod_identity_association" "external_secrets" {
+  cluster_name    = aws_eks_cluster.dev.name
+  namespace       = "external-secrets"
+  service_account = "external-secrets"
+  role_arn        = aws_iam_role.external_secrets.arn
+
+  tags = {
+    Component = "identity"
+  }
 }
