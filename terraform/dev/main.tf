@@ -650,3 +650,61 @@ resource "aws_iam_role_policy" "workload" {
     ]
   })
 }
+
+# The synchronisation controller's own identity, kept separate from the workload
+# role above because the two read the secret for different reasons and one shared
+# role would widen whichever of them needs less. The trust names only the generic
+# Pod Identity service principal, so the role outlives any cluster that happens to
+# run the controller.
+#
+# No aws_eks_pod_identity_association is declared here. An association binds a
+# role to an exact namespace and ServiceAccount, and those names come from the
+# pinned chart and its values, which are not selected yet. Authoring it now would
+# encode a guess.
+resource "aws_iam_role" "external_secrets" {
+  name = "cloud-platform-reference-dev-external-secrets"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "sts:AssumeRole",
+          "sts:TagSession",
+        ]
+        Principal = {
+          Service = "pods.eks.amazonaws.com"
+        }
+      },
+    ]
+  })
+
+  tags = {
+    Component = "identity"
+  }
+}
+
+# Two actions on one secret: read the value, and read the metadata that tells the
+# controller whether the value has changed. That pair is a starting hypothesis
+# rather than a measured runtime minimum. The first runtime window either confirms
+# it or returns an AccessDenied naming what is missing, and any widening comes
+# from that evidence and owner review rather than from anticipating it here.
+resource "aws_iam_role_policy" "external_secrets" {
+  name = "cloud-platform-reference-dev-external-secrets-read"
+  role = aws_iam_role.external_secrets.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret",
+        ]
+        Resource = aws_secretsmanager_secret.workload.arn
+      },
+    ]
+  })
+}
