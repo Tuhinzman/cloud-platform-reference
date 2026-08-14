@@ -1,7 +1,7 @@
 # Cloud Platform Reference
 
 A production-inspired cloud platform, designed and documented from first
-principles, to be implemented step by step with evidence.
+principles, and implemented step by step with evidence.
 
 ## Why This Project Exists
 
@@ -59,6 +59,10 @@ environment runs continuously originates in ADR-0004 and is restated in ADR-0006
 ADR-0007. Accepted records are never edited here, so ADR-0013 is the single place that
 states how far that supersession reaches and what in those three records is untouched.
 
+Infrastructure definitions live in [terraform/](terraform/), one directory per
+configuration root. Each root has its own README covering what it creates, what it
+deliberately does not, and what has been validated against AWS.
+
 Each platform topic follows the same documentation flow:
 
 Why → Requirements → Architecture → Decision → Diagram → Implementation →
@@ -66,10 +70,9 @@ Validation → Evidence → Lessons Learned
 
 ## Current Status
 
-Architecture planning is complete. The foundation documents are in place, fourteen
-decision records are accepted, and the table above is the whole of it. Nothing is
-implemented: no AWS resource exists, no infrastructure definition has been applied, and
-every completion claim this repository will eventually make is still unproven.
+Architecture planning is complete: the foundation documents are in place and fourteen
+decision records are accepted. Implementation is under way and has reached the end of the
+secrets and workload-identity work.
 
 The platform the records describe is one AWS account in `us-east-1` running three
 environment roles, each with its own VPC, its own EKS cluster, and its own telemetry,
@@ -81,18 +84,42 @@ reserved for the four things that have no other source.
 Two properties are worth knowing before reading further, because they shape everything
 else. Cost is treated as an engineering constraint with a stated monthly target, a review
 threshold, and a ceiling that stops work rather than a single number nobody honors. And
-no environment is left running: every one of the three roles is created for an approved
-window, validated, evidenced, destroyed, and verified clean. Both are decided in
-[ADR-0013](docs/decisions/0013-define-operations-and-cost-guardrails.md).
+no environment runtime is left running between approved windows: for each of the three
+roles the runtime is created for an approved window, validated, evidenced, destroyed, and
+verified clean. Both are decided in
+[ADR-0013](docs/decisions/0013-define-operations-and-cost-guardrails.md), and the second
+is why the answer to what exists right now has two halves.
+
+What persists is the Terraform state backend and the durable evidence destination, which
+outlive every environment, together with the retained part of the Dev environment: its
+network baseline and the identity, secret, and configuration resources scoped to that
+environment. What is not running is the billable Dev runtime, meaning the EKS control
+plane, the managed node group, and the NAT gateway. Those are declared in Terraform,
+created inside an approved window, and destroyed when it closes. They have been built and
+torn down more than once, and the definitions that rebuild them are in this repository.
+
+The secrets and workload-identity work is closed. A secret was rotated at its source and
+observed reaching a running consumer without a restart, EKS Pod Identity credential
+delivery was proven for the component that reads the secret store, and the paired
+negative test confirmed that an ordinary pod could not obtain node credentials through
+instance metadata. The artifact registry and the workload build path have not been
+started.
 
 The workload the platform runs is the complete justified application fleet rather than a
 handful of services, so that one delivery pipeline, one reconciliation model, and one
 teardown are exercised across breadth. That is decided in
 [ADR-0014](docs/decisions/0014-expand-the-validated-implementation-workload-scope.md),
-which changed no requirement and no other accepted record.
+which changed no requirement and no other accepted record. No workload has been deployed
+on the platform yet.
 
-Implementation comes next, and it begins with the repositories and the Terraform state
-backend rather than with a cluster.
+Evidence exists for what has been validated, and it is not published here. Raw evidence
+is retained outside this repository, and the sanitized subset that will support the
+claims in these pages goes through its own review rather than accumulating as
+implementation proceeds. Read every implementation statement in this repository as scoped
+to what its own stated validation covers. None of it is a production-readiness claim: the
+[Project Charter](docs/project-charter.md) defines this as a production-inspired platform
+rather than a hosted service, and the limitations each decision record states still
+stand.
 
 ## License
 

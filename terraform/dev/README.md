@@ -4,10 +4,12 @@ Everything the Dev environment will later run needs somewhere to run. This root
 creates that: one VPC, two Availability Zones, private subnets for the nodes and
 public subnets for managed ingress, and the routing that separates them.
 
-It also carries the Dev runtime: one NAT gateway for private egress, an EKS
-control plane, and a managed node group on the private subnets. Those bill by
-the hour from the moment they exist, which is the reason this environment is
-created for an approved window and destroyed afterwards.
+It also carries the Dev runtime — one NAT gateway for private egress, an EKS
+control plane, and a managed node group on the private subnets — and the
+environment's identity, secret and configuration resources. The runtime bills by
+the hour from the moment it exists, which is the reason this runtime is
+created for an approved window and destroyed afterwards. The identity and secret
+resources are not part of that window and outlive it.
 [ADR-0007](../../docs/decisions/0007-define-networking-and-traffic-boundaries.md)
 fixes the traffic boundaries,
 [ADR-0006](../../docs/decisions/0006-adopt-amazon-eks-as-the-workload-runtime.md)
@@ -62,6 +64,21 @@ None of those carries an hourly charge. The runtime below does.
 | `aws_eks_node_group` | Two `m6a.large` on-demand nodes on the private subnets |
 | `aws_eks_addon` × 4 | `vpc-cni`, `coredns`, `kube-proxy`, `eks-pod-identity-agent`, each pinned |
 
+Finally the environment's identity, secrets and configuration. The first four
+survive a runtime teardown and are removed only with the Dev environment. The
+Pod Identity association is cluster-scoped and goes when the cluster goes, so in
+lifecycle terms it belongs with the runtime above. The Secrets Manager entry
+carries a per-secret monthly charge for as long as it exists; the rest carry
+none.
+
+| Resource | Purpose |
+|---|---|
+| `aws_secretsmanager_secret` | The Dev workload secret, the container only, with a seven-day recovery window |
+| `aws_ssm_parameter` | Non-secret Dev configuration, `String` on the `Standard` tier |
+| `aws_iam_role` + `aws_iam_role_policy` | Workload identity, inline policy scoped to that one secret and that one parameter |
+| `aws_iam_role` + `aws_iam_role_policy` | Secret-synchronisation controller identity, inline policy scoped to the secret alone |
+| `aws_eks_pod_identity_association` | Binds the controller identity to one namespace and one ServiceAccount on the cluster |
+
 ## Address plan
 
 ```
@@ -85,9 +102,9 @@ directly.
 
 Availability Zone names are account-specific. `us-east-1a` in this account does
 not necessarily map to the same physical zone as `us-east-1a` in another one.
-The two names here are a deliberate selection rather than a default, and before
-Phase 4B selects a node instance type, that type has to be checked read-only for
-availability in both of these zones.
+The two names here are a deliberate selection rather than a default, and any node
+instance type this root uses has to be checked for availability in both of these
+zones before it is committed to.
 
 ## Input
 
@@ -188,8 +205,9 @@ their own names, so they do not carry it.
 The two `kubernetes.io/role` tags are per-resource subnet tags that sit
 alongside the six. They are what an AWS load balancer controller reads to decide
 which subnets to place internet-facing and internal load balancers in. No
-`kubernetes.io/cluster` tag is set, because no cluster name has been selected
-and no cluster exists.
+`kubernetes.io/cluster` tag is set. That controller is not deployed here, and
+nothing else in this root reads a cluster-scoped subnet tag, so the two role tags
+carry the whole of what these subnets currently need to express.
 
 ## The cluster and the nodes
 
@@ -202,8 +220,8 @@ private subnets only, with `desired`, `min` and `max` all set to two. There is n
 cluster autoscaler in this slice, so capacity changes by code review rather than
 by load. Two `m6a.large` provide 4 vCPU and 16 GiB in total before the kubelet,
 the CNI and system daemons take their share. That is a hardware statement, not a
-workload-capacity claim: nothing has been scheduled on this cluster, so how much
-of the AstroShop fleet fits here is unmeasured.
+workload-capacity claim. What has run here is validation workload only, a handful
+of pods at a time, so how much of the AstroShop fleet fits is unmeasured.
 
 ### Why there is a launch template
 
@@ -235,8 +253,14 @@ out: a pod sits one network hop further from IMDS than the host does, so a limit
 of one answers the node and drops the pod.
 
 Together those stop an ordinary pod from picking up the node IAM role through
-IMDS, which is what ADR-0008 requires. Workload AWS access is meant to come from
-EKS Pod Identity instead, and nothing is bound to it yet.
+IMDS, which is what ADR-0008 requires, and an ordinary pod on this fleet has been
+observed failing to obtain credentials that way. Workload AWS access comes from
+EKS Pod Identity instead, which the identity section below covers.
+
+The hop limit does not stop a `hostNetwork` pod, because such a pod shares the
+node's network namespace and is therefore no further from IMDS than the host is.
+Keeping `hostNetwork` out of workload namespaces is part of this control rather
+than a separate one, and that half has not been tested here.
 
 ### API endpoint access
 
@@ -264,7 +288,8 @@ is true. The identity that creates the cluster becomes a cluster administrator
 through EKS bootstrap behaviour, and that grant exists in AWS rather than in
 this configuration. No `aws_eks_access_entry` resource represents it here, so
 the administrator list is not readable from the repository and is not managed by
-Terraform. Expressing access entries explicitly belongs to the identity phase.
+Terraform. The identity work that followed this slice did not change that, so
+expressing access entries explicitly remains open.
 
 ### IAM, and one temporary choice
 
@@ -284,9 +309,11 @@ no application is granted anything by it. It is what the VPC CNI needs in order
 to manage pod network interfaces, and placing it on the node role means every
 pod that can reach the instance metadata service inherits it. AWS supports this
 pattern while the CNI is not yet running under its own identity, and recommends
-EKS Pod Identity for add-on IAM instead. This is not the final workload-identity
-model; the identity phase revisits it. Until then it is a known widening of the
-node's permission surface, recorded rather than hidden.
+EKS Pod Identity for add-on IAM instead. The identity work that followed gave the
+workload and the synchronisation controller their own Pod Identity roles and left
+this attachment untouched, so moving the CNI onto its own identity is still open.
+It remains a known widening of the node's permission surface, recorded rather
+than hidden.
 
 ## Managed add-ons
 
@@ -316,13 +343,57 @@ set and needs no conflict resolution.
 `aws-ebs-csi-driver` is out of scope for this slice, so this cluster has no
 dynamic block storage provisioner.
 
+## Identity, secrets and configuration
+
+[ADR-0008](../../docs/decisions/0008-define-the-secrets-and-workload-identity-model.md)
+puts sensitive values in a store outside the cluster, non-secret configuration in
+Parameter Store, and workload AWS permissions behind EKS Pod Identity rather than
+the node role. This root implements the environment-scoped half of that, and the
+resources are listed under "What it creates" above.
+
+No `aws_secretsmanager_secret_version` is declared. A version resource writes the
+value into Terraform state, where marking an input sensitive changes what is
+displayed and nothing about what is stored. The value is placed out of band, and
+the rotation path works the same way.
+
+Both IAM roles trust `pods.eks.amazonaws.com` and nothing else: no account
+principal, no OIDC provider, no cluster-specific condition. That generic service
+principal is what keeps the roles cluster-independent. An IRSA trust would name
+one cluster's OIDC issuer and would have to be rewritten on every recreation,
+which on this environment's lifecycle would be continuous churn. It is the
+property ADR-0008 selected Pod Identity for, and it is why the roles sit beside
+the network here rather than following the cluster.
+
+The two roles are kept apart deliberately. The workload reads the secret because
+it needs the value; the synchronisation controller reads it because it has to
+copy it into the cluster. One shared role would widen whichever of them needs
+less. Both inline policies reference the ARN Terraform computed for the secret,
+so no account ID is written into this configuration and neither grant widens if a
+name changes.
+
+**What has been proven.** Pod Identity credential delivery was observed for the
+synchronisation controller: its running pod carried the Pod Identity credential
+environment, read the secret, and a rotation at the source reached a running
+consumer's mounted file without restarting it. That is the validated rotation
+exercise ADR-0008 requires, on that path.
+
+**What has not.** `aws_iam_role.workload` has not been exercised from any pod. It
+carries no association and no runtime use, so the workload path is declared
+rather than demonstrated. The controller's two-action policy was sufficient for
+the path that ran and is not claimed to be a proven minimum. The store's deletion
+and recovery-window behaviour, which
+[ADR-0011](../../docs/decisions/0011-define-the-backup-and-recovery-model.md)
+requires to be verified, has not been exercised: the seven-day window is
+configured and nothing more.
+
 ## What this root does not create
 
 No security group, no network ACL, no VPC flow logs, no load balancer, no
 ingress, no interface endpoints, no EBS CSI driver, no cluster autoscaler, no
-OIDC provider, no Pod Identity association, no workload IAM role, no Terraform
-module, and no Kubernetes object of any kind. No workload, GitOps, observability
-or secret delivery exists on this cluster.
+OIDC provider, no Terraform module, and no Kubernetes object of any kind. The
+secret store and the identities that read it are declared here; the controller
+that synchronises a secret into a cluster is a Kubernetes install and is not. No
+workload, GitOps stack or observability stack is defined here either.
 
 AWS creates a default security group with every VPC, and this root does not
 manage it. That group allows traffic between resources that are members of it
@@ -338,8 +409,9 @@ not produced yet.
 ## Estimated planning baseline
 
 **These are planning figures, not measured runtime cost.** They come from the
-pricing verified for ADR-0013 on 2026-08-01 and have not been refreshed here.
-ADR-0013 requires a pricing recheck before the runtime is created.
+pricing verified for ADR-0013 and are not refreshed in this file. ADR-0013
+requires a pricing recheck immediately before a runtime window opens, and that
+recheck, not this table, is what a window is approved against.
 
 | Component | Verified hourly rate |
 |---|---|
@@ -352,32 +424,54 @@ volumes are on top of it, and neither rate is in the verified set, so no total
 is stated here. Data processing and cross-AZ transfer are usage-driven and
 unknown until the cluster carries traffic.
 
-The figures matter mainly for one reason: this environment is priced by the hour
+The figures matter mainly for one reason: this runtime is priced by the hour
 it exists, so the teardown discipline in ADR-0013 is the cost control, not the
 instance size.
 
-## Status
+## Lifecycle and current state
 
-The network exists. The runtime is configuration in this repository and nothing
-more.
+This root declares 37 resources, and they are not all meant to exist at the same
+time. Three classes are worth separating.
 
-**Applied and verified against AWS:** the VPC, the four subnets, the internet
-gateway, both route tables, the four associations and the S3 gateway endpoint.
-Read back from AWS after apply, with a following plan reporting no changes.
+| Class | Count | What it is |
+|---|---|---|
+| Declared | 37 | Everything in `main.tf` |
+| Retained | 20 | The network baseline plus the environment's identity, secret and configuration resources. Present between approved windows |
+| Runtime | 17 | The NAT gateway and its Elastic IP, the private default route, the cluster and node service roles with their four policy attachments, the cluster, the launch template, the node group, the four add-ons, and the Pod Identity association |
 
-**Authored only:** the Elastic IP, the NAT gateway, the private default route,
-both IAM roles and their four policy attachments, the EKS cluster, the launch
-template, the node group and the four managed add-ons. None of them has been
-planned or applied, so no cluster, no node, no NAT gateway and no Elastic IP
-exists.
+The retained figure is what Terraform state lists, and what the plan taken after
+the last teardown converged on. It is a statement about managed state rather than
+a resource-by-resource readback of AWS taken at the moment you read this.
 
-- `terraform fmt`, `terraform validate` and TFLint have not been run against
-  this revision, so no static-validation result is claimed for it
-- No plan has been produced for the runtime resources
-- Nothing has been scheduled on this cluster, so no capacity, reachability or
-  workload claim is made
-- No workload Pod Identity association exists. The Pod Identity agent add-on is
-  the mechanism only; nothing is bound to it
+The runtime lifecycle is create, validate, capture evidence, destroy, verify
+cleanup.
+[ADR-0013](../../docs/decisions/0013-define-operations-and-cost-guardrails.md)
+requires that of every environment role including Dev, superseding the earlier
+assumption that a development environment stays continuously active. Between
+windows the 17 runtime resources are configuration and nothing else. Within this
+root, the retained resources currently introduce no hourly runtime charge, and
+the Secrets Manager entry remains the known recurring retained-resource charge.
+
+**What has been exercised.** The network baseline was applied and read back from
+AWS, with a following plan reporting no changes. The runtime has been created and
+destroyed more than once, each time from a reviewed plan, with an orphan check
+after teardown and a following plan that reproduced the same 17-resource runtime
+boundary. Private egress was verified from a pod on the private node fleet, which
+resolved DNS and reached an external HTTPS endpoint from a source address
+matching the NAT gateway. `terraform fmt`, `terraform validate` and TFLint have
+been run against this revision and passed.
+
+**What has not.** No ingress, TLS termination, load balancer, workload, GitOps
+stack or observability stack has ever existed on this cluster, so no
+reachability, TLS, capacity or workload claim is made. Inbound reachability and
+NetworkPolicy enforcement are untested. The private ECR pull path is untested;
+only a public registry pull was observed. The state-backend locking contention
+test, the Terraform state recovery exercise, and the secret deletion and
+recovery-window verification have not run.
+
+Validation output lives outside this repository and its sanitized publication is
+governed separately, so this section records what was exercised rather than
+reproducing the evidence for it.
 
 TFLint here runs the bundled Terraform ruleset only. It checks Terraform
 language and style, it carries no AWS-specific rules, and it is not a security
