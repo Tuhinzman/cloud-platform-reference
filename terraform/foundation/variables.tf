@@ -12,15 +12,16 @@ variable "evidence_bucket_name" {
   }
 }
 
-variable "gitlab_project_path" {
-  description = "Full path of the GitLab project whose main-branch CI may assume the push role, as group/project without the scheme or host. It is the project coordinate the OIDC sub claim carries, so it is supplied at execution time and never committed."
-  type        = string
+variable "gitlab_project_id" {
+  description = "Immutable numeric ID GitLab assigns to the project whose main-branch CI may assume the push role. It is the project coordinate the OIDC sub claim carries, so it is supplied at execution time and never committed."
+  type        = number
 
   validation {
-    # A path, not a URL. A value carrying a scheme or a host would produce a sub
-    # condition that never matches, and the role would silently trust nothing.
-    condition     = can(regex("^[a-zA-Z0-9][a-zA-Z0-9._-]*(/[a-zA-Z0-9][a-zA-Z0-9._-]*)+$", var.gitlab_project_path))
-    error_message = "gitlab_project_path must be the group/project path without a scheme or host, for example group/project or group/subgroup/project."
+    # A whole positive number. The sub claim is matched as an exact string, so a
+    # fractional or negative value would render a condition that never matches,
+    # and the role would silently trust nothing.
+    condition     = var.gitlab_project_id > 0 && floor(var.gitlab_project_id) == var.gitlab_project_id
+    error_message = "gitlab_project_id must be the positive whole number GitLab assigns to the project, digits only."
   }
 }
 

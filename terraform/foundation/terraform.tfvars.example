@@ -11,5 +11,6 @@ evidence_bucket_name = "example-platform-evidence-000000"
 allowed_account_id = "000000000000"
 
 # The GitLab project whose main-branch pipelines may assume the ECR push role,
-# as group/project without the scheme or host. The value below is a placeholder.
-gitlab_project_path = "example-group/example-project"
+# given as the immutable numeric project ID the OIDC sub claim carries. Read it
+# from the project's Settings, General page. The value below is a placeholder.
+gitlab_project_id = 12345678

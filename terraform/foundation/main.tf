@@ -194,7 +194,7 @@ resource "aws_iam_openid_connect_provider" "gitlab" {
 # no credential of its own, assumed only through web identity federation.
 #
 # The trust is deliberately narrow. The sub claim GitLab issues carries the
-# project path and the ref, so pinning it to this project on branch main means a
+# project ID and the ref, so pinning it to this project on branch main means a
 # job in another project, on another branch, on a tag, or in a merge-request
 # pipeline cannot assume this role even though it presents a valid GitLab token.
 # The aud condition pins the audience alongside it, because a token minted for a
@@ -202,9 +202,10 @@ resource "aws_iam_openid_connect_provider" "gitlab" {
 #
 # Two consequences the pipeline has to respect. A job that declares an
 # environment gets extra fields in its sub claim, which no longer equals the
-# string below, so the push job declares none. And because sub carries the
-# project path, renaming or transferring the project breaks assumption rather
-# than silently trusting the new path.
+# string below, so the push job declares none. And because the project ID is
+# immutable, the trust stays bound to this same project across a rename or a
+# transfer, where a path would either stop matching or, once reused by another
+# project, name something this role never meant to trust.
 resource "aws_iam_role" "ci_checkout" {
   name = "cloud-platform-reference-shared-ci-checkout"
 
@@ -220,7 +221,7 @@ resource "aws_iam_role" "ci_checkout" {
         Condition = {
           StringEquals = {
             "gitlab.com:aud" = "sts.amazonaws.com"
-            "gitlab.com:sub" = "project_path:${var.gitlab_project_path}:ref_type:branch:ref:main"
+            "gitlab.com:sub" = "project_id:${var.gitlab_project_id}:ref_type:branch:ref:main"
           }
         }
       },
