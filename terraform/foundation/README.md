@@ -167,10 +167,10 @@ oldest applicable tagged image becomes the first expiry candidate. This is a
 bounded review trigger, not an exemption mechanism, and nothing implements it
 in the policy itself.
 
-Expected monthly cost is pending pre-apply verification. ECR cost is usage and
-storage dependent, current applicable AWS pricing must be verified before
-apply, and no measured or attributable ECR cost exists yet. The lifecycle
-policy is an initial storage bound, not measured cost evidence.
+ECR cost is usage and storage dependent. Current pricing has been reviewed
+separately, and no measured or attributable ECR cost has been observed yet.
+The lifecycle policy provides an initial image-count bound, not measured cost
+evidence.
 
 The registry is currently required to produce and retain the Phase 6 first
 immutable workload artifact digest, which is the evidence that it is still
@@ -191,9 +191,11 @@ bucket policy denies requests without TLS, and the six mandatory tags are
 present. Formatting, `terraform validate`, and `tflint` passed against that
 evidence-only configuration, and evidence retention remains undecided.
 
-The artifact registry resources are declared in source only. No apply has run
-since they were added, so no ECR repository exists in AWS and the lifecycle
-policy has never evaluated an image. No validation has run against this
-configuration yet. The next step is the owner-executed chain: formatting,
-validate, lint, scan, and plan review. The access boundaries of both
-foundations remain undemonstrated.
+The artifact registry is applied. `astroshop/checkout` exists as the first
+artifact-registry repository together with its lifecycle policy: the apply
+added those two resources and nothing else, AWS read-back verified the
+declared repository configuration, the lifecycle policy, and the six
+mandatory tags, and the plan after apply reported no changes. The repository
+holds 0 images. The workload build and delivery path has not started, so no
+digest has been published. The access boundaries of both foundations remain
+undemonstrated.
