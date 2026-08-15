@@ -177,9 +177,27 @@ immutable workload artifact digest, which is the evidence that it is still
 needed. No requirement for the remaining fleet repositories has been
 demonstrated or authorized yet.
 
-This root configures the registry and says nothing about who may use it. CI
-push access and environment pull access are identity decisions, implemented
-and evidenced separately.
+## CI push identity
+
+Pushing to that repository needs an AWS identity, and ADR-0009 puts pipeline
+identity on OIDC federation, so this root also declares the trust anchor for
+GitLab.com ID tokens and one role for the checkout pipeline. The pipeline
+exchanges its job token for short-lived STS credentials; no long-lived AWS
+credential exists in CI.
+
+The trust is pinned to one GitLab project on branch `main` and to one
+audience, so a token from another project, branch, tag, or merge-request
+pipeline cannot assume the role. The project path is operator-supplied and
+uncommitted, like the other values this root takes.
+
+The role's permissions are push side only: authenticate to the registry,
+upload layers, publish a manifest, scoped to `astroshop/checkout`. Only the
+registry-level authentication call is unscoped, because it accepts no
+repository ARN. Nothing here grants repository deletion, lifecycle-policy
+mutation, IAM, or any other service, and the permission set is a starting
+hypothesis until a pipeline run shows what the push actually calls.
+Environment pull access is a separate identity concern and is not implemented
+here.
 
 ## Status
 
@@ -197,5 +215,9 @@ added those two resources and nothing else, AWS read-back verified the
 declared repository configuration, the lifecycle policy, and the six
 mandatory tags, and the plan after apply reported no changes. The repository
 holds 0 images. The workload build and delivery path has not started, so no
-digest has been published. The access boundaries of both foundations remain
-undemonstrated.
+digest has been published.
+
+The CI push identity is declared in source only. No apply has run since those
+resources were added, so no OIDC provider and no role exist in AWS, no
+pipeline has assumed anything, and the permission set is unproven. The access
+boundaries of the evidence destination remain undemonstrated.

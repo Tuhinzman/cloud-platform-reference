@@ -9,3 +9,7 @@ evidence_bucket_name = "example-platform-evidence-000000"
 # The dedicated project account. The provider refuses to act on any other
 # account. The value below is a placeholder, not an account.
 allowed_account_id = "000000000000"
+
+# The GitLab project whose main-branch pipelines may assume the ECR push role,
+# as group/project without the scheme or host. The value below is a placeholder.
+gitlab_project_path = "example-group/example-project"

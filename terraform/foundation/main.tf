@@ -7,13 +7,14 @@ provider "aws" {
   # foundation somewhere it does not belong.
   allowed_account_ids = [var.allowed_account_id]
 
-  # The six mandatory tags of ADR-0013. The bucket and the ECR repository are
-  # the taggable AWS resources here, so these reach those two. The bucket's
-  # four configuration resources and the repository's lifecycle policy are
-  # sub-resources and carry no tags of their own. Component is "evidence-store"
-  # as the root default, and the repository overrides it to "artifact-registry"
-  # on itself, because cost attribution reads this tag and a registry is not
-  # evidence storage.
+  # The six mandatory tags of ADR-0013. The bucket, the ECR repository, the
+  # OIDC provider and the CI role are the taggable AWS resources here. The
+  # bucket's four configuration resources, the repository's lifecycle policy
+  # and the role's inline policy are sub-resources and carry no tags of their
+  # own. Component is "evidence-store" as the root default, and the resources
+  # that are not evidence storage override it on themselves, to
+  # "artifact-registry" for the registry and "identity" for the federation and
+  # the CI role, because cost attribution reads this tag.
   #
   # Environment is "shared" because every foundation here is persistent and
   # shared and belongs to none of the three environment roles. It is the same
@@ -165,6 +166,110 @@ resource "aws_ecr_lifecycle_policy" "checkout" {
           type = "expire"
         }
       }
+    ]
+  })
+}
+
+# The account's trust anchor for GitLab.com-issued ID tokens. ADR-0009 puts
+# pipeline identity on OIDC federation, so CI exchanges a job token for
+# short-lived STS credentials and no long-lived AWS credential exists anywhere
+# in the pipeline. The URL is the issuer claim GitLab.com writes into every
+# token, and the audience is the value the pipeline's id_tokens block must
+# request.
+#
+# No thumbprint_list. AWS verifies the JWKS endpoint's TLS certificate against
+# its own library of trusted root certificate authorities for GitLab, so a
+# hand-maintained thumbprint would add a rotation duty whose only effect on
+# expiry is to break role assumption.
+resource "aws_iam_openid_connect_provider" "gitlab" {
+  url            = "https://gitlab.com"
+  client_id_list = ["sts.amazonaws.com"]
+
+  tags = {
+    Component = "identity"
+  }
+}
+
+# The automation identity class of ADR-0005: a dedicated non-human role holding
+# no credential of its own, assumed only through web identity federation.
+#
+# The trust is deliberately narrow. The sub claim GitLab issues carries the
+# project path and the ref, so pinning it to this project on branch main means a
+# job in another project, on another branch, on a tag, or in a merge-request
+# pipeline cannot assume this role even though it presents a valid GitLab token.
+# The aud condition pins the audience alongside it, because a token minted for a
+# different service must not be replayable here.
+#
+# Two consequences the pipeline has to respect. A job that declares an
+# environment gets extra fields in its sub claim, which no longer equals the
+# string below, so the push job declares none. And because sub carries the
+# project path, renaming or transferring the project breaks assumption rather
+# than silently trusting the new path.
+resource "aws_iam_role" "ci_checkout" {
+  name = "cloud-platform-reference-shared-ci-checkout"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Principal = {
+          Federated = aws_iam_openid_connect_provider.gitlab.arn
+        }
+        Condition = {
+          StringEquals = {
+            "gitlab.com:aud" = "sts.amazonaws.com"
+            "gitlab.com:sub" = "project_path:${var.gitlab_project_path}:ref_type:branch:ref:main"
+          }
+        }
+      },
+    ]
+  })
+
+  tags = {
+    Component = "identity"
+  }
+}
+
+# Push side only, and inline because one role consumes it. The repository
+# statement takes the ARN Terraform computed for the repository above, so no
+# account ID is written here and the grant cannot widen if the repository name
+# changes.
+#
+# ecr:GetAuthorizationToken stands alone on "*" because it is a registry-level
+# call that accepts no repository ARN. That is the only reason anything here is
+# unscoped, and it does not widen the repository actions beside it. Nothing
+# grants repository deletion, lifecycle-policy mutation, IAM, or any other
+# service.
+#
+# This is the minimum credible set for authenticating, uploading layers and
+# publishing a manifest. It is a starting hypothesis until the first pipeline
+# run shows what the push actually calls.
+resource "aws_iam_role_policy" "ci_checkout_ecr_push" {
+  name = "cloud-platform-reference-shared-ci-checkout-ecr-push"
+  role = aws_iam_role.ci_checkout.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:InitiateLayerUpload",
+          "ecr:UploadLayerPart",
+          "ecr:CompleteLayerUpload",
+          "ecr:PutImage",
+          "ecr:BatchGetImage",
+        ]
+        Resource = aws_ecr_repository.checkout.arn
+      },
+      {
+        Effect   = "Allow"
+        Action   = "ecr:GetAuthorizationToken"
+        Resource = "*"
+      },
     ]
   })
 }
