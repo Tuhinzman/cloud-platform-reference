@@ -217,7 +217,15 @@ mandatory tags, and the plan after apply reported no changes. The repository
 holds 0 images. The workload build and delivery path has not started, so no
 digest has been published.
 
-The CI push identity is declared in source only. No apply has run since those
-resources were added, so no OIDC provider and no role exist in AWS, no
-pipeline has assumed anything, and the permission set is unproven. The access
-boundaries of the evidence destination remain undemonstrated.
+The CI push identity is applied. The GitLab OIDC provider, the checkout role
+and its inline push policy exist: the apply added those three resources and
+nothing else, and the plan after apply reported no changes. AWS read-back
+verified one trust statement allowing `sts:AssumeRoleWithWebIdentity` with the
+audience pinned to `sts.amazonaws.com` and the subject pinned to the approved
+GitLab project on branch `main`, no attached managed policy, one inline policy,
+and the six mandatory tags.
+
+No pipeline has assumed the role, so end-to-end OIDC authentication is not
+proven and the permission set is still a starting hypothesis until the first
+push exercises it. The access boundary of the evidence destination remains
+undemonstrated.
