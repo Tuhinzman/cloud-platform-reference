@@ -7,15 +7,19 @@ provider "aws" {
   # foundation somewhere it does not belong.
   allowed_account_ids = [var.allowed_account_id]
 
-  # The six mandatory tags of ADR-0013. Only the bucket is a taggable AWS
-  # resource here, so these reach the bucket alone. The four configuration
-  # resources below are sub-resources of it and carry no tags of their own.
+  # The six mandatory tags of ADR-0013. The bucket and the ECR repository are
+  # the taggable AWS resources here, so these reach those two. The bucket's
+  # four configuration resources and the repository's lifecycle policy are
+  # sub-resources and carry no tags of their own. Component is "evidence-store"
+  # as the root default, and the repository overrides it to "artifact-registry"
+  # on itself, because cost attribution reads this tag and a registry is not
+  # evidence storage.
   #
-  # Environment is "shared" because this is a persistent shared foundation and
-  # belongs to none of the three environment roles. It is the same value the
-  # state backend carries. Two foundations under different values would break
-  # the cost attribution REQ-019 requires, because orphan scans and cost
-  # grouping read this tag.
+  # Environment is "shared" because every foundation here is persistent and
+  # shared and belongs to none of the three environment roles. It is the same
+  # value the state backend carries. Two foundations under different values
+  # would break the cost attribution REQ-019 requires, because orphan scans and
+  # cost grouping read this tag.
   default_tags {
     tags = {
       Project     = "cloud-platform-reference"
@@ -94,6 +98,73 @@ resource "aws_s3_bucket_policy" "evidence" {
           }
         }
       },
+    ]
+  })
+}
+
+resource "aws_ecr_repository" "checkout" {
+  # The first repository of the ADR-0009 registry: one repository per owned
+  # service, created when that service enters the implemented delivery path,
+  # and checkout is the approved first-digest service. astroshop/ is the
+  # workload-artifact naming convention. The slash is part of the name and
+  # nothing more: it creates no policy namespace and no security boundary.
+  name = "astroshop/checkout"
+
+  # ADR-0009 derives tags from the source commit and makes the digest the
+  # artifact's identity, so the registry must refuse a push that would move
+  # an existing tag onto a different image.
+  image_tag_mutability = "IMMUTABLE"
+
+  # Refuse to delete stored images in order to complete a repository destroy.
+  # Unlike the evidence bucket there is no prevent_destroy here: images are
+  # rebuilt from source rather than restored, the ADR-0009 decommission path
+  # is deletion once no environment references them, and this refusal already
+  # blocks the destroy that matters.
+  force_delete = false
+
+  # Same at-rest model as the evidence bucket: an AWS-managed key, because no
+  # obligation here needs a customer-managed key's cost and lifecycle.
+  encryption_configuration {
+    encryption_type = "AES256"
+  }
+
+  # Off deliberately. Trivy is the one primary scanning platform (ADR-0009)
+  # and gates in the pipeline before an artifact reaches the registry, so
+  # registry-native scanning would only open a second findings stream that no
+  # gate reads.
+  image_scanning_configuration {
+    scan_on_push = false
+  }
+
+  tags = {
+    Component = "artifact-registry"
+  }
+}
+
+resource "aws_ecr_lifecycle_policy" "checkout" {
+  repository = aws_ecr_repository.checkout.name
+
+  # ADR-0009 requires registry storage to stay bounded, and immutable
+  # commit-derived tags mean every published build adds an image that no
+  # overwrite ever reclaims. The approved bound is count-based: retain the
+  # newest ten tagged images, expire older ones only once the count exceeds
+  # ten. tagStatus "tagged" must carry a tag pattern, and "*" matches every
+  # tagged image, which is this repository's entire published population.
+  policy = jsonencode({
+    rules = [
+      {
+        rulePriority = 1
+        description  = "Keep the newest 10 tagged images"
+        selection = {
+          tagStatus      = "tagged"
+          tagPatternList = ["*"]
+          countType      = "imageCountMoreThan"
+          countNumber    = 10
+        }
+        action = {
+          type = "expire"
+        }
+      }
     ]
   })
 }

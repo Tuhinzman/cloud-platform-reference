@@ -102,8 +102,8 @@ The secrets and workload-identity work is closed. A secret was rotated at its so
 observed reaching a running consumer without a restart, EKS Pod Identity credential
 delivery was proven for the component that reads the secret store, and the paired
 negative test confirmed that an ordinary pod could not obtain node credentials through
-instance metadata. The artifact registry and the workload build path have not been
-started.
+instance metadata. The artifact registry is now defined in Terraform. The
+workload build and delivery path has not yet been validated.
 
 The workload the platform runs is the complete justified application fleet rather than a
 handful of services, so that one delivery pipeline, one reconciliation model, and one
