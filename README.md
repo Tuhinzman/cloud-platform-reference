@@ -72,7 +72,8 @@ Validation → Evidence → Lessons Learned
 
 Architecture planning is complete: the foundation documents are in place and fourteen
 decision records are accepted. Implementation is under way and has reached the end of the
-secrets and workload-identity work.
+build and delivery work: the first application image has been built, scanned, and
+published to the platform registry by pipeline.
 
 The platform the records describe is one AWS account in `us-east-1` running three
 environment roles, each with its own VPC, its own EKS cluster, and its own telemetry,
@@ -102,8 +103,19 @@ The secrets and workload-identity work is closed. A secret was rotated at its so
 observed reaching a running consumer without a restart, EKS Pod Identity credential
 delivery was proven for the component that reads the secret store, and the paired
 negative test confirmed that an ordinary pod could not obtain node credentials through
-instance metadata. The artifact registry is now defined in Terraform. The
-workload build and delivery path has not yet been validated.
+instance metadata.
+
+The build and delivery path is now validated for the first service. Its pipeline runs on
+hosted runners, executes the service's own tests, builds the image, scans it before
+anything is published, generates a software bill of materials, and starts the built
+container to confirm it comes up and accepts a connection on its port. The pipeline
+holds no cloud credential: it exchanges a short-lived identity token for temporary
+credentials at the moment it needs them, and the image is published to the registry by
+digest. That digest was read back from the registry
+independently to confirm the published artifact is the one the pipeline built. The image
+carries no fixable high or critical findings, and that was reached by updating the
+toolchain and dependencies rather than by adding exceptions to the security gate. No
+workload has been deployed from that artifact yet.
 
 The workload the platform runs is the complete justified application fleet rather than a
 handful of services, so that one delivery pipeline, one reconciliation model, and one

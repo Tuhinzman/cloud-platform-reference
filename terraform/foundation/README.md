@@ -187,15 +187,17 @@ credential exists in CI.
 
 The trust is pinned to one GitLab project on branch `main` and to one
 audience, so a token from another project, branch, tag, or merge-request
-pipeline cannot assume the role. The project path is operator-supplied and
-uncommitted, like the other values this root takes.
+pipeline cannot assume the role. The project is identified by its immutable
+GitLab project ID, supplied as a Terraform input and uncommitted, like the
+other values this root takes.
 
 The role's permissions are push side only: authenticate to the registry,
 upload layers, publish a manifest, scoped to `astroshop/checkout`. Only the
 registry-level authentication call is unscoped, because it accepts no
 repository ARN. Nothing here grants repository deletion, lifecycle-policy
-mutation, IAM, or any other service, and the permission set is a starting
-hypothesis until a pipeline run shows what the push actually calls.
+mutation, IAM, or any other service. The permissions the observed checkout push
+path required were exercised successfully by that push; the set as a whole is
+not claimed to have been exhaustively exercised.
 Environment pull access is a separate identity concern and is not implemented
 here.
 
@@ -214,18 +216,18 @@ artifact-registry repository together with its lifecycle policy: the apply
 added those two resources and nothing else, AWS read-back verified the
 declared repository configuration, the lifecycle policy, and the six
 mandatory tags, and the plan after apply reported no changes. The repository
-holds 0 images. The workload build and delivery path has not started, so no
-digest has been published.
+holds 1 image, tag `bf07e2ea`, digest
+`sha256:ff23800f3e82d75d1bf79331aae337a72bfff50f62c2d33746d02c7c535b8365`. The
+checkout build and delivery path is validated.
 
 The CI push identity is applied. The GitLab OIDC provider, the checkout role
 and its inline push policy exist: the apply added those three resources and
 nothing else, and the plan after apply reported no changes. AWS read-back
 verified one trust statement allowing `sts:AssumeRoleWithWebIdentity` with the
-audience pinned to `sts.amazonaws.com` and the subject pinned to the approved
-GitLab project on branch `main`, no attached managed policy, one inline policy,
-and the six mandatory tags.
+audience pinned to `sts.amazonaws.com` and the subject pinned to
+`project_id:<project-id>:ref_type:branch:ref:main`, no attached managed policy, one
+inline policy, and the six mandatory tags.
 
-No pipeline has assumed the role, so end-to-end OIDC authentication is not
-proven and the permission set is still a starting hypothesis until the first
-push exercises it. The access boundary of the evidence destination remains
-undemonstrated.
+A pipeline has assumed the role and pushed, so end-to-end OIDC authentication
+is proven for the checkout push path. The access boundary of the evidence
+destination remains undemonstrated.
