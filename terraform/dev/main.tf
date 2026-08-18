@@ -564,8 +564,50 @@ resource "aws_secretsmanager_secret" "workload" {
   name                    = "cloud-platform-reference-dev-workload-secret"
   recovery_window_in_days = 7
 
+  # Lifecycle overrides the provider default for the reason recorded on
+  # aws_secretsmanager_secret.argocd_gitops_deploy_key below. The tag carries
+  # retention rather than environment scope, and both secrets are retained across
+  # runtime windows, so they cannot carry different values for the same property.
   tags = {
     Component = "identity"
+    Lifecycle = "persistent"
+  }
+}
+
+# The Argo CD deploy key for the GitOps repository, kept as its own secret rather
+# than a second field on the workload secret above. Repository Creation Plan
+# section 12 separates the Argo CD identity class from the workload runtime class,
+# and IAM can only scope two credentials apart if they are two entries.
+#
+# The recovery window and the absent kms_key_id carry the same reasoning as the
+# workload secret and are not restated here. ADR-0011 makes that window the answer
+# to accidental deletion, which is why no other deletion guard is added.
+#
+# No aws_secretsmanager_secret_version, for the reason stated above and because
+# ADR-0011 forbids a secret value reaching a repository at all. The private key is
+# written out of band, and what proves the stored value is the right one is the
+# public fingerprint derived from what Secrets Manager returns. This resource
+# proves a container exists and says nothing about what is inside it.
+resource "aws_secretsmanager_secret" "argocd_gitops_deploy_key" {
+  name                    = "cloud-platform-reference-dev-argocd-gitops-deploy-key"
+  recovery_window_in_days = 7
+
+  # Lifecycle overrides the provider default of "ephemeral", which reads the
+  # environment role rather than the retention model. ADR-0013 defines this tag by
+  # retention, lists secret-store contents in what is retained across windows, and
+  # states that nothing is retained merely because the environment role is named
+  # Dev, which cuts both ways. docs/architecture-baseline.md carries the secret
+  # store as a persistent foundation excluded from routine environment teardown.
+  #
+  # The tag has to carry that, because ADR-0013 makes Lifecycle the only filter an
+  # orphan scan has: left at the default, this credential would look like runtime
+  # left behind every time an approved window closes.
+  #
+  # Environment stays "dev" from the default. Scope and retention are separate
+  # questions and collapsing them is what produced the wrong value here.
+  tags = {
+    Component = "identity"
+    Lifecycle = "persistent"
   }
 }
 
@@ -685,11 +727,21 @@ resource "aws_iam_role" "external_secrets" {
   }
 }
 
-# Two actions on one secret: read the value, and read the metadata that tells the
+# Two actions on two secrets: read the value, and read the metadata that tells the
 # controller whether the value has changed. That pair is a starting hypothesis
 # rather than a measured runtime minimum. The first runtime window either confirms
 # it or returns an AccessDenied naming what is missing, and any widening comes
 # from that evidence and owner review rather than from anticipating it here.
+#
+# Resource is an explicit two-element list, not a wildcard and not a name prefix.
+# Both entries are ARNs Terraform computed from the resources in this root, so no
+# account ID is written here, the grant cannot reach a secret this root does not
+# declare, and neither ARN could be hand-assembled anyway because Secrets Manager
+# appends a suffix at creation.
+#
+# One statement rather than two, because the action pair is identical for both
+# secrets. Splitting it would produce two statements differing only in Resource,
+# which then have to be kept in step by hand.
 resource "aws_iam_role_policy" "external_secrets" {
   name = "cloud-platform-reference-dev-external-secrets-read"
   role = aws_iam_role.external_secrets.name
@@ -703,7 +755,10 @@ resource "aws_iam_role_policy" "external_secrets" {
           "secretsmanager:GetSecretValue",
           "secretsmanager:DescribeSecret",
         ]
-        Resource = aws_secretsmanager_secret.workload.arn
+        Resource = [
+          aws_secretsmanager_secret.workload.arn,
+          aws_secretsmanager_secret.argocd_gitops_deploy_key.arn,
+        ]
       },
     ]
   })
