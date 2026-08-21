@@ -624,6 +624,7 @@ resource "aws_ssm_parameter" "workload" {
 
   tags = {
     Component = "identity"
+    Lifecycle = "persistent"
   }
 }
 
@@ -662,6 +663,7 @@ resource "aws_iam_role" "workload" {
 
   tags = {
     Component = "identity"
+    Lifecycle = "persistent"
   }
 }
 
@@ -724,6 +726,7 @@ resource "aws_iam_role" "external_secrets" {
 
   tags = {
     Component = "identity"
+    Lifecycle = "persistent"
   }
 }
 
