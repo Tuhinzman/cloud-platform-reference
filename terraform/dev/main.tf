@@ -7,16 +7,23 @@ provider "aws" {
   # environment network somewhere it does not belong.
   allowed_account_ids = [var.allowed_account_id]
 
-  # The six mandatory tags of ADR-0013. Unlike the two foundation roots, most of
-  # what this root declares is taggable. The routes and the four associations
-  # expose no AWS tags of their own and are left that way rather than given a
-  # tagging workaround.
+  # The six mandatory tags of ADR-0013, set once here so every taggable resource
+  # in this root starts with all six. Some resource types expose no AWS tags at
+  # all; those are left untagged rather than given a wrapper resource invented
+  # to carry tags for them.
   #
-  # Environment is "dev" and Lifecycle is "ephemeral" because these resources
-  # belong to an environment role rather than to a persistent shared foundation.
-  # Component is "network" as the root default, and the cluster, the node group
-  # and the two IAM roles override it to "runtime" on themselves, because cost
-  # attribution reads this tag and they are not networking.
+  # Component defaults to "network" because establishing the environment network
+  # baseline is what this root primarily does. A resource whose actual function
+  # is something else overrides Component on itself, because cost attribution
+  # and orphan scans read this tag and it has to describe the resource.
+  #
+  # Lifecycle defaults to "ephemeral" because a resource here belongs to the
+  # environment lifecycle unless it has a reason to survive a runtime teardown.
+  # Retention and function are independent questions, so an override of one
+  # implies nothing about the other.
+  #
+  # Both are defaults rather than rules. Where a resource sets its own value,
+  # that declaration is authoritative and carries the reason with it.
   default_tags {
     tags = {
       Project     = "cloud-platform-reference"

@@ -208,7 +208,7 @@ Each requirement has exactly one primary owning group; supporting groups partici
 
 ## Assumptions and Open Decisions
 
-Container-based workloads remain the approved workload boundary, and nothing in this model is implemented.
+Container-based workloads remain the approved workload boundary. This document assigns responsibility and deliberately records no implementation state; how far the platform has been built and what that build has proven are recorded where implementation and evidence live, not here.
 
 Every decision area this document once listed as open has been settled, and the closing section records where each one landed. The responsibility assignments above were not amended as that happened, which is the claim this model was making: ownership boundaries drawn from requirements should survive the arrival of the technology that implements them.
 

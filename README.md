@@ -71,9 +71,10 @@ Validation → Evidence → Lessons Learned
 ## Current Status
 
 Architecture planning is complete: the foundation documents are in place and fourteen
-decision records are accepted. Implementation is under way and has reached the end of the
-build and delivery work: the first application image has been built, scanned, and
-published to the platform registry by pipeline.
+decision records are accepted. Implementation is under way and has reached first
+reconciliation: an application image built and published by pipeline was deployed to the
+Dev cluster by the GitOps controller, observed running, and then destroyed along with the
+runtime that carried it.
 
 The platform the records describe is one AWS account in `us-east-1` running three
 environment roles, each with its own VPC, its own EKS cluster, and its own telemetry,
@@ -99,11 +100,15 @@ plane, the managed node group, and the NAT gateway. Those are declared in Terraf
 created inside an approved window, and destroyed when it closes. They have been built and
 torn down more than once, and the definitions that rebuild them are in this repository.
 
-The secrets and workload-identity work is closed. A secret was rotated at its source and
-observed reaching a running consumer without a restart, EKS Pod Identity credential
-delivery was proven for the component that reads the secret store, and the paired
-negative test confirmed that an ordinary pod could not obtain node credentials through
-instance metadata.
+The secrets and workload-identity path has been exercised, with two attributions left
+open. A secret was rotated at its source and observed reaching a running consumer without
+a restart, and the paired negative test confirmed that an ordinary pod could not obtain
+node credentials through instance metadata. On the most recent runtime the controller that
+reads the secret store started with the EKS Pod Identity credential path injected, and the
+secret it was asked to synchronize arrived in the cluster. Neither of those observations
+settles attribution. That the controller authenticated to AWS as its own Pod Identity role,
+and that one identified read in the audit trail is the read that served that
+synchronization, are unproven and are not claimed here.
 
 The build and delivery path is now validated for the first service. Its pipeline runs on
 hosted runners, executes the service's own tests, builds the image, scans it before
@@ -114,15 +119,36 @@ credentials at the moment it needs them, and the image is published to the regis
 digest. That digest was read back from the registry
 independently to confirm the published artifact is the one the pipeline built. The image
 carries no fixable high or critical findings, and that was reached by updating the
-toolchain and dependencies rather than by adding exceptions to the security gate. No
-workload has been deployed from that artifact yet.
+toolchain and dependencies rather than by adding exceptions to the security gate. That
+artifact is the one the platform later deployed.
 
-The workload the platform runs is the complete justified application fleet rather than a
-handful of services, so that one delivery pipeline, one reconciliation model, and one
-teardown are exercised across breadth. That is decided in
+The workload scope the platform is built toward is the complete justified application
+fleet rather than a handful of services, so that one delivery pipeline, one reconciliation
+model, and one teardown are exercised across breadth. That is decided in
 [ADR-0014](docs/decisions/0014-expand-the-validated-implementation-workload-scope.md),
-which changed no requirement and no other accepted record. No workload has been deployed
-on the platform yet.
+which changed no requirement and no other accepted record. It sets the approved scope. It
+is not a description of what has been deployed.
+
+What has been deployed is one slice of that scope. On the most recent Dev runtime window,
+Argo CD reconciled against the private GitOps repository and applied the checkout service:
+one Deployment, one Service, and one ServiceAccount, reaching Synced and Healthy after a
+single manual sync the owner authorized. The Deployment came up at one of one replica, the
+pod ran and stayed ready with no restarts, and the image identifier read back from the
+running container matched by digest the artifact the pipeline had published, which is what
+joins the build path to the runtime. The rest of the fleet was not deployed, so nothing
+here says how the platform behaves under the full application.
+
+That runtime is gone. Terraform created seventeen resources to open the window and
+destroyed the same seventeen to close it, the plan taken afterwards converged on
+rebuilding exactly those seventeen, and a resource census confirmed nothing of the runtime
+class was left behind. No environment runtime is live as this is written.
+
+Reconciliation working once is easy to read as more than it is, so the boundary is worth
+stating plainly. The full application fleet has not been deployed. Observability is
+decided and not implemented at runtime. Rollback has not been exercised, promotion between
+environments has not been performed, and the Validation and Production-Validation
+environments have not been built at all. Each of those is an obligation its own decision
+record still carries.
 
 Evidence exists for what has been validated, and it is not published here. Raw evidence
 is retained outside this repository, and the sanitized subset that will support the

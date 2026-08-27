@@ -64,19 +64,20 @@ None of those carries an hourly charge. The runtime below does.
 | `aws_eks_node_group` | Two `m6a.large` on-demand nodes on the private subnets |
 | `aws_eks_addon` × 4 | `vpc-cni`, `coredns`, `kube-proxy`, `eks-pod-identity-agent`, each pinned |
 
-Finally the environment's identity, secrets and configuration. The first four
+Finally the environment's identity, secrets and configuration. The first five
 survive a runtime teardown and are removed only with the Dev environment. The
 Pod Identity association is cluster-scoped and goes when the cluster goes, so in
-lifecycle terms it belongs with the runtime above. The Secrets Manager entry
+lifecycle terms it belongs with the runtime above. Each Secrets Manager entry
 carries a per-secret monthly charge for as long as it exists; the rest carry
 none.
 
 | Resource | Purpose |
 |---|---|
 | `aws_secretsmanager_secret` | The Dev workload secret, the container only, with a seven-day recovery window |
+| `aws_secretsmanager_secret` | The GitOps repository deploy key, the container only, on the same recovery window. Kept apart from the workload secret because the two identity classes have to be scopable separately in IAM |
 | `aws_ssm_parameter` | Non-secret Dev configuration, `String` on the `Standard` tier |
 | `aws_iam_role` + `aws_iam_role_policy` | Workload identity, inline policy scoped to that one secret and that one parameter |
-| `aws_iam_role` + `aws_iam_role_policy` | Secret-synchronisation controller identity, inline policy scoped to the secret alone |
+| `aws_iam_role` + `aws_iam_role_policy` | Secret-synchronisation controller identity, inline policy scoped to those two secrets and nothing else |
 | `aws_eks_pod_identity_association` | Binds the controller identity to one namespace and one ServiceAccount on the cluster |
 
 ## Address plan
@@ -159,14 +160,14 @@ internet egress, and associating it with the public route table is outside this
 slice rather than something the endpoint could not do. There is no hourly charge
 and no data processing charge for a gateway endpoint.
 
-Its effect is worth stating precisely, because it is easy to overstate. When ECR
-image pulls start in a later phase, an ECR pull is two different kinds of
-traffic. Image layers are S3-backed, and that part may use this endpoint. The
-registry and API calls to `api.ecr` and `dkr.ecr` are not S3 and are not covered
-by an S3 gateway endpoint, so under the currently accepted single-NAT design
-they would still take the NAT path unless ECR interface endpoints are introduced
-later with their own justification and their own hourly cost. This root does not
-create those, and nothing here lets ECR traffic bypass NAT as a whole.
+Its effect is worth stating precisely, because it is easy to overstate. An ECR
+pull is two different kinds of traffic. Image layers are S3-backed, and that part
+may use this endpoint. The registry and API calls to `api.ecr` and `dkr.ecr` are
+not S3 and are not covered by an S3 gateway endpoint, so under the currently
+accepted single-NAT design they would still take the NAT path unless ECR
+interface endpoints are introduced later with their own justification and their
+own hourly cost. This root does not create those, and nothing here lets ECR
+traffic bypass NAT as a whole.
 
 The endpoint policy is left at the provider default. A restrictive endpoint
 policy is a real control, but it needs to name the buckets and principals it is
@@ -174,37 +175,55 @@ protecting, and neither is known in a slice that creates no workload.
 
 ## Tagging
 
-The six mandatory tags of ADR-0013 are applied through the provider's
-`default_tags` and reach every taggable resource in this root. `aws_route` and
-`aws_route_table_association` are not taggable AWS resource types, so they carry
-no tags and no separate resource was invented to give them any.
+The six mandatory tags of ADR-0013 come from the provider's `default_tags`, so
+every taggable resource starts with all six and a resource needing a different
+value overrides that one key on itself. Four resource types here expose no AWS
+tags at all: routes, route table associations, IAM role policy attachments and
+inline role policies. They carry none, and no wrapper resource was invented to
+give them any.
 
-`Lifecycle = ephemeral` means these resources belong to the environment
-lifecycle rather than to the persistent shared foundations, which is the
-distinction ADR-0013 draws between what is retained across windows and what is
-recreated. It does not mean the VPC is destroyed at the end of each working
-session. How long a particular approved window keeps this network is a separate
-operational decision, and ADR-0013's networking retention rule decides it on
-rebuild-time drift, dependency cleanup, CIDR reuse and teardown-proof grounds
-rather than on the environment's name.
+`Lifecycle` describes retention, not what a resource does. The default is
+`ephemeral`, meaning the resource belongs to the environment lifecycle rather
+than to the persistent shared foundations, which is the distinction ADR-0013
+draws between what is retained across windows and what is recreated. It does not
+mean the VPC is destroyed at the end of each working session. How long a
+particular approved window keeps this network is a separate operational
+decision, and ADR-0013's networking retention rule decides it on rebuild-time
+drift, dependency cleanup, CIDR reuse and teardown-proof grounds rather than on
+the environment's name.
 
-`Component = network` is the provider-level default and no longer fits every
-resource, so four of them override it to `runtime` on themselves: the cluster,
-the node group and the two IAM roles. The NAT gateway and its Elastic IP stay
-`network`, because that is what they are. Cost attribution and orphan scans read
-this tag, so the value has to describe the resource rather than the directory it
-happens to live in.
+Five resources override `Lifecycle` to `persistent`: the two Secrets Manager
+entries, the Parameter Store entry and the two Pod Identity roles. Those outlive
+a runtime teardown, and ADR-0013 makes `Lifecycle` the filter an orphan scan
+reads, so left at the default they would look like runtime left behind every
+time a window closed. Nothing else here carries `persistent`. The Pod Identity
+association is the case worth naming, because it is identity by function and
+ephemeral by retention: it is cluster-scoped and goes when the cluster goes.
 
-A seventh tag, `Name`, is on every taggable resource that does not already carry
-a service-level name. It is not one of the six and classifies nothing; it exists
+`Component` describes function, not retention, and the two questions are
+answered independently. `network` is the provider-level default and no longer
+fits everything this root declares. The runtime resources override it to
+`runtime`: the control plane and node service roles, the cluster itself, the
+launch template, the node group and the four add-ons. The environment's two
+Secrets Manager entries, its Parameter Store entry, its two Pod Identity roles
+and the association override it to `identity`. The NAT gateway and its Elastic
+IP stay `network`, because that is what they are. Cost attribution and orphan
+scans read this tag, so the value has to describe the resource rather than the
+directory it happens to live in.
+
+A seventh tag, `Name`, is not one of the six and classifies nothing. It exists
 because the console and the CLI list resources by `Name`, and an operator
 inspecting or tearing down this environment needs to identify the right one
-without cross-referencing IDs. IAM roles, the cluster and the node group have
-their own names, so they do not carry it.
+without cross-referencing IDs. It is not applied everywhere. The network
+resources carry it, and the worker instances receive it through the launch
+template's `tag_specifications`, which is part of why that template exists.
+The IAM roles, the cluster, the node group, the add-ons and the secret and
+parameter entries all carry names or identifiers of their own, so none of them
+is given one.
 
-The two `kubernetes.io/role` tags are per-resource subnet tags that sit
-alongside the six. They are what an AWS load balancer controller reads to decide
-which subnets to place internet-facing and internal load balancers in. No
+The `kubernetes.io/role` subnet tags are per-resource tags that sit alongside
+the six. They are what an AWS load balancer controller reads to decide which
+subnets to place internet-facing and internal load balancers in. No
 `kubernetes.io/cluster` tag is set. That controller is not deployed here, and
 nothing else in this root reads a cluster-scoped subnet tag, so the two role tags
 carry the whole of what these subnets currently need to express.
@@ -364,12 +383,12 @@ which on this environment's lifecycle would be continuous churn. It is the
 property ADR-0008 selected Pod Identity for, and it is why the roles sit beside
 the network here rather than following the cluster.
 
-The two roles are kept apart deliberately. The workload reads the secret because
-it needs the value; the synchronisation controller reads it because it has to
-copy it into the cluster. One shared role would widen whichever of them needs
-less. Both inline policies reference the ARN Terraform computed for the secret,
-so no account ID is written into this configuration and neither grant widens if a
-name changes.
+The two roles are kept apart deliberately. The workload reads its secret because
+it needs the value; the synchronisation controller reads a secret because it has
+to copy it into the cluster. One shared role would widen whichever of them needs
+less. Both inline policies reference ARNs Terraform computed for the secrets in
+this root, so no account ID is written into this configuration and neither grant
+widens if a name changes.
 
 **What has been proven.** Pod Identity credential delivery was observed for the
 synchronisation controller: its running pod carried the Pod Identity credential
@@ -430,13 +449,13 @@ instance size.
 
 ## Lifecycle and current state
 
-This root declares 37 resources, and they are not all meant to exist at the same
+This root declares 38 resources, and they are not all meant to exist at the same
 time. Three classes are worth separating.
 
 | Class | Count | What it is |
 |---|---|---|
-| Declared | 37 | Everything in `main.tf` |
-| Retained | 20 | The network baseline plus the environment's identity, secret and configuration resources. Present between approved windows |
+| Declared | 38 | Everything in `main.tf` |
+| Retained | 21 | The network baseline plus the environment's identity, secret and configuration resources. Present between approved windows |
 | Runtime | 17 | The NAT gateway and its Elastic IP, the private default route, the cluster and node service roles with their four policy attachments, the cluster, the launch template, the node group, the four add-ons, and the Pod Identity association |
 
 The retained figure is what Terraform state lists, and what the plan taken after
@@ -450,7 +469,8 @@ requires that of every environment role including Dev, superseding the earlier
 assumption that a development environment stays continuously active. Between
 windows the 17 runtime resources are configuration and nothing else. Within this
 root, the retained resources currently introduce no hourly runtime charge, and
-the Secrets Manager entry remains the known recurring retained-resource charge.
+the two Secrets Manager entries remain the known recurring retained-resource
+charge.
 
 **What has been exercised.** The network baseline was applied and read back from
 AWS, with a following plan reporting no changes. The runtime has been created and
@@ -458,16 +478,19 @@ destroyed more than once, each time from a reviewed plan, with an orphan check
 after teardown and a following plan that reproduced the same 17-resource runtime
 boundary. Private egress was verified from a pod on the private node fleet, which
 resolved DNS and reached an external HTTPS endpoint from a source address
-matching the NAT gateway. `terraform fmt`, `terraform validate` and TFLint have
-been run against this revision and passed.
+matching the NAT gateway. A GitOps controller, a secret-synchronisation
+controller and one application service have run on a rebuilt cluster, and that
+service's image was pulled from the project's private registry by digest.
+`terraform fmt`, `terraform validate` and TFLint have been run against this
+revision and passed.
 
-**What has not.** No ingress, TLS termination, load balancer, workload, GitOps
-stack or observability stack has ever existed on this cluster, so no
-reachability, TLS, capacity or workload claim is made. Inbound reachability and
-NetworkPolicy enforcement are untested. The private ECR pull path is untested;
-only a public registry pull was observed. The state-backend locking contention
-test, the Terraform state recovery exercise, and the secret deletion and
-recovery-window verification have not run.
+**What has not.** No ingress, TLS termination, load balancer or observability
+stack has ever existed on this cluster, so no reachability, TLS or capacity claim
+is made. Inbound reachability and NetworkPolicy enforcement are untested. What
+has run is one service of the AstroShop fleet rather than the fleet, so nothing
+here measures this node group under the full application. The state-backend
+locking contention test, the Terraform state recovery exercise, and the secret
+deletion and recovery-window verification have not run.
 
 Validation output lives outside this repository and its sanitized publication is
 governed separately, so this section records what was exercised rather than
