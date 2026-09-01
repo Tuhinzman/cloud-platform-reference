@@ -136,16 +136,24 @@ the bucket still bills and still refuses to be deleted.
 [ADR-0009](../../docs/decisions/0009-define-the-software-delivery-model.md)
 declares Amazon ECR a persistent shared foundation: one repository per owned
 service, created when that service enters the implemented delivery path.
-checkout is the approved first-digest service, so this root declares exactly
-one repository, `astroshop/checkout`, and its lifecycle policy. The
-`astroshop/` prefix is the workload-artifact naming convention. The slash is
-part of the name and nothing more: it creates no policy namespace and no
-security boundary in ECR.
+checkout is the approved first-digest service. This root now declares four
+repositories: the three `astroshop/` application repositories, and one
+`platform/` repository for the mirrored OpenTelemetry Collector image. Only
+`astroshop/checkout` and its lifecycle policy have been applied.
+`astroshop/shipping`, `astroshop/quote` and `platform/opentelemetry-collector`
+are declarations that have not been planned or applied and do not exist in AWS.
+
+The `astroshop/` prefix is the workload-artifact naming convention, covering the
+services this project builds from source. The `platform/` prefix keeps a
+third-party platform component out of that namespace, because the Collector is
+pinned under ADR-0006 through ADR-0010 rather than the ADR-0012 workload rules.
+In both cases the slash is part of the name and nothing more: it creates no
+policy namespace and no security boundary in ECR.
 
 | Resource | Purpose |
 |---|---|
-| `aws_ecr_repository` | The checkout image repository. Immutable commit-derived tags, encryption at rest under an AWS-managed key, native scan-on-push off because Trivy owns the scanning gate |
-| `aws_ecr_lifecycle_policy` | Bounds storage with a count-based rule: the newest 10 tagged images are retained, and older ones expire only once the count passes 10 |
+| `aws_ecr_repository` | Four declared image repositories: `astroshop/checkout`, `astroshop/shipping`, `astroshop/quote` and `platform/opentelemetry-collector`. Immutable tags, encryption at rest under an AWS-managed key, native scan-on-push off because Trivy owns the scanning gate |
+| `aws_ecr_lifecycle_policy` | Bounds storage on the three `astroshop/` repositories with a count-based rule: the newest 10 tagged images are retained, and older ones expire only once the count passes 10. The Collector repository carries no lifecycle policy, because it is consumed by immutable digest and a tag-count rule could expire a digest still referenced |
 
 Its purpose is to retain immutable workload artifacts across environment
 lifecycles, so promotion moves a digest that already passed its gates instead
@@ -174,16 +182,28 @@ evidence.
 
 The registry is currently required to produce and retain the Phase 6 first
 immutable workload artifact digest, which is the evidence that it is still
-needed. No requirement for the remaining fleet repositories has been
+needed. The shipping and quote repositories are declared because a project
+pipeline for both services has been authored as a prerequisite of later work,
+and the Collector repository is declared because that work requires its image
+mirrored into this registry rather than pulled from an external one at pod
+start. None of those three publications or mirrors has been authorized or
+performed. No requirement for the remaining fleet repositories has been
 demonstrated or authorized yet.
 
 ## CI push identity
 
-Pushing to that repository needs an AWS identity, and ADR-0009 puts pipeline
+Pushing to those repositories needs an AWS identity, and ADR-0009 puts pipeline
 identity on OIDC federation, so this root also declares the trust anchor for
-GitLab.com ID tokens and one role for the checkout pipeline. The pipeline
-exchanges its job token for short-lived STS credentials; no long-lived AWS
-credential exists in CI.
+GitLab.com ID tokens and one role for the project's publication pipelines. The
+pipeline exchanges its job token for short-lived STS credentials; no long-lived
+AWS credential exists in CI.
+
+One role rather than one per service. The subject claim this role trusts carries
+the GitLab project and the ref and nothing that separates one service's pipeline
+from another's, and checkout, shipping and quote publish from the same project on
+the same branch. Per-service roles would carry identical trust conditions, so a
+job able to assume one could assume any of them, and the separation would be in
+name only. The permission boundary is the repository list below.
 
 The trust is pinned to one GitLab project on branch `main` and to one
 audience, so a token from another project, branch, tag, or merge-request
@@ -192,12 +212,17 @@ GitLab project ID, supplied as a Terraform input and uncommitted, like the
 other values this root takes.
 
 The role's permissions are push side only: authenticate to the registry,
-upload layers, publish a manifest, scoped to `astroshop/checkout`. Only the
-registry-level authentication call is unscoped, because it accepts no
-repository ARN. Nothing here grants repository deletion, lifecycle-policy
-mutation, IAM, or any other service. The permissions the observed checkout push
-path required were exercised successfully by that push; the set as a whole is
-not claimed to have been exhaustively exercised.
+upload layers, publish a manifest, scoped to an explicit list of the three
+`astroshop/` application repositories. Only the registry-level authentication
+call is unscoped, because it accepts no repository ARN. The declared widening
+from one repository to three adds no action and changes no trust condition.
+`platform/opentelemetry-collector` is deliberately absent from that list, so
+this role cannot push the Collector mirror; that mechanism is a separate
+identity question and is not implemented here. Nothing here grants repository
+deletion, lifecycle-policy mutation, IAM, or any other service. The permissions
+the observed checkout push path required were exercised successfully by that
+push; the set as a whole is not claimed to have been exhaustively exercised,
+and no push has been performed for shipping or quote.
 Environment pull access is a separate identity concern and is not implemented
 here.
 
