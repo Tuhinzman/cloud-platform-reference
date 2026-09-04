@@ -1,0 +1,227 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1720" height="900" viewBox="0 0 1720 900" role="img" aria-label="3. Identity, Secrets, Observability, Evidence &amp; Lifecycle">
+<title>3. Identity, Secrets, Observability, Evidence &amp; Lifecycle</title>
+<defs><marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#5A6672"/></marker><marker id="arwl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6B4FBB"/></marker></defs>
+<rect width="1720" height="900" fill="#FFFFFF"/>
+<text x="40" y="52" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="26" font-weight="700" fill="#1B2733">3. Identity, Secrets, Observability, Evidence &amp; Lifecycle</text>
+<text x="40" y="76" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" fill="#5A6672">Four platform concerns and what each has actually proven.</text>
+<rect x="30" y="92" width="400" height="616" rx="10" fill="#F7FBF8" stroke="#1D6F42" stroke-width="1.4" opacity="0.98"/>
+<text x="46" y="116" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#1D6F42" letter-spacing="0.3">1)  WORKLOAD IDENTITY AND SECRETS</text>
+<g><rect x="323.9" y="102.0" width="79.0" height="17" rx="8.5" fill="#E3F2E8" stroke="#A8D5B8" stroke-width="1"/><text x="363.4" y="114.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#1D6F42" text-anchor="middle" letter-spacing="0.4">VALIDATED</text></g>
+<text x="46" y="696" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" font-style="italic">Validated inside closed runtime windows RW-1 and RW-2. No runtime is live now.</text>
+<rect x="450" y="92" width="420" height="616" rx="10" fill="#FFFBF3" stroke="#8A5A00" stroke-width="1.4" opacity="0.98"/>
+<text x="466" y="116" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#8A5A00" letter-spacing="0.3">2)  OBSERVABILITY</text>
+<g><rect x="611.1" y="102.0" width="65.0" height="17" rx="8.5" fill="#FDF3E3" stroke="#E8C98A" stroke-width="1"/><text x="643.6" y="114.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#8A5A00" text-anchor="middle" letter-spacing="0.4">PLANNED</text></g>
+<rect x="890" y="92" width="380" height="616" rx="10" fill="#F7FBF8" stroke="#1D6F42" stroke-width="1.4" opacity="0.98"/>
+<text x="906" y="116" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#1D6F42" letter-spacing="0.3">3)  EVIDENCE FLOW</text>
+<g><rect x="1051.1" y="102.0" width="79.0" height="17" rx="8.5" fill="#E3F2E8" stroke="#A8D5B8" stroke-width="1"/><text x="1090.6" y="114.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#1D6F42" text-anchor="middle" letter-spacing="0.4">VALIDATED</text></g>
+<rect x="1290" y="92" width="400" height="616" rx="10" fill="#F7FBF8" stroke="#1D6F42" stroke-width="1.4" opacity="0.98"/>
+<text x="1306" y="116" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#1D6F42" letter-spacing="0.3">4)  ENVIRONMENT LIFECYCLE</text>
+<g><rect x="1517.5" y="102.0" width="79.0" height="17" rx="8.5" fill="#E3F2E8" stroke="#A8D5B8" stroke-width="1"/><text x="1557.0" y="114.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#1D6F42" text-anchor="middle" letter-spacing="0.4">VALIDATED</text></g>
+<rect x="1308" y="552" width="362" height="142" rx="10" fill="#F7F9FB" stroke="#2E5C8A" stroke-width="1.4" opacity="0.98"/>
+<text x="1324" y="576" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#2E5C8A" letter-spacing="0.3">OPERATIONS AND COST GUARDRAILS</text>
+<rect x="30" y="730" width="1660" height="108" rx="10" fill="#F7F8FA" stroke="#2E5C8A" stroke-width="1.4" opacity="0.98"/>
+<text x="46" y="754" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#2E5C8A" letter-spacing="0.3">LEGEND</text>
+<path d="M 223.0 173.0 L 239.0 173.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 326.0 204.0 L 230.5 204.0 L 230.5 224.0 L 135.0 224.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 223.0 255.0 L 239.0 255.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 223.0 355.0 L 239.0 360.0" fill="none" stroke="#5A6672" stroke-width="1.5" stroke-dasharray="7 4" marker-end="url(#arw)"/>
+<path d="M 231.0 592.0 L 231.0 606.0" fill="none" stroke="#5A6672" stroke-width="1.5" stroke-dasharray="7 4" marker-end="url(#arw)"/>
+<path d="M 563.0 220.0 L 612.0 220.0 L 612.0 246.0 L 661.0 246.0" fill="none" stroke="#6B4FBB" stroke-width="1.5" stroke-dasharray="2 4" marker-end="url(#arwl)"/>
+<path d="M 763.0 220.0 L 712.0 220.0 L 712.0 246.0 L 661.0 246.0" fill="none" stroke="#6B4FBB" stroke-width="1.5" stroke-dasharray="2 4" marker-end="url(#arwl)"/>
+<path d="M 661.0 320.0 L 595.0 320.0 L 595.0 344.0 L 529.0 344.0" fill="none" stroke="#6B4FBB" stroke-width="1.5" stroke-dasharray="2 4" marker-end="url(#arwl)"/>
+<path d="M 661.0 320.0 L 661.0 344.0" fill="none" stroke="#6B4FBB" stroke-width="1.5" stroke-dasharray="2 4" marker-end="url(#arwl)"/>
+<path d="M 661.0 320.0 L 727.0 320.0 L 727.0 344.0 L 793.0 344.0" fill="none" stroke="#6B4FBB" stroke-width="1.5" stroke-dasharray="2 4" marker-end="url(#arwl)"/>
+<path d="M 529.0 418.0 L 595.0 418.0 L 595.0 444.0 L 661.0 444.0" fill="none" stroke="#6B4FBB" stroke-width="1.5" stroke-dasharray="2 4" marker-end="url(#arwl)"/>
+<path d="M 661.0 418.0 L 661.0 444.0" fill="none" stroke="#6B4FBB" stroke-width="1.5" stroke-dasharray="2 4" marker-end="url(#arwl)"/>
+<path d="M 793.0 418.0 L 727.0 418.0 L 727.0 444.0 L 661.0 444.0" fill="none" stroke="#6B4FBB" stroke-width="1.5" stroke-dasharray="2 4" marker-end="url(#arwl)"/>
+<path d="M 1080.0 206.0 L 1080.0 232.0" fill="none" stroke="#6B4FBB" stroke-width="1.5" stroke-dasharray="2 4" marker-end="url(#arwl)"/>
+<path d="M 1080.0 290.0 L 1080.0 316.0" fill="none" stroke="#6B4FBB" stroke-width="1.5" stroke-dasharray="2 4" marker-end="url(#arwl)"/>
+<path d="M 1080.0 380.0 L 1080.0 406.0" fill="none" stroke="#6B4FBB" stroke-width="1.5" stroke-dasharray="2 4" marker-end="url(#arwl)"/>
+<path d="M 1080.0 464.0 L 1080.0 490.0" fill="none" stroke="#6B4FBB" stroke-width="1.5" stroke-dasharray="2 4" marker-end="url(#arwl)"/>
+<rect x="48" y="142" width="175" height="62" rx="8" fill="#FEF3E9" stroke="#EC7211" stroke-width="1.5"/>
+<rect x="48" y="142" width="4" height="62" rx="2" fill="#EC7211"/>
+<text x="135.5" y="163" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">AWS Secrets Manager</text>
+<text x="135.5" y="178" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">system of record;</text>
+<text x="135.5" y="191" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">sits outside the cluster</text>
+<rect x="239" y="142" width="175" height="62" rx="8" fill="#F1EEFA" stroke="#6B4FBB" stroke-width="1.5"/>
+<rect x="239" y="142" width="4" height="62" rx="2" fill="#6B4FBB"/>
+<text x="326.5" y="163" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">External Secrets</text>
+<text x="326.5" y="178" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Operator</text>
+<text x="326.5" y="193" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">controlled synchronisation</text>
+<rect x="48" y="224" width="175" height="62" rx="8" fill="#F1EEFA" stroke="#6B4FBB" stroke-width="1.5"/>
+<rect x="48" y="224" width="4" height="62" rx="2" fill="#6B4FBB"/>
+<text x="135.5" y="245" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Kubernetes Secret</text>
+<text x="135.5" y="260" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">delivery mechanism only,</text>
+<text x="135.5" y="273" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">never the system of record</text>
+<rect x="239" y="224" width="175" height="62" rx="8" fill="#FFFFFF" stroke="#6B4FBB" stroke-width="1.5"/>
+<rect x="239" y="224" width="4" height="62" rx="2" fill="#6B4FBB"/>
+<text x="326.5" y="245" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Workload</text>
+<text x="326.5" y="260" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">consumes natively</text>
+<rect x="48" y="322" width="175" height="66" rx="8" fill="#FEF3E9" stroke="#EC7211" stroke-width="1.5"/>
+<rect x="48" y="322" width="4" height="66" rx="2" fill="#EC7211"/>
+<text x="135.5" y="343" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">EKS Pod Identity</text>
+<text x="135.5" y="358" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">role trust names one generic</text>
+<text x="135.5" y="371" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">EKS service principal</text>
+<rect x="239" y="322" width="175" height="76" rx="8" fill="#FEF3E9" stroke="#EC7211" stroke-width="1.5"/>
+<rect x="239" y="322" width="4" height="76" rx="2" fill="#EC7211"/>
+<text x="326.5" y="343" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Least-privilege IAM role</text>
+<text x="326.5" y="358" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">one per workload,</text>
+<text x="326.5" y="371" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">durable across clusters</text>
+<rect x="48" y="448" width="366" height="62" rx="8" fill="#FFFFFF" stroke="#2E5C8A" stroke-width="1.5"/>
+<rect x="48" y="448" width="4" height="62" rx="2" fill="#2E5C8A"/>
+<text x="231.0" y="469" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">AWS Systems Manager Parameter Store</text>
+<text x="231.0" y="484" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">non-sensitive runtime configuration only; explicitly not</text>
+<text x="231.0" y="497" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">the secret store</text>
+<rect x="48" y="516" width="366" height="76" rx="8" fill="#FEF3E9" stroke="#EC7211" stroke-width="1.5"/>
+<rect x="48" y="516" width="4" height="76" rx="2" fill="#EC7211"/>
+<text x="231.0" y="537" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">AWS IAM Identity Center</text>
+<text x="231.0" y="552" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">MFA at sign-in; ReadOnly or Administrator permission set;</text>
+<text x="231.0" y="565" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">short-lived console and CLI credentials;</text>
+<text x="231.0" y="578" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">no long-lived human access keys, bootstrap included</text>
+<rect x="48" y="606" width="366" height="56" rx="8" fill="#F3EEFB" stroke="#7B42BC" stroke-width="1.5"/>
+<rect x="48" y="606" width="4" height="56" rx="2" fill="#7B42BC"/>
+<text x="231.0" y="627" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Terraform and AWS APIs</text>
+<text x="231.0" y="642" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">owner-executed; automatic apply remains unapproved</text>
+<rect x="468" y="162" width="190" height="58" rx="8" fill="#F1EEFA" stroke="#6B4FBB" stroke-width="1.5"/>
+<rect x="468" y="162" width="4" height="58" rx="2" fill="#6B4FBB"/>
+<text x="563.0" y="183" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Workload signals</text>
+<text x="563.0" y="198" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">OpenTelemetry instrumentation</text>
+<rect x="672" y="162" width="182" height="58" rx="8" fill="#EDF3F9" stroke="#2E5C8A" stroke-width="1.5"/>
+<rect x="672" y="162" width="4" height="58" rx="2" fill="#2E5C8A"/>
+<text x="763.0" y="183" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Platform signals</text>
+<text x="763.0" y="198" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">cluster, node, workload state</text>
+<rect x="468" y="246" width="386" height="74" rx="8" fill="#F1EEFA" stroke="#6B4FBB" stroke-width="1.5"/>
+<rect x="468" y="246" width="4" height="74" rx="2" fill="#6B4FBB"/>
+<text x="661.0" y="267" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">OpenTelemetry Collector gateway</text>
+<text x="661.0" y="282" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">one per environment and the only entry point for workload</text>
+<text x="661.0" y="295" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">telemetry;</text>
+<text x="661.0" y="308" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">enriches with environment, service and artifact digest</text>
+<rect x="468" y="344" width="122" height="74" rx="8" fill="#FFFFFF" stroke="#6B4FBB" stroke-width="1.5"/>
+<rect x="468" y="344" width="4" height="74" rx="2" fill="#6B4FBB"/>
+<text x="529.0" y="365" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Metrics</text>
+<text x="529.0" y="380" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Prometheus</text>
+<text x="529.0" y="393" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">(decided)</text>
+<rect x="600" y="344" width="122" height="74" rx="8" fill="#FFFFFF" stroke="#6B4FBB" stroke-width="1.5"/>
+<rect x="600" y="344" width="4" height="74" rx="2" fill="#6B4FBB"/>
+<text x="661.0" y="365" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Logs</text>
+<text x="661.0" y="380" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Loki-class store;</text>
+<text x="661.0" y="393" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Loki is the</text>
+<text x="661.0" y="406" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">candidate</text>
+<rect x="732" y="344" width="122" height="74" rx="8" fill="#FFFFFF" stroke="#6B4FBB" stroke-width="1.5"/>
+<rect x="732" y="344" width="4" height="74" rx="2" fill="#6B4FBB"/>
+<text x="793.0" y="365" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Traces</text>
+<text x="793.0" y="380" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Jaeger or Tempo;</text>
+<text x="793.0" y="393" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Tempo provisional</text>
+<rect x="468" y="444" width="386" height="58" rx="8" fill="#F1EEFA" stroke="#6B4FBB" stroke-width="1.5"/>
+<rect x="468" y="444" width="4" height="58" rx="2" fill="#6B4FBB"/>
+<text x="661.0" y="465" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Grafana</text>
+<text x="661.0" y="480" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">environment health, workload golden signals, deployed-version</text>
+<text x="661.0" y="493" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">view</text>
+<rect x="908" y="148" width="344" height="58" rx="8" fill="#FFFFFF" stroke="#2E5C8A" stroke-width="1.5"/>
+<rect x="908" y="148" width="4" height="58" rx="2" fill="#2E5C8A"/>
+<text x="1080.0" y="169" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Validation results</text>
+<text x="1080.0" y="184" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">digests, read-backs, reconciliation records</text>
+<rect x="908" y="232" width="344" height="58" rx="8" fill="#FFFFFF" stroke="#2E5C8A" stroke-width="1.5"/>
+<rect x="908" y="232" width="4" height="58" rx="2" fill="#2E5C8A"/>
+<text x="1080.0" y="253" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Raw evidence</text>
+<text x="1080.0" y="268" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">unsanitized, captured before teardown</text>
+<rect x="908" y="316" width="344" height="64" rx="8" fill="#FEF3E9" stroke="#EC7211" stroke-width="1.5"/>
+<rect x="908" y="316" width="4" height="64" rx="2" fill="#EC7211"/>
+<text x="1080.0" y="337" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Amazon S3 evidence destination</text>
+<text x="1080.0" y="352" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">versioned; object versions are its only recovery path</text>
+<rect x="908" y="406" width="344" height="58" rx="8" fill="#FFFFFF" stroke="#2E5C8A" stroke-width="1.5"/>
+<rect x="908" y="406" width="4" height="58" rx="2" fill="#2E5C8A"/>
+<text x="1080.0" y="427" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Sanitized evidence</text>
+<text x="1080.0" y="442" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">redacted under the public-artifact rules</text>
+<rect x="908" y="490" width="344" height="82" rx="8" fill="#FBEEF1" stroke="#B0475A" stroke-width="1.5"/>
+<rect x="908" y="490" width="4" height="82" rx="2" fill="#B0475A"/>
+<text x="1080.0" y="511" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">cloud-platform-reference</text>
+<text x="1080.0" y="526" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">public-reference publication target;</text>
+<text x="1080.0" y="539" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">51 local commits, no remote configured,</text>
+<text x="1080.0" y="552" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">publication still owner-gated</text>
+<g><rect x="1170.0" y="481.0" width="72.0" height="17" rx="8.5" fill="#EEF0F2" stroke="#C8CDD4" stroke-width="1"/><text x="1206.0" y="493.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#48535F" text-anchor="middle" letter-spacing="0.4">NOT LIVE</text></g>
+<rect x="1308" y="142" width="178" height="72" rx="8" fill="#FFFFFF" stroke="#1D6F42" stroke-width="1.5"/>
+<rect x="1308" y="142" width="4" height="72" rx="2" fill="#1D6F42"/>
+<text x="1397.0" y="163" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="middle">1. Approve window</text>
+<text x="1397.0" y="177.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">purpose, cost, teardown</text>
+<text x="1397.0" y="190.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">recorded first</text>
+<rect x="1498" y="142" width="178" height="72" rx="8" fill="#FFFFFF" stroke="#1D6F42" stroke-width="1.5"/>
+<rect x="1498" y="142" width="4" height="72" rx="2" fill="#1D6F42"/>
+<text x="1587.0" y="163" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="middle">2. Terraform create</text>
+<text x="1587.0" y="177.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">from authoritative sources</text>
+<rect x="1308" y="226" width="178" height="72" rx="8" fill="#FFFFFF" stroke="#1D6F42" stroke-width="1.5"/>
+<rect x="1308" y="226" width="4" height="72" rx="2" fill="#1D6F42"/>
+<text x="1397.0" y="247" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="middle">3. GitOps reconcile</text>
+<text x="1397.0" y="261.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Argo CD applies desired</text>
+<text x="1397.0" y="274.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">state</text>
+<rect x="1498" y="226" width="178" height="72" rx="8" fill="#FFFFFF" stroke="#1D6F42" stroke-width="1.5"/>
+<rect x="1498" y="226" width="4" height="72" rx="2" fill="#1D6F42"/>
+<text x="1587.0" y="247" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="middle">4. Validate</text>
+<text x="1587.0" y="261.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">tests and checks that exist</text>
+<rect x="1308" y="310" width="178" height="72" rx="8" fill="#FFFFFF" stroke="#1D6F42" stroke-width="1.5"/>
+<rect x="1308" y="310" width="4" height="72" rx="2" fill="#1D6F42"/>
+<text x="1397.0" y="331" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="middle">5. Capture evidence</text>
+<text x="1397.0" y="345.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">raw and sanitized</text>
+<rect x="1498" y="310" width="178" height="72" rx="8" fill="#FFFFFF" stroke="#1D6F42" stroke-width="1.5"/>
+<rect x="1498" y="310" width="4" height="72" rx="2" fill="#1D6F42"/>
+<text x="1587.0" y="331" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="middle">6. Destroy (reverse</text>
+<text x="1587.0" y="345.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="middle">order)</text>
+<text x="1587.0" y="360.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">ephemeral resources only</text>
+<rect x="1308" y="394" width="178" height="72" rx="8" fill="#FFFFFF" stroke="#1D6F42" stroke-width="1.5"/>
+<rect x="1308" y="394" width="4" height="72" rx="2" fill="#1D6F42"/>
+<text x="1397.0" y="415" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="middle">7. Orphan scan</text>
+<text x="1397.0" y="429.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">verified clean in Phase 4b</text>
+<text x="1397.0" y="442.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">and Phase 5</text>
+<rect x="1498" y="394" width="178" height="72" rx="8" fill="#FFFFFF" stroke="#1D6F42" stroke-width="1.5"/>
+<rect x="1498" y="394" width="4" height="72" rx="2" fill="#1D6F42"/>
+<text x="1587.0" y="415" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="middle">8. Rebuild next window</text>
+<text x="1587.0" y="429.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">foundation is reused, not</text>
+<text x="1587.0" y="442.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">rebuilt</text>
+<text x="48" y="406" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">Pod Identity was selected because its role trust names one</text>
+<text x="48" y="420.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">generic EKS service principal, so IAM roles stay durable and</text>
+<text x="48" y="435.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">an ephemeral cluster only recreates lightweight associations.</text>
+<text x="468" y="122" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#8A5A00" text-anchor="start" font-style="italic">Designed and measured clusterlessly. Runtime validation on EKS</text>
+<text x="468" y="136.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#8A5A00" text-anchor="start" font-style="italic">has not happened and no window is authorized. Clusterless</text>
+<text x="468" y="151.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#8A5A00" text-anchor="start" font-style="italic">measurement is not EKS runtime proof.</text>
+<text x="468" y="532" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">The trace backend is deliberately unselected: ADR-0010 defers</text>
+<text x="468" y="546.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">the Jaeger-versus-Tempo choice to implementation evidence, and</text>
+<text x="468" y="561.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">current state keeps Tempo as a provisional candidate only.</text>
+<text x="468" y="586" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">One validated investigation exercise, a deliberately induced</text>
+<text x="468" y="600.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">fault traced from alert to root cause to verified recovery, is</text>
+<text x="468" y="615.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">required before this model counts as implemented. It has not</text>
+<text x="468" y="629.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">run.</text>
+<text x="468" y="652" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">AWS-native audit and control-plane records stay in their AWS</text>
+<text x="468" y="666.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">services. Neither side ingests the other, and no signal is</text>
+<text x="468" y="681.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">stored twice.</text>
+<text x="908" y="596" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">Evidence is exported before teardown, and only sanitized</text>
+<text x="908" y="610.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">evidence is ever published. The repository is not yet</text>
+<text x="908" y="625.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">published, so the publication step is a target rather than</text>
+<text x="908" y="639.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">a completed state.</text>
+<text x="1308" y="500" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">Exercised end to end across closed runtime windows RW-1 and</text>
+<text x="1308" y="514.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">RW-2. Ephemeral runtime resources are removed after every</text>
+<text x="1308" y="529.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">approved window; persistent foundation resources are</text>
+<text x="1308" y="543.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">intentionally retained, so the platform never claims to</text>
+<text x="1308" y="558.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">leave nothing behind.</text>
+<text x="1322" y="592" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#1B2733" text-anchor="start">Approved runtime window discipline</text>
+<text x="1660" y="592" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#1D6F42" text-anchor="end">VALIDATED</text>
+<text x="1322" y="609" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#1B2733" text-anchor="start">Mandatory teardown after each window</text>
+<text x="1660" y="609" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#1D6F42" text-anchor="end">VALIDATED</text>
+<text x="1322" y="626" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#1B2733" text-anchor="start">Budget alerts, notify only</text>
+<text x="1660" y="626" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#1D6F42" text-anchor="end">VALIDATED</text>
+<text x="1322" y="643" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#1B2733" text-anchor="start">Six mandatory tag keys</text>
+<text x="1660" y="643" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#1D6F42" text-anchor="end">VALIDATED</text>
+<text x="1322" y="660" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#1B2733" text-anchor="start">Orphan-resource verification</text>
+<text x="1660" y="660" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#1D6F42" text-anchor="end">VALIDATED</text>
+<text x="1322" y="677" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#1B2733" text-anchor="start">Automated destructive cost response</text>
+<text x="1660" y="677" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#5B4780" text-anchor="end">DEFERRED</text>
+<text x="48" y="778" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">Data / artifact flow</text>
+<text x="48" y="798" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">Control / identity flow (dashed)</text>
+<text x="48" y="818" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">Telemetry / evidence flow (dotted)</text>
+<text x="280" y="778" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">VALIDATED proven by captured evidence, at the badge's stated scope</text>
+<text x="280" y="798" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">PARTIAL capability exists for part of the fleet only</text>
+<text x="280" y="818" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">NOT LIVE implemented and validated in closed windows; no runtime now</text>
+<text x="790" y="778" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">PLANNED accepted or designed, not yet exercised</text>
+<text x="790" y="798" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">RETAINED survives environment teardown by design</text>
+<text x="790" y="818" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">DEFERRED decision deliberately left open</text>
+<text x="1692" y="880" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12.5" fill="#9AA4AF" text-anchor="end" letter-spacing="0.6">Tuhin Zaman</text>
+</svg>

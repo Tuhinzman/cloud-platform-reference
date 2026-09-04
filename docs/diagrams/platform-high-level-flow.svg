@@ -1,0 +1,203 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1720" height="1112" viewBox="0 0 1720 1112" role="img" aria-label="4. Full Flow — High Level">
+<title>4. Full Flow — High Level</title>
+<defs><marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#5A6672"/></marker><marker id="arwl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6B4FBB"/></marker></defs>
+<rect width="1720" height="1112" fill="#FFFFFF"/>
+<text x="40" y="52" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="26" font-weight="700" fill="#1B2733">4. Full Flow — High Level</text>
+<text x="40" y="76" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" fill="#5A6672">The conservative overview. Every badge is scoped to what current evidence supports.</text>
+<rect x="30" y="96" width="390" height="512" rx="10" fill="#FBFCFD" stroke="#2E5C8A" stroke-width="1.4" opacity="0.98"/>
+<text x="46" y="120" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#2E5C8A" letter-spacing="0.3">SOURCE AND DELIVERY</text>
+<rect x="440" y="96" width="420" height="512" rx="10" fill="#FDFBF9" stroke="#EC7211" stroke-width="1.4" opacity="0.98"/>
+<text x="456" y="120" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#EC7211" letter-spacing="0.3">AWS PLATFORM</text>
+<rect x="880" y="96" width="400" height="512" rx="10" fill="#FBFAFE" stroke="#6B4FBB" stroke-width="1.4" opacity="0.98"/>
+<text x="896" y="120" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#6B4FBB" letter-spacing="0.3">OBSERVABILITY AND EVIDENCE</text>
+<rect x="1300" y="96" width="390" height="512" rx="10" fill="#F7FBF8" stroke="#1D6F42" stroke-width="1.4" opacity="0.98"/>
+<text x="1316" y="120" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#1D6F42" letter-spacing="0.3">LIFECYCLE</text>
+<rect x="30" y="632" width="1660" height="164" rx="10" fill="#FFFBF3" stroke="#B7791F" stroke-width="1.4" opacity="0.98"/>
+<text x="46" y="656" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#B7791F" letter-spacing="0.3">CURRENT IMPLEMENTATION STATUS</text>
+<rect x="30" y="818" width="1660" height="96" rx="10" fill="#F7F8FA" stroke="#2E5C8A" stroke-width="1.4" opacity="0.98"/>
+<text x="46" y="842" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#2E5C8A" letter-spacing="0.3">END-TO-END FLOW  -  TARGET SEQUENCE</text>
+<rect x="30" y="986" width="1660" height="108" rx="10" fill="#F7F8FA" stroke="#2E5C8A" stroke-width="1.4" opacity="0.98"/>
+<text x="46" y="1010" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#2E5C8A" letter-spacing="0.3">LEGEND</text>
+<path d="M 225.0 206.0 L 225.0 226.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 225.0 302.0 L 225.0 322.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 225.0 380.0 L 225.0 400.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 225.0 466.0 L 225.0 486.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 650.0 280.0 L 650.0 296.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 650.0 364.0 L 650.0 380.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 650.0 442.0 L 650.0 458.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 1080.0 208.0 L 1080.0 224.0" fill="none" stroke="#6B4FBB" stroke-width="1.5" stroke-dasharray="2 4" marker-end="url(#arwl)"/>
+<path d="M 1080.0 290.0 L 1080.0 306.0" fill="none" stroke="#6B4FBB" stroke-width="1.5" stroke-dasharray="2 4" marker-end="url(#arwl)"/>
+<path d="M 1080.0 436.0 L 1080.0 452.0" fill="none" stroke="#6B4FBB" stroke-width="1.5" stroke-dasharray="2 4" marker-end="url(#arwl)"/>
+<path d="M 214.0 875.0 L 228.0 875.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 396.0 875.0 L 410.0 875.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 578.0 875.0 L 592.0 875.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 760.0 875.0 L 774.0 875.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 942.0 875.0 L 956.0 875.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 1124.0 875.0 L 1138.0 875.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 1306.0 875.0 L 1320.0 875.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 1488.0 875.0 L 1502.0 875.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<rect x="48" y="146" width="354" height="60" rx="8" fill="#FBEEF1" stroke="#B0475A" stroke-width="1.5"/>
+<rect x="48" y="146" width="4" height="60" rx="2" fill="#B0475A"/>
+<text x="225.0" y="167" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">cloud-platform-workload</text>
+<text x="225.0" y="182" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">GitLab source for 17 justified components</text>
+<rect x="48" y="226" width="354" height="76" rx="8" fill="#EDF3F9" stroke="#2E5C8A" stroke-width="1.5"/>
+<rect x="48" y="226" width="4" height="76" rx="2" fill="#2E5C8A"/>
+<text x="225.0" y="247" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">GitLab CI/CD</text>
+<text x="225.0" y="262" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">lint, tests where they exist, build, Trivy HIGH/CRITICAL</text>
+<text x="225.0" y="275" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">gate, CycloneDX SBOM, container health check</text>
+<g><rect x="327.0" y="217.0" width="65.0" height="17" rx="8.5" fill="#E4F2F5" stroke="#A5D3DE" stroke-width="1"/><text x="359.5" y="229.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#0B5C6E" text-anchor="middle" letter-spacing="0.4">PARTIAL</text></g>
+<rect x="48" y="322" width="354" height="58" rx="8" fill="#FEF3E9" stroke="#EC7211" stroke-width="1.5"/>
+<rect x="48" y="322" width="4" height="58" rx="2" fill="#EC7211"/>
+<text x="225.0" y="343" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">AWS STS via GitLab OIDC</text>
+<text x="225.0" y="358" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">short-lived credentials; no static keys</text>
+<g><rect x="313.0" y="313.0" width="79.0" height="17" rx="8.5" fill="#E3F2E8" stroke="#A8D5B8" stroke-width="1"/><text x="352.5" y="325.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#1D6F42" text-anchor="middle" letter-spacing="0.4">VALIDATED</text></g>
+<rect x="48" y="400" width="354" height="66" rx="8" fill="#FEF3E9" stroke="#EC7211" stroke-width="1.5"/>
+<rect x="48" y="400" width="4" height="66" rx="2" fill="#EC7211"/>
+<text x="225.0" y="421" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Amazon ECR</text>
+<text x="225.0" y="436" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">immutable tags; the digest is the artifact identity</text>
+<text x="225.0" y="449" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">3 service repositories exist, not 17</text>
+<g><rect x="327.0" y="391.0" width="65.0" height="17" rx="8.5" fill="#E4F2F5" stroke="#A5D3DE" stroke-width="1"/><text x="359.5" y="403.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#0B5C6E" text-anchor="middle" letter-spacing="0.4">PARTIAL</text></g>
+<rect x="48" y="486" width="354" height="58" rx="8" fill="#FBEEF1" stroke="#B0475A" stroke-width="1.5"/>
+<rect x="48" y="486" width="4" height="58" rx="2" fill="#B0475A"/>
+<text x="225.0" y="507" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">cloud-platform-gitops</text>
+<text x="225.0" y="522" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">desired state; digest-only changes</text>
+<g><rect x="320.0" y="477.0" width="72.0" height="17" rx="8.5" fill="#EEF0F2" stroke="#C8CDD4" stroke-width="1"/><text x="356.0" y="489.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#48535F" text-anchor="middle" letter-spacing="0.4">NOT LIVE</text></g>
+<rect x="458" y="146" width="384" height="56" rx="8" fill="#FEF3E9" stroke="#EC7211" stroke-width="1.5"/>
+<rect x="458" y="146" width="4" height="56" rx="2" fill="#EC7211"/>
+<text x="650.0" y="167" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Dedicated AWS account, us-east-1</text>
+<text x="650.0" y="182" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">one account; Organizations is plumbing only</text>
+<rect x="458" y="218" width="384" height="62" rx="8" fill="#FFFFFF" stroke="#EC7211" stroke-width="1.5"/>
+<rect x="458" y="218" width="4" height="62" rx="2" fill="#EC7211"/>
+<text x="650.0" y="239" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Public DNS, certificates, load balancing</text>
+<text x="650.0" y="254" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Route 53 and ACM selected for the domain phase</text>
+<g><rect x="767.0" y="209.0" width="65.0" height="17" rx="8.5" fill="#FDF3E3" stroke="#E8C98A" stroke-width="1"/><text x="799.5" y="221.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#8A5A00" text-anchor="middle" letter-spacing="0.4">PLANNED</text></g>
+<rect x="458" y="296" width="384" height="68" rx="8" fill="#FFFFFF" stroke="#2E5C8A" stroke-width="1.5"/>
+<rect x="458" y="296" width="4" height="68" rx="2" fill="#2E5C8A"/>
+<text x="650.0" y="317" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Per-environment VPC, two AZs</text>
+<text x="650.0" y="332" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">private worker nodes, one NAT Gateway,</text>
+<text x="650.0" y="345" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">S3 gateway endpoint</text>
+<g><rect x="760.0" y="287.0" width="72.0" height="17" rx="8.5" fill="#EEF0F2" stroke="#C8CDD4" stroke-width="1"/><text x="796.0" y="299.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#48535F" text-anchor="middle" letter-spacing="0.4">NOT LIVE</text></g>
+<rect x="458" y="380" width="384" height="62" rx="8" fill="#FEF3E9" stroke="#EC7211" stroke-width="1.5"/>
+<rect x="458" y="380" width="4" height="62" rx="2" fill="#EC7211"/>
+<text x="650.0" y="401" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Amazon EKS</text>
+<text x="650.0" y="416" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">AWS-managed control plane outside the VPC</text>
+<g><rect x="760.0" y="371.0" width="72.0" height="17" rx="8.5" fill="#EEF0F2" stroke="#C8CDD4" stroke-width="1"/><text x="796.0" y="383.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#48535F" text-anchor="middle" letter-spacing="0.4">NOT LIVE</text></g>
+<rect x="458" y="458" width="384" height="58" rx="8" fill="#F1EEFA" stroke="#6B4FBB" stroke-width="1.5"/>
+<rect x="458" y="458" width="4" height="58" rx="2" fill="#6B4FBB"/>
+<text x="650.0" y="479" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Argo CD</text>
+<text x="650.0" y="494" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">one instance per environment cluster</text>
+<g><rect x="760.0" y="449.0" width="72.0" height="17" rx="8.5" fill="#EEF0F2" stroke="#C8CDD4" stroke-width="1"/><text x="796.0" y="461.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#48535F" text-anchor="middle" letter-spacing="0.4">NOT LIVE</text></g>
+<rect x="458" y="534" width="384" height="56" rx="8" fill="#F6FAF8" stroke="#2C6049" stroke-width="1.5"/>
+<rect x="458" y="534" width="4" height="56" rx="2" fill="#2C6049"/>
+<text x="650.0" y="555" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Persistent foundation</text>
+<text x="650.0" y="570" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">state, registry, secrets, IAM roles, evidence store</text>
+<g><rect x="760.0" y="525.0" width="72.0" height="17" rx="8.5" fill="#E8F0EC" stroke="#B4CFC2" stroke-width="1"/><text x="796.0" y="537.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#2C6049" text-anchor="middle" letter-spacing="0.4">RETAINED</text></g>
+<rect x="898" y="146" width="364" height="62" rx="8" fill="#F1EEFA" stroke="#6B4FBB" stroke-width="1.5"/>
+<rect x="898" y="146" width="4" height="62" rx="2" fill="#6B4FBB"/>
+<text x="1080.0" y="167" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">OpenTelemetry Collector gateway</text>
+<text x="1080.0" y="182" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">one per environment; the only telemetry entry point</text>
+<g><rect x="1187.0" y="137.0" width="65.0" height="17" rx="8.5" fill="#FDF3E3" stroke="#E8C98A" stroke-width="1"/><text x="1219.5" y="149.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#8A5A00" text-anchor="middle" letter-spacing="0.4">PLANNED</text></g>
+<rect x="898" y="224" width="364" height="66" rx="8" fill="#FFFFFF" stroke="#6B4FBB" stroke-width="1.5"/>
+<rect x="898" y="224" width="4" height="66" rx="2" fill="#6B4FBB"/>
+<text x="1080.0" y="245" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Metrics, logs, traces</text>
+<text x="1080.0" y="260" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Prometheus; Loki-class store;</text>
+<text x="1080.0" y="273" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">trace backend still deferred</text>
+<g><rect x="1187.0" y="215.0" width="65.0" height="17" rx="8.5" fill="#FDF3E3" stroke="#E8C98A" stroke-width="1"/><text x="1219.5" y="227.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#8A5A00" text-anchor="middle" letter-spacing="0.4">PLANNED</text></g>
+<rect x="898" y="306" width="364" height="52" rx="8" fill="#FFFFFF" stroke="#6B4FBB" stroke-width="1.5"/>
+<rect x="898" y="306" width="4" height="52" rx="2" fill="#6B4FBB"/>
+<text x="1080.0" y="327" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Grafana views</text>
+<text x="1080.0" y="342" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">health, golden signals, deployed version</text>
+<g><rect x="1187.0" y="297.0" width="65.0" height="17" rx="8.5" fill="#FDF3E3" stroke="#E8C98A" stroke-width="1"/><text x="1219.5" y="309.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#8A5A00" text-anchor="middle" letter-spacing="0.4">PLANNED</text></g>
+<rect x="898" y="374" width="364" height="62" rx="8" fill="#FEF3E9" stroke="#EC7211" stroke-width="1.5"/>
+<rect x="898" y="374" width="4" height="62" rx="2" fill="#EC7211"/>
+<text x="1080.0" y="395" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">S3 evidence destination</text>
+<text x="1080.0" y="410" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">versioned; evidence captured before teardown</text>
+<g><rect x="1173.0" y="365.0" width="79.0" height="17" rx="8.5" fill="#E3F2E8" stroke="#A8D5B8" stroke-width="1"/><text x="1212.5" y="377.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#1D6F42" text-anchor="middle" letter-spacing="0.4">VALIDATED</text></g>
+<rect x="898" y="452" width="364" height="68" rx="8" fill="#FBEEF1" stroke="#B0475A" stroke-width="1.5"/>
+<rect x="898" y="452" width="4" height="68" rx="2" fill="#B0475A"/>
+<text x="1080.0" y="473" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Public reference repository</text>
+<text x="1080.0" y="488" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">sanitized evidence and documentation;</text>
+<text x="1080.0" y="501" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">publication target, not yet published</text>
+<g><rect x="1180.0" y="443.0" width="72.0" height="17" rx="8.5" fill="#EEF0F2" stroke="#C8CDD4" stroke-width="1"/><text x="1216.0" y="455.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#48535F" text-anchor="middle" letter-spacing="0.4">NOT LIVE</text></g>
+<rect x="1318" y="144" width="354" height="44" rx="8" fill="#FFFFFF" stroke="#1D6F42" stroke-width="1.5"/>
+<rect x="1318" y="144" width="4" height="44" rx="2" fill="#1D6F42"/>
+<text x="1332.0" y="165" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="start">1. Approve window</text>
+<rect x="1318" y="198" width="354" height="44" rx="8" fill="#FFFFFF" stroke="#1D6F42" stroke-width="1.5"/>
+<rect x="1318" y="198" width="4" height="44" rx="2" fill="#1D6F42"/>
+<text x="1332.0" y="219" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="start">2. Terraform create</text>
+<rect x="1318" y="252" width="354" height="44" rx="8" fill="#FFFFFF" stroke="#1D6F42" stroke-width="1.5"/>
+<rect x="1318" y="252" width="4" height="44" rx="2" fill="#1D6F42"/>
+<text x="1332.0" y="273" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="start">3. GitOps reconcile</text>
+<rect x="1318" y="306" width="354" height="44" rx="8" fill="#FFFFFF" stroke="#1D6F42" stroke-width="1.5"/>
+<rect x="1318" y="306" width="4" height="44" rx="2" fill="#1D6F42"/>
+<text x="1332.0" y="327" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="start">4. Validate</text>
+<rect x="1318" y="360" width="354" height="44" rx="8" fill="#FFFFFF" stroke="#1D6F42" stroke-width="1.5"/>
+<rect x="1318" y="360" width="4" height="44" rx="2" fill="#1D6F42"/>
+<text x="1332.0" y="381" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="start">5. Capture evidence</text>
+<rect x="1318" y="414" width="354" height="44" rx="8" fill="#FFFFFF" stroke="#1D6F42" stroke-width="1.5"/>
+<rect x="1318" y="414" width="4" height="44" rx="2" fill="#1D6F42"/>
+<text x="1332.0" y="435" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="start">6. Destroy</text>
+<rect x="1318" y="468" width="354" height="44" rx="8" fill="#FFFFFF" stroke="#1D6F42" stroke-width="1.5"/>
+<rect x="1318" y="468" width="4" height="44" rx="2" fill="#1D6F42"/>
+<text x="1332.0" y="489" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="start">7. Orphan scan</text>
+<rect x="1318" y="522" width="354" height="44" rx="8" fill="#FFFFFF" stroke="#1D6F42" stroke-width="1.5"/>
+<rect x="1318" y="522" width="4" height="44" rx="2" fill="#1D6F42"/>
+<text x="1332.0" y="543" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="start">8. Rebuild next window</text>
+<rect x="46" y="852" width="168" height="46" rx="8" fill="#FFFFFF" stroke="#2E5C8A" stroke-width="1.5"/>
+<rect x="46" y="852" width="4" height="46" rx="2" fill="#2E5C8A"/>
+<text x="130.0" y="873" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#1B2733" text-anchor="middle">Commit to Git</text>
+<rect x="228" y="852" width="168" height="46" rx="8" fill="#FFFFFF" stroke="#2E5C8A" stroke-width="1.5"/>
+<rect x="228" y="852" width="4" height="46" rx="2" fill="#2E5C8A"/>
+<text x="312.0" y="873" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#1B2733" text-anchor="middle">Build once in CI</text>
+<rect x="410" y="852" width="168" height="46" rx="8" fill="#FFFFFF" stroke="#2E5C8A" stroke-width="1.5"/>
+<rect x="410" y="852" width="4" height="46" rx="2" fill="#2E5C8A"/>
+<text x="494.0" y="873" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#1B2733" text-anchor="middle">Scan and SBOM</text>
+<rect x="592" y="852" width="168" height="46" rx="8" fill="#FFFFFF" stroke="#2E5C8A" stroke-width="1.5"/>
+<rect x="592" y="852" width="4" height="46" rx="2" fill="#2E5C8A"/>
+<text x="676.0" y="873" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#1B2733" text-anchor="middle">Publish by digest</text>
+<rect x="774" y="852" width="168" height="46" rx="8" fill="#FFFFFF" stroke="#2E5C8A" stroke-width="1.5"/>
+<rect x="774" y="852" width="4" height="46" rx="2" fill="#2E5C8A"/>
+<text x="858.0" y="873" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#1B2733" text-anchor="middle">Record digest in Git</text>
+<rect x="956" y="852" width="168" height="46" rx="8" fill="#FFFFFF" stroke="#2E5C8A" stroke-width="1.5"/>
+<rect x="956" y="852" width="4" height="46" rx="2" fill="#2E5C8A"/>
+<text x="1040.0" y="873" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#1B2733" text-anchor="middle">Argo CD reconciles</text>
+<rect x="1138" y="852" width="168" height="46" rx="8" fill="#FFFFFF" stroke="#2E5C8A" stroke-width="1.5"/>
+<rect x="1138" y="852" width="4" height="46" rx="2" fill="#2E5C8A"/>
+<text x="1222.0" y="873" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#1B2733" text-anchor="middle">Traffic reaches</text>
+<text x="1222.0" y="887" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#1B2733" text-anchor="middle">workload</text>
+<rect x="1320" y="852" width="168" height="46" rx="8" fill="#FFFFFF" stroke="#2E5C8A" stroke-width="1.5"/>
+<rect x="1320" y="852" width="4" height="46" rx="2" fill="#2E5C8A"/>
+<text x="1404.0" y="873" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#1B2733" text-anchor="middle">Telemetry and evidence</text>
+<rect x="1502" y="852" width="168" height="46" rx="8" fill="#FFFFFF" stroke="#2E5C8A" stroke-width="1.5"/>
+<rect x="1502" y="852" width="4" height="46" rx="2" fill="#2E5C8A"/>
+<text x="1586.0" y="873" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#1B2733" text-anchor="middle">Destroy after window</text>
+<text x="1650" y="172" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#1D6F42" text-anchor="end">VALIDATED</text>
+<text x="1650" y="226" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#1D6F42" text-anchor="end">VALIDATED</text>
+<text x="1650" y="280" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#1D6F42" text-anchor="end">VALIDATED</text>
+<text x="1650" y="334" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#1D6F42" text-anchor="end">VALIDATED</text>
+<text x="1650" y="388" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#1D6F42" text-anchor="end">VALIDATED</text>
+<text x="1650" y="442" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#1D6F42" text-anchor="end">VALIDATED</text>
+<text x="1650" y="496" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#1D6F42" text-anchor="end">VALIDATED</text>
+<text x="1650" y="550" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#1D6F42" text-anchor="end">VALIDATED</text>
+<text x="1318" y="594" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">Validated across closed runtime windows RW-1 and RW-2. Not</text>
+<text x="1318" y="608.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">currently running.</text>
+<text x="52" y="674" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1B2733" text-anchor="start">CI/CD: 3 of 17 justified services have a validated build, scan, SBOM and health path (checkout, shipping, quote). 3 of 17 are lint-only or partial</text>
+<text x="52" y="690.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1B2733" text-anchor="start">(frontend, payment, product-catalog). 11 of 17 are not yet wired.</text>
+<text x="52" y="712" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1B2733" text-anchor="start">Coverage for all 17 justified services is mandatory under Accepted ADR-0014 and is incomplete today. Language-tier templates are an implementation</text>
+<text x="52" y="728.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1B2733" text-anchor="start">mechanism, never a scope gate.</text>
+<text x="52" y="750" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1B2733" text-anchor="start">Runtime is not live and no window is currently authorized. 0 publish jobs have been executed in this publication epoch, so no fleet-wide image publication</text>
+<text x="52" y="766.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1B2733" text-anchor="start">and no immutable digest evidence exists. Promotion and rollback are accepted architecture and have not been exercised.</text>
+<text x="52" y="940" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">The sequence above is the target flow, not a statement that it runs today; the status panel states which segments are proven. Ephemeral runtime resources are</text>
+<text x="52" y="955.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">removed after every approved window, and persistent foundation resources are intentionally retained. The platform is the product, and AstroShop is the workload</text>
+<text x="52" y="971.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">used to validate it.</text>
+<text x="48" y="1034" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">Data / artifact flow</text>
+<text x="48" y="1054" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">Control / identity flow (dashed)</text>
+<text x="48" y="1074" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">Telemetry / evidence flow (dotted)</text>
+<text x="280" y="1034" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">VALIDATED proven by captured evidence, at the badge's stated scope</text>
+<text x="280" y="1054" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">PARTIAL capability exists for part of the fleet only</text>
+<text x="280" y="1074" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">NOT LIVE implemented and validated in closed windows; no runtime now</text>
+<text x="790" y="1034" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">PLANNED accepted or designed, not yet exercised</text>
+<text x="790" y="1054" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">RETAINED survives environment teardown by design</text>
+<text x="790" y="1074" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">DEFERRED decision deliberately left open</text>
+<text x="1692" y="1092" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12.5" fill="#9AA4AF" text-anchor="end" letter-spacing="0.6">Tuhin Zaman</text>
+</svg>

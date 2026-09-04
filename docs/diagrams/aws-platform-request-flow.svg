@@ -1,0 +1,185 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1720" height="1064" viewBox="0 0 1720 1064" role="img" aria-label="2. AWS Platform &amp; Request Flow">
+<title>2. AWS Platform &amp; Request Flow</title>
+<defs><marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#5A6672"/></marker><marker id="arwl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6B4FBB"/></marker></defs>
+<rect width="1720" height="1064" fill="#FFFFFF"/>
+<text x="40" y="52" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="26" font-weight="700" fill="#1B2733">2. AWS Platform &amp; Request Flow</text>
+<text x="40" y="76" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" fill="#5A6672">One dedicated AWS account in us-east-1. Runtime is created only inside an approved window and is not live now; the foundation below it is retained on purpose.</text>
+<rect x="30" y="92" width="1160" height="600" rx="10" fill="#FDFBF9" stroke="#EC7211" stroke-width="1.4" opacity="0.98"/>
+<text x="46" y="116" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#EC7211" letter-spacing="0.3">DEDICATED AWS ACCOUNT  -  us-east-1</text>
+<rect x="50" y="288" width="1120" height="384" rx="10" fill="#FBFCFD" stroke="#2E5C8A" stroke-width="1.4" stroke-dasharray="6 4" opacity="0.98"/>
+<text x="66" y="312" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#2E5C8A" letter-spacing="0.3">PER-ENVIRONMENT VPC  -  two Availability Zones</text>
+<g><rect x="451.8" y="298.0" width="72.0" height="17" rx="8.5" fill="#EEF0F2" stroke="#C8CDD4" stroke-width="1"/><text x="487.8" y="310.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#48535F" text-anchor="middle" letter-spacing="0.4">NOT LIVE</text></g>
+<text x="66" y="634" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" font-style="italic">Created and destroyed with its environment window. Exactly one NAT Gateway per</text>
+<text x="66" y="647" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" font-style="italic">environment, in one Availability Zone: an accepted cost and egress-resilience</text>
+<text x="66" y="660" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" font-style="italic">trade-off, not a production pattern.</text>
+<rect x="70" y="330" width="530" height="150" rx="10" fill="#F4F7FA" stroke="#5A6672" stroke-width="1.4" opacity="0.98"/>
+<text x="86" y="354" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#5A6672" letter-spacing="0.3">Availability Zone A</text>
+<rect x="620" y="330" width="530" height="150" rx="10" fill="#F4F7FA" stroke="#5A6672" stroke-width="1.4" opacity="0.98"/>
+<text x="636" y="354" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#5A6672" letter-spacing="0.3">Availability Zone B</text>
+<rect x="1210" y="92" width="480" height="420" rx="10" fill="#F6FAF8" stroke="#2C6049" stroke-width="1.4" opacity="0.98"/>
+<text x="1226" y="116" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#2C6049" letter-spacing="0.3">PERSISTENT FOUNDATION</text>
+<g><rect x="1404.3" y="102.0" width="72.0" height="17" rx="8.5" fill="#E8F0EC" stroke="#B4CFC2" stroke-width="1"/><text x="1440.3" y="114.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#2C6049" text-anchor="middle" letter-spacing="0.4">RETAINED</text></g>
+<text x="1226" y="487" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" font-style="italic">The architecture-baseline register, exactly. Every row is excluded from</text>
+<text x="1226" y="500" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" font-style="italic">environment teardown.</text>
+<rect x="1210" y="530" width="480" height="226" rx="10" fill="#F7F9FB" stroke="#2E5C8A" stroke-width="1.4" opacity="0.98"/>
+<text x="1226" y="554" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#2E5C8A" letter-spacing="0.3">ADDITIONAL RETAINED OPERATING CONTROLS</text>
+<text x="1226" y="744" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" font-style="italic">Durable, but deliberately not members of the persistent-foundation register.</text>
+<rect x="30" y="930" width="1660" height="108" rx="10" fill="#F7F8FA" stroke="#2E5C8A" stroke-width="1.4" opacity="0.98"/>
+<text x="46" y="954" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#2E5C8A" letter-spacing="0.3">LEGEND</text>
+<path d="M 180.0 174.0 L 200.0 174.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 365.0 174.0 L 385.0 174.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 550.0 174.0 L 570.0 174.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 662.5 208.0 L 560.8 208.0 L 560.8 364.0 L 459.0 364.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 336.0 412.0 L 318.0 412.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 203.0 460.0 L 195.5 460.0 L 195.5 500.0 L 188.0 500.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<path d="M 886.0 412.0 L 318.0 412.0" fill="none" stroke="#5A6672" stroke-width="1.5" marker-end="url(#arw)"/>
+<rect x="50" y="140" width="130" height="68" rx="8" fill="#FFFFFF" stroke="#1B2733" stroke-width="1.5"/>
+<rect x="50" y="140" width="4" height="68" rx="2" fill="#1B2733"/>
+<text x="115.0" y="161" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Client / User</text>
+<text x="115.0" y="176" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">browser entry</text>
+<rect x="200" y="140" width="165" height="68" rx="8" fill="#FEF3E9" stroke="#EC7211" stroke-width="1.5"/>
+<rect x="200" y="140" width="4" height="68" rx="2" fill="#EC7211"/>
+<text x="282.5" y="161" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Public DNS</text>
+<text x="282.5" y="176" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Route 53 selected for the</text>
+<text x="282.5" y="189" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">domain phase (Phase 9)</text>
+<g><rect x="290.0" y="131.0" width="65.0" height="17" rx="8.5" fill="#FDF3E3" stroke="#E8C98A" stroke-width="1"/><text x="322.5" y="143.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#8A5A00" text-anchor="middle" letter-spacing="0.4">PLANNED</text></g>
+<rect x="385" y="140" width="165" height="68" rx="8" fill="#FEF3E9" stroke="#EC7211" stroke-width="1.5"/>
+<rect x="385" y="140" width="4" height="68" rx="2" fill="#EC7211"/>
+<text x="467.5" y="161" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Managed certificates</text>
+<text x="467.5" y="176" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">ACM; TLS terminates at</text>
+<text x="467.5" y="189" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">the ingress boundary</text>
+<g><rect x="475.0" y="131.0" width="65.0" height="17" rx="8.5" fill="#FDF3E3" stroke="#E8C98A" stroke-width="1"/><text x="507.5" y="143.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#8A5A00" text-anchor="middle" letter-spacing="0.4">PLANNED</text></g>
+<rect x="570" y="140" width="185" height="68" rx="8" fill="#FEF3E9" stroke="#EC7211" stroke-width="1.5"/>
+<rect x="570" y="140" width="4" height="68" rx="2" fill="#EC7211"/>
+<text x="662.5" y="161" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Internet-facing load</text>
+<text x="662.5" y="176" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">balancing boundary</text>
+<text x="662.5" y="191" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">HTTP redirected to HTTPS</text>
+<g><rect x="680.0" y="131.0" width="65.0" height="17" rx="8.5" fill="#FDF3E3" stroke="#E8C98A" stroke-width="1"/><text x="712.5" y="143.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#8A5A00" text-anchor="middle" letter-spacing="0.4">PLANNED</text></g>
+<rect x="88" y="364" width="230" height="96" rx="8" fill="#FFFFFF" stroke="#EC7211" stroke-width="1.5"/>
+<rect x="88" y="364" width="4" height="96" rx="2" fill="#EC7211"/>
+<text x="203.0" y="385" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Public subnet A</text>
+<text x="203.0" y="400" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">NAT Gateway (exactly one)</text>
+<text x="203.0" y="413" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Elastic IP</text>
+<text x="203.0" y="426" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">no public worker nodes</text>
+<rect x="336" y="364" width="246" height="96" rx="8" fill="#FFFFFF" stroke="#2E5C8A" stroke-width="1.5"/>
+<rect x="336" y="364" width="4" height="96" rx="2" fill="#2E5C8A"/>
+<text x="459.0" y="385" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Private subnet A</text>
+<text x="459.0" y="400" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">EKS managed node group</text>
+<text x="459.0" y="413" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">workload pods</text>
+<rect x="638" y="364" width="230" height="96" rx="8" fill="#FFFFFF" stroke="#EC7211" stroke-width="1.5"/>
+<rect x="638" y="364" width="4" height="96" rx="2" fill="#EC7211"/>
+<text x="753.0" y="385" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Public subnet B</text>
+<text x="753.0" y="400" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">ingress placement only</text>
+<rect x="886" y="364" width="246" height="96" rx="8" fill="#FFFFFF" stroke="#2E5C8A" stroke-width="1.5"/>
+<rect x="886" y="364" width="4" height="96" rx="2" fill="#2E5C8A"/>
+<text x="1009.0" y="385" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Private subnet B</text>
+<text x="1009.0" y="400" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">EKS managed node group</text>
+<text x="1009.0" y="413" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">workload pods</text>
+<rect x="88" y="500" width="200" height="62" rx="8" fill="#FEF3E9" stroke="#EC7211" stroke-width="1.5"/>
+<rect x="88" y="500" width="4" height="62" rx="2" fill="#EC7211"/>
+<text x="188.0" y="521" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Internet Gateway</text>
+<text x="188.0" y="536" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">approved external destinations</text>
+<rect x="308" y="500" width="210" height="62" rx="8" fill="#FEF3E9" stroke="#EC7211" stroke-width="1.5"/>
+<rect x="308" y="500" width="4" height="62" rx="2" fill="#EC7211"/>
+<text x="413.0" y="521" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">S3 Gateway Endpoint</text>
+<text x="413.0" y="536" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">object storage without NAT</text>
+<rect x="538" y="500" width="300" height="62" rx="8" fill="#F1EEFA" stroke="#6B4FBB" stroke-width="1.5"/>
+<rect x="538" y="500" width="4" height="62" rx="2" fill="#6B4FBB"/>
+<text x="688.0" y="521" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">AstroShop reference workload</text>
+<text x="688.0" y="536" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">frontend-proxy, frontend, checkout,</text>
+<text x="688.0" y="549" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">and the remaining fleet services</text>
+<rect x="858" y="500" width="292" height="62" rx="8" fill="#F1EEFA" stroke="#6B4FBB" stroke-width="1.5"/>
+<rect x="858" y="500" width="4" height="62" rx="2" fill="#6B4FBB"/>
+<text x="1004.0" y="521" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">In-cluster platform agents</text>
+<text x="1004.0" y="536" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Argo CD, External Secrets Operator,</text>
+<text x="1004.0" y="549" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">EKS Pod Identity Agent, OTel Collector</text>
+<rect x="50" y="700" width="340" height="74" rx="8" fill="#FEF3E9" stroke="#EC7211" stroke-width="1.5"/>
+<rect x="50" y="700" width="4" height="74" rx="2" fill="#EC7211"/>
+<text x="220.0" y="721" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">AWS-managed EKS control plane</text>
+<text x="220.0" y="736" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">outside the customer VPC; API endpoint has both</text>
+<text x="220.0" y="749" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">public and private access enabled</text>
+<g><rect x="308.0" y="691.0" width="72.0" height="17" rx="8.5" fill="#EEF0F2" stroke="#C8CDD4" stroke-width="1"/><text x="344.0" y="703.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#48535F" text-anchor="middle" letter-spacing="0.4">NOT LIVE</text></g>
+<rect x="410" y="700" width="300" height="74" rx="8" fill="#F2F4F6" stroke="#48535F" stroke-width="1.5"/>
+<rect x="410" y="700" width="4" height="74" rx="2" fill="#48535F"/>
+<text x="560.0" y="721" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Runtime state</text>
+<text x="560.0" y="736" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">No runtime is live. No window is currently</text>
+<text x="560.0" y="749" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">authorized. RW-1 and RW-2 are closed.</text>
+<g><rect x="628.0" y="691.0" width="72.0" height="17" rx="8.5" fill="#EEF0F2" stroke="#C8CDD4" stroke-width="1"/><text x="664.0" y="703.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#48535F" text-anchor="middle" letter-spacing="0.4">NOT LIVE</text></g>
+<rect x="1226" y="128" width="448" height="46" rx="8" fill="#FFFFFF" stroke="#2C6049" stroke-width="1.5"/>
+<rect x="1226" y="128" width="4" height="46" rx="2" fill="#2C6049"/>
+<text x="1240.0" y="149" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="start">Terraform state backend</text>
+<text x="1240.0" y="163.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="start">S3, versioned and locked</text>
+<rect x="1226" y="176" width="448" height="46" rx="8" fill="#FFFFFF" stroke="#2C6049" stroke-width="1.5"/>
+<rect x="1226" y="176" width="4" height="46" rx="2" fill="#2C6049"/>
+<text x="1240.0" y="197" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="start">Artifact registry</text>
+<text x="1240.0" y="211.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="start">Amazon ECR, immutable tags</text>
+<rect x="1226" y="224" width="448" height="46" rx="8" fill="#FFFFFF" stroke="#2C6049" stroke-width="1.5"/>
+<rect x="1226" y="224" width="4" height="46" rx="2" fill="#2C6049"/>
+<text x="1240.0" y="245" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="start">Secret store</text>
+<text x="1240.0" y="259.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="start">AWS Secrets Manager</text>
+<rect x="1226" y="272" width="448" height="46" rx="8" fill="#FFFFFF" stroke="#2C6049" stroke-width="1.5"/>
+<rect x="1226" y="272" width="4" height="46" rx="2" fill="#2C6049"/>
+<text x="1240.0" y="293" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="start">Workload IAM roles</text>
+<text x="1240.0" y="307.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="start">durable under Pod Identity trust</text>
+<rect x="1226" y="320" width="448" height="46" rx="8" fill="#FFFFFF" stroke="#2C6049" stroke-width="1.5"/>
+<rect x="1226" y="320" width="4" height="46" rx="2" fill="#2C6049"/>
+<text x="1240.0" y="341" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="start">Evidence and backup destination</text>
+<text x="1240.0" y="355.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="start">S3, versioned</text>
+<rect x="1226" y="368" width="448" height="46" rx="8" fill="#FFFFFF" stroke="#2C6049" stroke-width="1.5"/>
+<rect x="1226" y="368" width="4" height="46" rx="2" fill="#2C6049"/>
+<text x="1240.0" y="389" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="start">DNS hosted zone</text>
+<text x="1240.0" y="403.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="start">created in the domain phase, not before</text>
+<rect x="1226" y="416" width="448" height="46" rx="8" fill="#FFFFFF" stroke="#2C6049" stroke-width="1.5"/>
+<rect x="1226" y="416" width="4" height="46" rx="2" fill="#2C6049"/>
+<text x="1240.0" y="437" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="start">Durable workload datastore</text>
+<text x="1240.0" y="451.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="start">product deferred to implementation</text>
+<rect x="1226" y="564" width="448" height="60" rx="8" fill="#FFFFFF" stroke="#2E5C8A" stroke-width="1.5"/>
+<rect x="1226" y="564" width="4" height="60" rx="2" fill="#2E5C8A"/>
+<text x="1240.0" y="585" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="start">SSM Parameter Store</text>
+<text x="1240.0" y="599.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="start">non-sensitive runtime configuration; declared in</text>
+<text x="1240.0" y="612.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="start">Terraform, so it is rebuilt rather than restored</text>
+<rect x="1226" y="632" width="448" height="60" rx="8" fill="#FFFFFF" stroke="#2E5C8A" stroke-width="1.5"/>
+<rect x="1226" y="632" width="4" height="60" rx="2" fill="#2E5C8A"/>
+<text x="1240.0" y="653" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="start">Budget alerts</text>
+<text x="1240.0" y="667.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="start">approximately 100 / 150 / 200 USD levels;</text>
+<text x="1240.0" y="680.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="start">they notify and do not prevent spend</text>
+<rect x="1226" y="700" width="448" height="46" rx="8" fill="#FFFFFF" stroke="#2E5C8A" stroke-width="1.5"/>
+<rect x="1226" y="700" width="4" height="46" rx="2" fill="#2E5C8A"/>
+<text x="1240.0" y="721" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="start">Six mandatory tag keys</text>
+<text x="1240.0" y="735.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="start">Project, Environment, Component, Owner, ManagedBy, Lifecycle</text>
+<rect x="164.8" y="156.0" width="50.4" height="15" rx="3" fill="#FFFFFF" stroke="#C8CDD4" stroke-width="0.6"/>
+<text x="190.0" y="167.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">lookup</text>
+<rect x="538.0" y="156.0" width="44.0" height="15" rx="3" fill="#FFFFFF" stroke="#C8CDD4" stroke-width="0.6"/>
+<text x="560.0" y="167.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">HTTPS</text>
+<rect x="471.6" y="268.0" width="178.4" height="15" rx="3" fill="#FFFFFF" stroke="#C8CDD4" stroke-width="0.6"/>
+<text x="560.8" y="279.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">ingress / service boundary</text>
+<rect x="301.8" y="394.0" width="50.4" height="15" rx="3" fill="#FFFFFF" stroke="#C8CDD4" stroke-width="0.6"/>
+<text x="327.0" y="405.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">egress</text>
+<rect x="548.0" y="394.0" width="108.0" height="15" rx="3" fill="#FFFFFF" stroke="#C8CDD4" stroke-width="0.6"/>
+<text x="602.0" y="405.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">cross-AZ egress</text>
+<text x="50" y="236" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">ADR-0007 decides a managed internet-facing load-balancing boundary, public DNS and managed certificates without naming products. Route 53 and ACM are</text>
+<text x="50" y="250.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">the recorded implementation selection for the domain phase. No hosted zone, certificate or load balancer exists in Terraform today.</text>
+<text x="1660" y="152" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#2C6049" text-anchor="end">RETAINED</text>
+<text x="1660" y="200" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#2C6049" text-anchor="end">RETAINED</text>
+<text x="1660" y="248" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#2C6049" text-anchor="end">RETAINED</text>
+<text x="1660" y="296" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#2C6049" text-anchor="end">RETAINED</text>
+<text x="1660" y="344" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#2C6049" text-anchor="end">RETAINED</text>
+<text x="1660" y="392" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#8A5A00" text-anchor="end">PLANNED</text>
+<text x="1660" y="440" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#5B4780" text-anchor="end">DEFERRED</text>
+<text x="50" y="800" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#1B2733" text-anchor="start">Request path: Client -&gt; public DNS -&gt; load-balancing boundary -&gt; ingress and service boundary -&gt; AstroShop</text>
+<text x="50" y="815.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#1B2733" text-anchor="start">services in private subnets.</text>
+<text x="50" y="846" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#1B2733" text-anchor="start">Egress path: private subnet pods -&gt; single NAT Gateway -&gt; Internet Gateway -&gt; approved external destinations.</text>
+<text x="50" y="861.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#1B2733" text-anchor="start">Object storage reaches S3 through the gateway endpoint instead.</text>
+<text x="50" y="892" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#1B2733" text-anchor="start">Worker nodes never sit in a public subnet, and map_public_ip_on_launch is false on every subnet, public ones</text>
+<text x="50" y="907.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#1B2733" text-anchor="start">included.</text>
+<text x="48" y="978" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">Data / artifact flow</text>
+<text x="48" y="998" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">Control / identity flow (dashed)</text>
+<text x="48" y="1018" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">Telemetry / evidence flow (dotted)</text>
+<text x="280" y="978" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">VALIDATED proven by captured evidence, at the badge's stated scope</text>
+<text x="280" y="998" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">PARTIAL capability exists for part of the fleet only</text>
+<text x="280" y="1018" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">NOT LIVE implemented and validated in closed windows; no runtime now</text>
+<text x="790" y="978" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">PLANNED accepted or designed, not yet exercised</text>
+<text x="790" y="998" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">RETAINED survives environment teardown by design</text>
+<text x="790" y="1018" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start">DEFERRED decision deliberately left open</text>
+<text x="1692" y="1044" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12.5" fill="#9AA4AF" text-anchor="end" letter-spacing="0.6">Tuhin Zaman</text>
+</svg>

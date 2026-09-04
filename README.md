@@ -33,6 +33,18 @@ The foundation documents are the place to start:
 - [Logical Architecture](docs/logical-architecture.md): how the platform decomposes into logical responsibilities and how they interact
 - [Architecture Baseline](docs/architecture-baseline.md): the two platform-wide facts no single decision owns, which are why the platform standardizes on one region and which resources survive environment teardown
 
+### Diagrams
+
+Four views render the same architecture at different depths. Every component carries a status
+badge scoped to what current evidence supports, so a reader can tell accepted architecture from
+exercised implementation without reading the records first. All four are exported from one
+editable source, [aws-platform-reference-architecture.drawio](docs/diagrams/aws-platform-reference-architecture.drawio).
+
+- [Full Flow, High Level](docs/diagrams/platform-high-level-flow.svg): the whole platform on one page, with the current implementation status stated plainly
+- [Control, Delivery and GitOps](docs/diagrams/control-delivery-gitops.svg): source to runtime, the CI federation path, and human infrastructure control
+- [AWS Platform and Request Flow](docs/diagrams/aws-platform-request-flow.svg): the account, the per-environment network, and what is retained across teardown
+- [Identity, Secrets, Observability, Evidence and Lifecycle](docs/diagrams/identity-observability-evidence-lifecycle.svg): the four platform concerns and what each has proven
+
 Every significant choice is recorded in [docs/decisions](docs/decisions/), one decision per
 record, each with its alternatives, consequences, and a revisit trigger. All fourteen are
 accepted.

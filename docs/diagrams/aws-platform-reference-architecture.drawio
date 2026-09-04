@@ -1,0 +1,585 @@
+<mxfile host="app.diagrams.net" type="device">
+<diagram id="page1" name="Control, Delivery &amp; GitOps">
+<mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1720" pageHeight="900" math="0" shadow="0">
+<root><mxCell id="0"/><mxCell id="1" parent="0"/>
+<mxCell id="p0_title" value="1. Control, Delivery &amp; GitOps" style="text;html=1;align=left;verticalAlign=middle;fontSize=24;fontStyle=1;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="36" y="24" width="1640" height="34" as="geometry"/></mxCell>
+<mxCell id="p0_sub" value="Source to runtime, the CI federation path, and human infrastructure control. Badges state what is proven today, not what the architecture accepts." style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="36" y="58" width="1640" height="20" as="geometry"/></mxCell>
+<mxCell id="gA" value="DELIVERY PATH" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBFCFD;strokeColor=#2E5C8A;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#2E5C8A;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="30" y="92" width="1660" height="282" as="geometry"/></mxCell>
+<mxCell id="gci" value="GitLab CI/CD  -  per-service pipelines composed from shared templates  [PARTIAL]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDF3F9;strokeColor=#2E5C8A;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#2E5C8A;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="400" y="124" width="880" height="112" as="geometry"/></mxCell>
+<mxCell id="gB" value="CI IDENTITY  -  federated, no static keys  [VALIDATED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBFCFD;strokeColor=#2E5C8A;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#2E5C8A;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="30" y="396" width="810" height="128" as="geometry"/></mxCell>
+<mxCell id="gC" value="HUMAN INFRASTRUCTURE CONTROL  [VALIDATED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBFCFD;strokeColor=#2E5C8A;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#2E5C8A;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="870" y="396" width="820" height="128" as="geometry"/></mxCell>
+<mxCell id="gD" value="PROMOTION AND ROLLBACK  -  accepted architecture, not yet exercised  [PLANNED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFBF3;strokeColor=#B7791F;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#B7791F;fontFamily=Helvetica;arcSize=6;dashed=1;dashPattern=6 4;" vertex="1" parent="1"><mxGeometry x="30" y="546" width="1660" height="152" as="geometry"/></mxCell>
+<mxCell id="legend" value="LEGEND" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7F8FA;strokeColor=#2E5C8A;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#2E5C8A;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="30" y="720" width="1660" height="108" as="geometry"/></mxCell>
+<mxCell id="dev" value="Developer /
+Platform Engineer
+
+commits source" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1B2733;strokeWidth=1.5;fontSize=13;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="50" y="142" width="140" height="78" as="geometry"/></mxCell>
+<mxCell id="wl" value="cloud-platform-workload
+
+GitLab application source
+17 justified components" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBEEF1;strokeColor=#B0475A;strokeWidth=1.5;fontSize=13;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="210" y="142" width="170" height="78" as="geometry"/></mxCell>
+<mxCell id="s1" value="Lint /
+static
+
+hadolint + language" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="416" y="158" width="136" height="62" as="geometry"/></mxCell>
+<mxCell id="s2" value="Tests
+
+only where they exist" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="560" y="158" width="136" height="62" as="geometry"/></mxCell>
+<mxCell id="s3" value="Container
+build
+
+root context" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="704" y="158" width="136" height="62" as="geometry"/></mxCell>
+<mxCell id="s4" value="Trivy scan
+
+blocking HIGH/CRITICAL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="848" y="158" width="136" height="62" as="geometry"/></mxCell>
+<mxCell id="s5" value="SBOM
+
+CycloneDX" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="992" y="158" width="136" height="62" as="geometry"/></mxCell>
+<mxCell id="s6" value="Health
+check
+
+container starts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1136" y="158" width="136" height="62" as="geometry"/></mxCell>
+<mxCell id="cov" value="CI/CD coverage today
+
+
+3 / 17  full validated path
+checkout, shipping, quote
+
+3 / 17  lint-only / partial
+frontend, payment,
+product-catalog
+
+11 / 17  not yet wired
+
+Coverage for all 17 justified
+services is MANDATORY under
+Accepted ADR-0014 and is
+incomplete today." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFBF3;strokeColor=#B7791F;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1500" y="124" width="175" height="250" as="geometry"/></mxCell>
+<mxCell id="pub" value="Manual publish
+
+owner-triggered
+job only
+[NOT LIVE]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=13;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="400" y="254" width="150" height="78" as="geometry"/></mxCell>
+<mxCell id="ecr" value="Amazon ECR
+
+immutable tags from commit;
+digest is the identity
+[PARTIAL]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=13;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="570" y="254" width="180" height="78" as="geometry"/></mxCell>
+<mxCell id="mr" value="Digest-only change
+
+merge request against
+desired state
+[PLANNED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBEEF1;strokeColor=#B0475A;strokeWidth=1.5;fontSize=13;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="770" y="254" width="180" height="78" as="geometry"/></mxCell>
+<mxCell id="gitops" value="cloud-platform-gitops
+
+GitLab desired state
+[NOT LIVE]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBEEF1;strokeColor=#B0475A;strokeWidth=1.5;fontSize=13;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="970" y="254" width="180" height="78" as="geometry"/></mxCell>
+<mxCell id="argo" value="Argo CD
+
+one instance per
+environment cluster
+[NOT LIVE]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1EEFA;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=13;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1170" y="254" width="150" height="78" as="geometry"/></mxCell>
+<mxCell id="eks" value="Amazon EKS
+
+runtime target
+[NOT LIVE]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=13;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1340" y="254" width="145" height="78" as="geometry"/></mxCell>
+<mxCell id="oidc" value="GitLab OIDC ID token
+
+aud sts.amazonaws.com" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="50" y="434" width="185" height="70" as="geometry"/></mxCell>
+<mxCell id="sts" value="AWS STS
+
+dedicated CI role;
+AssumeRoleWithWebIdentity" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="255" y="434" width="195" height="70" as="geometry"/></mxCell>
+<mxCell id="cred" value="Short-lived credentials
+
+expire on their own" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="470" y="434" width="175" height="70" as="geometry"/></mxCell>
+<mxCell id="ecrt" value="ECR push
+
+publish stage only" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="665" y="434" width="155" height="70" as="geometry"/></mxCell>
+<mxCell id="pe" value="Platform Engineer
+
+the only operating role" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1B2733;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="890" y="434" width="150" height="70" as="geometry"/></mxCell>
+<mxCell id="idc" value="IAM Identity Center
+
+MFA; ReadOnly or Administrator;
+no long-lived access keys" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1060" y="434" width="205" height="70" as="geometry"/></mxCell>
+<mxCell id="tf" value="Terraform
+
+bootstrap / foundation / dev" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3EEFB;strokeColor=#7B42BC;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1285" y="434" width="175" height="70" as="geometry"/></mxCell>
+<mxCell id="api" value="AWS APIs
+
+owner-executed; apply is
+never automated" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1480" y="434" width="190" height="70" as="geometry"/></mxCell>
+<mxCell id="envd" value="Dev
+
+environment role" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B7791F;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="60" y="592" width="160" height="68" as="geometry"/></mxCell>
+<mxCell id="envv" value="Validation
+
+environment role" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B7791F;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="250" y="592" width="175" height="68" as="geometry"/></mxCell>
+<mxCell id="envp" value="Production Validation
+
+environment role" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B7791F;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="455" y="592" width="205" height="68" as="geometry"/></mxCell>
+<mxCell id="roll" value="Rollback
+
+Git revert of the digest pin;
+Helm rollback is not used" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B7791F;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="720" y="592" width="250" height="68" as="geometry"/></mxCell>
+<mxCell id="p0_t0" value="0 publish jobs executed in the current publication epoch. 3 ECR repositories exist (astroshop/checkout, astroshop/shipping, astroshop/quote) plus platform/opentelemetry-collector; no fleet-wide publication and no digest evidence exists." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="404" y="334" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p0_t1" value="The same immutable digest moves between environment roles. Promotion is a Git change that Argo CD reconciles; it is not a rebuild." style="text;html=1;align=left;verticalAlign=top;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="1000" y="586" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p0_t2" value="ADR-0009 states its implementation is not complete until one validated rollback exercise has run. That exercise has not run, so promotion, cross-environment promotion and rollback all remain open claims." style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="1000" y="626" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p0_t3" value="Data / artifact flow" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="48" y="754" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p0_t4" value="Control / identity flow  (dashed)" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="48" y="774" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p0_t5" value="Telemetry / evidence flow  (dotted)" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="48" y="794" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p0_t6" value="VALIDATED  proven by captured evidence, at the badge's stated scope" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="280" y="754" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p0_t7" value="PARTIAL  capability exists for part of the fleet only" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="280" y="774" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p0_t8" value="NOT LIVE  implemented and validated in closed windows; no runtime now" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="280" y="794" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p0_t9" value="PLANNED  accepted or designed, not yet exercised" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="790" y="754" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p0_t10" value="RETAINED  survives environment teardown by design" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="790" y="774" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p0_t11" value="DEFERRED  decision deliberately left open" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="790" y="794" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p0_e0" value="commit" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="dev" target="wl"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p0_e1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="wl" target="gci"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p0_e2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="gci" target="pub"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p0_e3" value="push" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="pub" target="ecr"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p0_e4" value="digest" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="ecr" target="mr"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p0_e5" value="merge" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="mr" target="gitops"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p0_e6" value="pull" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="gitops" target="argo"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p0_e7" value="reconcile" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="argo" target="eks"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p0_e8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;dashed=1;dashPattern=7 4;" edge="1" parent="1" source="oidc" target="sts"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p0_e9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;dashed=1;dashPattern=7 4;" edge="1" parent="1" source="sts" target="cred"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p0_e10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;dashed=1;dashPattern=7 4;" edge="1" parent="1" source="cred" target="ecrt"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p0_e11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;dashed=1;dashPattern=7 4;" edge="1" parent="1" source="pe" target="idc"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p0_e12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;dashed=1;dashPattern=7 4;" edge="1" parent="1" source="idc" target="tf"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p0_e13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="tf" target="api"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p0_e14" value="MR + owner approval" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="envd" target="envv"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p0_e15" value="MR + owner approval" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="envv" target="envp"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p0_wm" value="Tuhin Zaman" style="text;html=1;align=right;verticalAlign=middle;fontSize=12;fontColor=#9AA4AF;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="1460" y="860" width="220" height="22" as="geometry"/></mxCell>
+</root></mxGraphModel></diagram>
+<diagram id="page2" name="AWS Platform &amp; Request Flow">
+<mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1720" pageHeight="1064" math="0" shadow="0">
+<root><mxCell id="0"/><mxCell id="1" parent="0"/>
+<mxCell id="p1_title" value="2. AWS Platform &amp; Request Flow" style="text;html=1;align=left;verticalAlign=middle;fontSize=24;fontStyle=1;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="36" y="24" width="1640" height="34" as="geometry"/></mxCell>
+<mxCell id="p1_sub" value="One dedicated AWS account in us-east-1. Runtime is created only inside an approved window and is not live now; the foundation below it is retained on purpose." style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="36" y="58" width="1640" height="20" as="geometry"/></mxCell>
+<mxCell id="acct" value="DEDICATED AWS ACCOUNT  -  us-east-1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FDFBF9;strokeColor=#EC7211;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#EC7211;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="30" y="92" width="1160" height="600" as="geometry"/></mxCell>
+<mxCell id="vpc" value="PER-ENVIRONMENT VPC  -  two Availability Zones  [NOT LIVE]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBFCFD;strokeColor=#2E5C8A;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#2E5C8A;fontFamily=Helvetica;arcSize=6;dashed=1;dashPattern=6 4;" vertex="1" parent="1"><mxGeometry x="50" y="288" width="1120" height="384" as="geometry"/></mxCell>
+<mxCell id="azA" value="Availability Zone A" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F4F7FA;strokeColor=#5A6672;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#5A6672;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="70" y="330" width="530" height="150" as="geometry"/></mxCell>
+<mxCell id="azB" value="Availability Zone B" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F4F7FA;strokeColor=#5A6672;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#5A6672;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="620" y="330" width="530" height="150" as="geometry"/></mxCell>
+<mxCell id="pf" value="PERSISTENT FOUNDATION  [RETAINED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F6FAF8;strokeColor=#2C6049;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#2C6049;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="1210" y="92" width="480" height="420" as="geometry"/></mxCell>
+<mxCell id="ro" value="ADDITIONAL RETAINED OPERATING CONTROLS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7F9FB;strokeColor=#2E5C8A;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#2E5C8A;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="1210" y="530" width="480" height="226" as="geometry"/></mxCell>
+<mxCell id="legend" value="LEGEND" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7F8FA;strokeColor=#2E5C8A;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#2E5C8A;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="30" y="930" width="1660" height="108" as="geometry"/></mxCell>
+<mxCell id="client" value="Client / User
+
+browser entry" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1B2733;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="50" y="140" width="130" height="68" as="geometry"/></mxCell>
+<mxCell id="dns" value="Public DNS
+
+Route 53 selected for the
+domain phase (Phase 9)
+[PLANNED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="200" y="140" width="165" height="68" as="geometry"/></mxCell>
+<mxCell id="cert" value="Managed certificates
+
+ACM; TLS terminates at
+the ingress boundary
+[PLANNED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="385" y="140" width="165" height="68" as="geometry"/></mxCell>
+<mxCell id="alb" value="Internet-facing load
+balancing boundary
+
+HTTP redirected to HTTPS
+[PLANNED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="570" y="140" width="185" height="68" as="geometry"/></mxCell>
+<mxCell id="pubA" value="Public subnet A
+
+NAT Gateway (exactly one)
+Elastic IP
+no public worker nodes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="88" y="364" width="230" height="96" as="geometry"/></mxCell>
+<mxCell id="privA" value="Private subnet A
+
+EKS managed node group
+workload pods" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="336" y="364" width="246" height="96" as="geometry"/></mxCell>
+<mxCell id="pubB" value="Public subnet B
+
+ingress placement only" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="638" y="364" width="230" height="96" as="geometry"/></mxCell>
+<mxCell id="privB" value="Private subnet B
+
+EKS managed node group
+workload pods" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="886" y="364" width="246" height="96" as="geometry"/></mxCell>
+<mxCell id="igw" value="Internet Gateway
+
+approved external destinations" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="88" y="500" width="200" height="62" as="geometry"/></mxCell>
+<mxCell id="s3ep" value="S3 Gateway Endpoint
+
+object storage without NAT" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="308" y="500" width="210" height="62" as="geometry"/></mxCell>
+<mxCell id="wlpods" value="AstroShop reference workload
+
+frontend-proxy, frontend, checkout,
+and the remaining fleet services" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1EEFA;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="538" y="500" width="300" height="62" as="geometry"/></mxCell>
+<mxCell id="agents" value="In-cluster platform agents
+
+Argo CD, External Secrets Operator,
+EKS Pod Identity Agent, OTel Collector" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1EEFA;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="858" y="500" width="292" height="62" as="geometry"/></mxCell>
+<mxCell id="cp" value="AWS-managed EKS control plane
+
+outside the customer VPC; API endpoint has both
+public and private access enabled
+[NOT LIVE]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="50" y="700" width="340" height="74" as="geometry"/></mxCell>
+<mxCell id="live" value="Runtime state
+
+No runtime is live. No window is currently
+authorized. RW-1 and RW-2 are closed.
+[NOT LIVE]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F2F4F6;strokeColor=#48535F;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="410" y="700" width="300" height="74" as="geometry"/></mxCell>
+<mxCell id="pf0" value="Terraform state backend
+
+S3, versioned and locked" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2C6049;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1226" y="128" width="448" height="46" as="geometry"/></mxCell>
+<mxCell id="pf1" value="Artifact registry
+
+Amazon ECR, immutable tags" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2C6049;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1226" y="176" width="448" height="46" as="geometry"/></mxCell>
+<mxCell id="pf2" value="Secret store
+
+AWS Secrets Manager" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2C6049;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1226" y="224" width="448" height="46" as="geometry"/></mxCell>
+<mxCell id="pf3" value="Workload IAM roles
+
+durable under Pod Identity trust" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2C6049;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1226" y="272" width="448" height="46" as="geometry"/></mxCell>
+<mxCell id="pf4" value="Evidence and backup destination
+
+S3, versioned" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2C6049;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1226" y="320" width="448" height="46" as="geometry"/></mxCell>
+<mxCell id="pf5" value="DNS hosted zone
+
+created in the domain phase, not before" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2C6049;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1226" y="368" width="448" height="46" as="geometry"/></mxCell>
+<mxCell id="pf6" value="Durable workload datastore
+
+product deferred to implementation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2C6049;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1226" y="416" width="448" height="46" as="geometry"/></mxCell>
+<mxCell id="ro1" value="SSM Parameter Store
+
+non-sensitive runtime configuration; declared in
+Terraform, so it is rebuilt rather than restored" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1226" y="564" width="448" height="60" as="geometry"/></mxCell>
+<mxCell id="ro2" value="Budget alerts
+
+approximately 100 / 150 / 200 USD levels;
+they notify and do not prevent spend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1226" y="632" width="448" height="60" as="geometry"/></mxCell>
+<mxCell id="ro3" value="Six mandatory tag keys
+
+Project, Environment, Component, Owner, ManagedBy, Lifecycle" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1226" y="700" width="448" height="46" as="geometry"/></mxCell>
+<mxCell id="p1_t0" value="ADR-0007 decides a managed internet-facing load-balancing boundary, public DNS and managed certificates without naming products. Route 53 and ACM are the recorded implementation selection for the domain phase. No hosted zone, certificate or load balancer exists in Terraform today." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="50" y="222" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p1_t1" value="RETAINED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#2C6049;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1510" y="138" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p1_t2" value="RETAINED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#2C6049;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1510" y="186" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p1_t3" value="RETAINED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#2C6049;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1510" y="234" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p1_t4" value="RETAINED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#2C6049;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1510" y="282" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p1_t5" value="RETAINED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#2C6049;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1510" y="330" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p1_t6" value="PLANNED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#8A5A00;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1510" y="378" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p1_t7" value="DEFERRED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#5B4780;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1510" y="426" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p1_t8" value="Request path:  Client -&gt; public DNS -&gt; load-balancing boundary -&gt; ingress and service boundary -&gt; AstroShop services in private subnets." style="text;html=1;align=left;verticalAlign=top;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="50" y="786" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p1_t9" value="Egress path:  private subnet pods -&gt; single NAT Gateway -&gt; Internet Gateway -&gt; approved external destinations.  Object storage reaches S3 through the gateway endpoint instead." style="text;html=1;align=left;verticalAlign=top;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="50" y="832" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p1_t10" value="Worker nodes never sit in a public subnet, and map_public_ip_on_launch is false on every subnet, public ones included." style="text;html=1;align=left;verticalAlign=top;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="50" y="878" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p1_t11" value="Data / artifact flow" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="48" y="964" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p1_t12" value="Control / identity flow  (dashed)" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="48" y="984" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p1_t13" value="Telemetry / evidence flow  (dotted)" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="48" y="1004" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p1_t14" value="VALIDATED  proven by captured evidence, at the badge's stated scope" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="280" y="964" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p1_t15" value="PARTIAL  capability exists for part of the fleet only" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="280" y="984" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p1_t16" value="NOT LIVE  implemented and validated in closed windows; no runtime now" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="280" y="1004" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p1_t17" value="PLANNED  accepted or designed, not yet exercised" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="790" y="964" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p1_t18" value="RETAINED  survives environment teardown by design" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="790" y="984" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p1_t19" value="DEFERRED  decision deliberately left open" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="790" y="1004" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p1_e0" value="lookup" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="client" target="dns"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p1_e1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="dns" target="cert"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p1_e2" value="HTTPS" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="cert" target="alb"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p1_e3" value="ingress / service boundary" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="alb" target="privA"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p1_e4" value="egress" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="privA" target="pubA"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p1_e5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="pubA" target="igw"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p1_e6" value="cross-AZ egress" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="privB" target="pubA"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p1_wm" value="Tuhin Zaman" style="text;html=1;align=right;verticalAlign=middle;fontSize=12;fontColor=#9AA4AF;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="1460" y="1024" width="220" height="22" as="geometry"/></mxCell>
+</root></mxGraphModel></diagram>
+<diagram id="page3" name="Identity, Secrets, Observability, Evidence &amp; Lifecycle">
+<mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1720" pageHeight="900" math="0" shadow="0">
+<root><mxCell id="0"/><mxCell id="1" parent="0"/>
+<mxCell id="p2_title" value="3. Identity, Secrets, Observability, Evidence &amp; Lifecycle" style="text;html=1;align=left;verticalAlign=middle;fontSize=24;fontStyle=1;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="36" y="24" width="1640" height="34" as="geometry"/></mxCell>
+<mxCell id="p2_sub" value="Four platform concerns and what each has actually proven." style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="36" y="58" width="1640" height="20" as="geometry"/></mxCell>
+<mxCell id="g1" value="1)  WORKLOAD IDENTITY AND SECRETS  [VALIDATED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7FBF8;strokeColor=#1D6F42;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#1D6F42;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="30" y="92" width="400" height="616" as="geometry"/></mxCell>
+<mxCell id="g2" value="2)  OBSERVABILITY  [PLANNED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFBF3;strokeColor=#8A5A00;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#8A5A00;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="450" y="92" width="420" height="616" as="geometry"/></mxCell>
+<mxCell id="g3" value="3)  EVIDENCE FLOW  [VALIDATED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7FBF8;strokeColor=#1D6F42;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#1D6F42;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="890" y="92" width="380" height="616" as="geometry"/></mxCell>
+<mxCell id="g4" value="4)  ENVIRONMENT LIFECYCLE  [VALIDATED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7FBF8;strokeColor=#1D6F42;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#1D6F42;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="1290" y="92" width="400" height="616" as="geometry"/></mxCell>
+<mxCell id="gcost" value="OPERATIONS AND COST GUARDRAILS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7F9FB;strokeColor=#2E5C8A;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#2E5C8A;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="1308" y="552" width="362" height="142" as="geometry"/></mxCell>
+<mxCell id="legend" value="LEGEND" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7F8FA;strokeColor=#2E5C8A;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#2E5C8A;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="30" y="730" width="1660" height="108" as="geometry"/></mxCell>
+<mxCell id="sm" value="AWS Secrets Manager
+
+system of record;
+sits outside the cluster" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="48" y="142" width="175" height="62" as="geometry"/></mxCell>
+<mxCell id="eso" value="External Secrets
+Operator
+
+controlled synchronisation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1EEFA;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="239" y="142" width="175" height="62" as="geometry"/></mxCell>
+<mxCell id="k8ss" value="Kubernetes Secret
+
+delivery mechanism only,
+never the system of record" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1EEFA;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="48" y="224" width="175" height="62" as="geometry"/></mxCell>
+<mxCell id="wlp" value="Workload
+
+consumes natively" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="239" y="224" width="175" height="62" as="geometry"/></mxCell>
+<mxCell id="podid" value="EKS Pod Identity
+
+role trust names one generic
+EKS service principal" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="48" y="322" width="175" height="66" as="geometry"/></mxCell>
+<mxCell id="role" value="Least-privilege
+IAM role
+
+one per workload,
+durable across clusters" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="239" y="322" width="175" height="76" as="geometry"/></mxCell>
+<mxCell id="ssm" value="AWS Systems Manager Parameter Store
+
+non-sensitive runtime configuration only; explicitly not the secret store" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="48" y="448" width="366" height="62" as="geometry"/></mxCell>
+<mxCell id="idc3" value="AWS IAM Identity Center
+
+MFA at sign-in; ReadOnly or Administrator permission set;
+short-lived console and CLI credentials;
+no long-lived human access keys, bootstrap included" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="48" y="516" width="366" height="76" as="geometry"/></mxCell>
+<mxCell id="tf3" value="Terraform and AWS APIs
+
+owner-executed; automatic apply remains unapproved" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3EEFB;strokeColor=#7B42BC;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="48" y="606" width="366" height="56" as="geometry"/></mxCell>
+<mxCell id="wsig" value="Workload signals
+
+OpenTelemetry instrumentation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1EEFA;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="468" y="162" width="190" height="58" as="geometry"/></mxCell>
+<mxCell id="psig" value="Platform signals
+
+cluster, node, workload state" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDF3F9;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="672" y="162" width="182" height="58" as="geometry"/></mxCell>
+<mxCell id="otel" value="OpenTelemetry Collector gateway
+
+one per environment and the only entry point for workload telemetry;
+enriches with environment, service and artifact digest" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1EEFA;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="468" y="246" width="386" height="74" as="geometry"/></mxCell>
+<mxCell id="prom" value="Metrics
+
+Prometheus
+(decided)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="468" y="344" width="122" height="74" as="geometry"/></mxCell>
+<mxCell id="loki" value="Logs
+
+Loki-class store;
+Loki is the candidate" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="600" y="344" width="122" height="74" as="geometry"/></mxCell>
+<mxCell id="trace" value="Traces
+
+Jaeger or Tempo;
+Tempo provisional" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="732" y="344" width="122" height="74" as="geometry"/></mxCell>
+<mxCell id="graf" value="Grafana
+
+environment health, workload golden signals, deployed-version view" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1EEFA;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="468" y="444" width="386" height="58" as="geometry"/></mxCell>
+<mxCell id="vres" value="Validation results
+
+digests, read-backs, reconciliation records" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="908" y="148" width="344" height="58" as="geometry"/></mxCell>
+<mxCell id="rawe" value="Raw evidence
+
+unsanitized, captured before teardown" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="908" y="232" width="344" height="58" as="geometry"/></mxCell>
+<mxCell id="s3e" value="Amazon S3 evidence destination
+
+versioned; object versions are its only recovery path" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="908" y="316" width="344" height="64" as="geometry"/></mxCell>
+<mxCell id="sane" value="Sanitized evidence
+
+redacted under the public-artifact rules" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="908" y="406" width="344" height="58" as="geometry"/></mxCell>
+<mxCell id="ptgt" value="cloud-platform-reference
+
+public-reference publication target;
+51 local commits, no remote configured,
+publication still owner-gated
+[NOT LIVE]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBEEF1;strokeColor=#B0475A;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="908" y="490" width="344" height="82" as="geometry"/></mxCell>
+<mxCell id="lc0" value="1. Approve window
+
+purpose, cost, teardown recorded first" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1308" y="142" width="178" height="72" as="geometry"/></mxCell>
+<mxCell id="lc1" value="2. Terraform create
+
+from authoritative sources" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1498" y="142" width="178" height="72" as="geometry"/></mxCell>
+<mxCell id="lc2" value="3. GitOps reconcile
+
+Argo CD applies desired state" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1308" y="226" width="178" height="72" as="geometry"/></mxCell>
+<mxCell id="lc3" value="4. Validate
+
+tests and checks that exist" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1498" y="226" width="178" height="72" as="geometry"/></mxCell>
+<mxCell id="lc4" value="5. Capture evidence
+
+raw and sanitized" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1308" y="310" width="178" height="72" as="geometry"/></mxCell>
+<mxCell id="lc5" value="6. Destroy (reverse order)
+
+ephemeral resources only" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1498" y="310" width="178" height="72" as="geometry"/></mxCell>
+<mxCell id="lc6" value="7. Orphan scan
+
+verified clean in Phase 4b and Phase 5" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1308" y="394" width="178" height="72" as="geometry"/></mxCell>
+<mxCell id="lc7" value="8. Rebuild next window
+
+foundation is reused, not rebuilt" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1498" y="394" width="178" height="72" as="geometry"/></mxCell>
+<mxCell id="p2_t0" value="Pod Identity was selected because its role trust names one generic EKS service principal, so IAM roles stay durable and an ephemeral cluster only recreates lightweight associations." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="48" y="392" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t1" value="Designed and measured clusterlessly. Runtime validation on EKS has not happened and no window is authorized. Clusterless measurement is not EKS runtime proof." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#8A5A00;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="468" y="108" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t2" value="The trace backend is deliberately unselected: ADR-0010 defers the Jaeger-versus-Tempo choice to implementation evidence, and current state keeps Tempo as a provisional candidate only." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="468" y="518" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t3" value="One validated investigation exercise, a deliberately induced fault traced from alert to root cause to verified recovery, is required before this model counts as implemented. It has not run." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="468" y="572" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t4" value="AWS-native audit and control-plane records stay in their AWS services. Neither side ingests the other, and no signal is stored twice." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="468" y="638" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t5" value="Evidence is exported before teardown, and only sanitized evidence is ever published. The repository is not yet published, so the publication step is a target rather than a completed state." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="908" y="582" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t6" value="Exercised end to end across closed runtime windows RW-1 and RW-2. Ephemeral runtime resources are removed after every approved window; persistent foundation resources are intentionally retained, so the platform never claims to leave nothing behind." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="1308" y="486" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t7" value="Approved runtime window discipline" style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="1322" y="578" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t8" value="VALIDATED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#1D6F42;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1510" y="578" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t9" value="Mandatory teardown after each window" style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="1322" y="595" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t10" value="VALIDATED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#1D6F42;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1510" y="595" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t11" value="Budget alerts, notify only" style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="1322" y="612" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t12" value="VALIDATED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#1D6F42;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1510" y="612" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t13" value="Six mandatory tag keys" style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="1322" y="629" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t14" value="VALIDATED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#1D6F42;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1510" y="629" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t15" value="Orphan-resource verification" style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="1322" y="646" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t16" value="VALIDATED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#1D6F42;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1510" y="646" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t17" value="Automated destructive cost response" style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="1322" y="663" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t18" value="DEFERRED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#5B4780;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1510" y="663" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t19" value="Data / artifact flow" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="48" y="764" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t20" value="Control / identity flow  (dashed)" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="48" y="784" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t21" value="Telemetry / evidence flow  (dotted)" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="48" y="804" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t22" value="VALIDATED  proven by captured evidence, at the badge's stated scope" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="280" y="764" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t23" value="PARTIAL  capability exists for part of the fleet only" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="280" y="784" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t24" value="NOT LIVE  implemented and validated in closed windows; no runtime now" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="280" y="804" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t25" value="PLANNED  accepted or designed, not yet exercised" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="790" y="764" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t26" value="RETAINED  survives environment teardown by design" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="790" y="784" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t27" value="DEFERRED  decision deliberately left open" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="790" y="804" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_e0" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="sm" target="eso"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p2_e1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="eso" target="k8ss"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p2_e2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="k8ss" target="wlp"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p2_e3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;dashed=1;dashPattern=7 4;" edge="1" parent="1" source="podid" target="role"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p2_e4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;dashed=1;dashPattern=7 4;" edge="1" parent="1" source="idc3" target="tf3"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p2_e5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6B4FBB;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;dashed=1;dashPattern=2 4;" edge="1" parent="1" source="wsig" target="otel"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p2_e6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6B4FBB;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;dashed=1;dashPattern=2 4;" edge="1" parent="1" source="psig" target="otel"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p2_e7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6B4FBB;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;dashed=1;dashPattern=2 4;" edge="1" parent="1" source="otel" target="prom"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p2_e8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6B4FBB;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;dashed=1;dashPattern=2 4;" edge="1" parent="1" source="otel" target="loki"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p2_e9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6B4FBB;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;dashed=1;dashPattern=2 4;" edge="1" parent="1" source="otel" target="trace"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p2_e10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6B4FBB;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;dashed=1;dashPattern=2 4;" edge="1" parent="1" source="prom" target="graf"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p2_e11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6B4FBB;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;dashed=1;dashPattern=2 4;" edge="1" parent="1" source="loki" target="graf"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p2_e12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6B4FBB;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;dashed=1;dashPattern=2 4;" edge="1" parent="1" source="trace" target="graf"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p2_e13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6B4FBB;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;dashed=1;dashPattern=2 4;" edge="1" parent="1" source="vres" target="rawe"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p2_e14" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6B4FBB;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;dashed=1;dashPattern=2 4;" edge="1" parent="1" source="rawe" target="s3e"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p2_e15" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6B4FBB;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;dashed=1;dashPattern=2 4;" edge="1" parent="1" source="s3e" target="sane"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p2_e16" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6B4FBB;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;dashed=1;dashPattern=2 4;" edge="1" parent="1" source="sane" target="ptgt"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p2_wm" value="Tuhin Zaman" style="text;html=1;align=right;verticalAlign=middle;fontSize=12;fontColor=#9AA4AF;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="1460" y="860" width="220" height="22" as="geometry"/></mxCell>
+</root></mxGraphModel></diagram>
+<diagram id="page4" name="Full Flow — High Level">
+<mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1720" pageHeight="1112" math="0" shadow="0">
+<root><mxCell id="0"/><mxCell id="1" parent="0"/>
+<mxCell id="p3_title" value="4. Full Flow — High Level" style="text;html=1;align=left;verticalAlign=middle;fontSize=24;fontStyle=1;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="36" y="24" width="1640" height="34" as="geometry"/></mxCell>
+<mxCell id="p3_sub" value="The conservative overview. Every badge is scoped to what current evidence supports." style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="36" y="58" width="1640" height="20" as="geometry"/></mxCell>
+<mxCell id="c1" value="SOURCE AND DELIVERY" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBFCFD;strokeColor=#2E5C8A;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#2E5C8A;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="30" y="96" width="390" height="512" as="geometry"/></mxCell>
+<mxCell id="c2" value="AWS PLATFORM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FDFBF9;strokeColor=#EC7211;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#EC7211;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="440" y="96" width="420" height="512" as="geometry"/></mxCell>
+<mxCell id="c3" value="OBSERVABILITY AND EVIDENCE" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBFAFE;strokeColor=#6B4FBB;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#6B4FBB;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="880" y="96" width="400" height="512" as="geometry"/></mxCell>
+<mxCell id="c4" value="LIFECYCLE" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7FBF8;strokeColor=#1D6F42;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#1D6F42;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="1300" y="96" width="390" height="512" as="geometry"/></mxCell>
+<mxCell id="stat" value="CURRENT IMPLEMENTATION STATUS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFBF3;strokeColor=#B7791F;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#B7791F;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="30" y="632" width="1660" height="164" as="geometry"/></mxCell>
+<mxCell id="flow" value="END-TO-END FLOW  -  TARGET SEQUENCE" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7F8FA;strokeColor=#2E5C8A;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#2E5C8A;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="30" y="818" width="1660" height="96" as="geometry"/></mxCell>
+<mxCell id="legend" value="LEGEND" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7F8FA;strokeColor=#2E5C8A;strokeWidth=1.5;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fontSize=13;fontStyle=1;fontColor=#2E5C8A;fontFamily=Helvetica;arcSize=6;" vertex="1" parent="1"><mxGeometry x="30" y="986" width="1660" height="108" as="geometry"/></mxCell>
+<mxCell id="f_wl" value="cloud-platform-workload
+
+GitLab source for 17 justified components" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBEEF1;strokeColor=#B0475A;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="48" y="146" width="354" height="60" as="geometry"/></mxCell>
+<mxCell id="f_ci" value="GitLab CI/CD
+
+lint, tests where they exist, build, Trivy HIGH/CRITICAL
+gate, CycloneDX SBOM, container health check
+[PARTIAL]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDF3F9;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="48" y="226" width="354" height="76" as="geometry"/></mxCell>
+<mxCell id="f_sts" value="AWS STS via GitLab OIDC
+
+short-lived credentials; no static keys
+[VALIDATED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="48" y="322" width="354" height="58" as="geometry"/></mxCell>
+<mxCell id="f_ecr" value="Amazon ECR
+
+immutable tags; the digest is the artifact identity
+3 service repositories exist, not 17
+[PARTIAL]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="48" y="400" width="354" height="66" as="geometry"/></mxCell>
+<mxCell id="f_gitops" value="cloud-platform-gitops
+
+desired state; digest-only changes
+[NOT LIVE]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBEEF1;strokeColor=#B0475A;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="48" y="486" width="354" height="58" as="geometry"/></mxCell>
+<mxCell id="f_acct" value="Dedicated AWS account, us-east-1
+
+one account; Organizations is plumbing only" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="458" y="146" width="384" height="56" as="geometry"/></mxCell>
+<mxCell id="f_edge" value="Public DNS, certificates, load balancing
+
+Route 53 and ACM selected for the domain phase
+[PLANNED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="458" y="218" width="384" height="62" as="geometry"/></mxCell>
+<mxCell id="f_vpc" value="Per-environment VPC, two AZs
+
+private worker nodes, one NAT Gateway,
+S3 gateway endpoint
+[NOT LIVE]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="458" y="296" width="384" height="68" as="geometry"/></mxCell>
+<mxCell id="f_eks" value="Amazon EKS
+
+AWS-managed control plane outside the VPC
+[NOT LIVE]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="458" y="380" width="384" height="62" as="geometry"/></mxCell>
+<mxCell id="f_argo" value="Argo CD
+
+one instance per environment cluster
+[NOT LIVE]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1EEFA;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="458" y="458" width="384" height="58" as="geometry"/></mxCell>
+<mxCell id="f_found" value="Persistent foundation
+
+state, registry, secrets, IAM roles, evidence store
+[RETAINED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F6FAF8;strokeColor=#2C6049;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="458" y="534" width="384" height="56" as="geometry"/></mxCell>
+<mxCell id="f_otel" value="OpenTelemetry Collector gateway
+
+one per environment; the only telemetry entry point
+[PLANNED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1EEFA;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="898" y="146" width="364" height="62" as="geometry"/></mxCell>
+<mxCell id="f_back" value="Metrics, logs, traces
+
+Prometheus; Loki-class store;
+trace backend still deferred
+[PLANNED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="898" y="224" width="364" height="66" as="geometry"/></mxCell>
+<mxCell id="f_graf" value="Grafana views
+
+health, golden signals, deployed version
+[PLANNED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="898" y="306" width="364" height="52" as="geometry"/></mxCell>
+<mxCell id="f_s3" value="S3 evidence destination
+
+versioned; evidence captured before teardown
+[VALIDATED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="898" y="374" width="364" height="62" as="geometry"/></mxCell>
+<mxCell id="f_pub" value="Public reference repository
+
+sanitized evidence and documentation;
+publication target, not yet published
+[NOT LIVE]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBEEF1;strokeColor=#B0475A;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="898" y="452" width="364" height="68" as="geometry"/></mxCell>
+<mxCell id="f_lc0" value="1.  Approve window" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1318" y="144" width="354" height="44" as="geometry"/></mxCell>
+<mxCell id="f_lc1" value="2.  Terraform create" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1318" y="198" width="354" height="44" as="geometry"/></mxCell>
+<mxCell id="f_lc2" value="3.  GitOps reconcile" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1318" y="252" width="354" height="44" as="geometry"/></mxCell>
+<mxCell id="f_lc3" value="4.  Validate" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1318" y="306" width="354" height="44" as="geometry"/></mxCell>
+<mxCell id="f_lc4" value="5.  Capture evidence" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1318" y="360" width="354" height="44" as="geometry"/></mxCell>
+<mxCell id="f_lc5" value="6.  Destroy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1318" y="414" width="354" height="44" as="geometry"/></mxCell>
+<mxCell id="f_lc6" value="7.  Orphan scan" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1318" y="468" width="354" height="44" as="geometry"/></mxCell>
+<mxCell id="f_lc7" value="8.  Rebuild next window" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1318" y="522" width="354" height="44" as="geometry"/></mxCell>
+<mxCell id="fl0" value="Commit to Git" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=11;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="46" y="852" width="168" height="46" as="geometry"/></mxCell>
+<mxCell id="fl1" value="Build once in CI" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=11;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="228" y="852" width="168" height="46" as="geometry"/></mxCell>
+<mxCell id="fl2" value="Scan and SBOM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=11;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="410" y="852" width="168" height="46" as="geometry"/></mxCell>
+<mxCell id="fl3" value="Publish by digest" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=11;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="592" y="852" width="168" height="46" as="geometry"/></mxCell>
+<mxCell id="fl4" value="Record digest in Git" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=11;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="774" y="852" width="168" height="46" as="geometry"/></mxCell>
+<mxCell id="fl5" value="Argo CD reconciles" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=11;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="956" y="852" width="168" height="46" as="geometry"/></mxCell>
+<mxCell id="fl6" value="Traffic reaches workload" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=11;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1138" y="852" width="168" height="46" as="geometry"/></mxCell>
+<mxCell id="fl7" value="Telemetry and evidence" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=11;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1320" y="852" width="168" height="46" as="geometry"/></mxCell>
+<mxCell id="fl8" value="Destroy after window" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=11;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1502" y="852" width="168" height="46" as="geometry"/></mxCell>
+<mxCell id="p3_t0" value="VALIDATED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#1D6F42;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1500" y="158" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t1" value="VALIDATED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#1D6F42;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1500" y="212" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t2" value="VALIDATED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#1D6F42;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1500" y="266" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t3" value="VALIDATED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#1D6F42;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1500" y="320" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t4" value="VALIDATED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#1D6F42;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1500" y="374" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t5" value="VALIDATED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#1D6F42;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1500" y="428" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t6" value="VALIDATED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#1D6F42;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1500" y="482" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t7" value="VALIDATED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#1D6F42;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1500" y="536" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t8" value="Validated across closed runtime windows RW-1 and RW-2. Not currently running." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="1318" y="580" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t9" value="CI/CD:  3 of 17 justified services have a validated build, scan, SBOM and health path (checkout, shipping, quote).  3 of 17 are lint-only or partial (frontend, payment, product-catalog).  11 of 17 are not yet wired." style="text;html=1;align=left;verticalAlign=top;fontSize=12.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="52" y="660" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t10" value="Coverage for all 17 justified services is mandatory under Accepted ADR-0014 and is incomplete today. Language-tier templates are an implementation mechanism, never a scope gate." style="text;html=1;align=left;verticalAlign=top;fontSize=12.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="52" y="698" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t11" value="Runtime is not live and no window is currently authorized.  0 publish jobs have been executed in this publication epoch, so no fleet-wide image publication and no immutable digest evidence exists.  Promotion and rollback are accepted architecture and have not been exercised." style="text;html=1;align=left;verticalAlign=top;fontSize=12.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="52" y="736" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t12" value="The sequence above is the target flow, not a statement that it runs today; the status panel states which segments are proven.  Ephemeral runtime resources are removed after every approved window, and persistent foundation resources are intentionally retained.  The platform is the product, and AstroShop is the workload used to validate it." style="text;html=1;align=left;verticalAlign=top;fontSize=11.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="52" y="926" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t13" value="Data / artifact flow" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="48" y="1020" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t14" value="Control / identity flow  (dashed)" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="48" y="1040" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t15" value="Telemetry / evidence flow  (dotted)" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="48" y="1060" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t16" value="VALIDATED  proven by captured evidence, at the badge's stated scope" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="280" y="1020" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t17" value="PARTIAL  capability exists for part of the fleet only" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="280" y="1040" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t18" value="NOT LIVE  implemented and validated in closed windows; no runtime now" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="280" y="1060" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t19" value="PLANNED  accepted or designed, not yet exercised" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="790" y="1020" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t20" value="RETAINED  survives environment teardown by design" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="790" y="1040" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t21" value="DEFERRED  decision deliberately left open" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="790" y="1060" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_e0" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="f_wl" target="f_ci"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p3_e1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="f_ci" target="f_sts"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p3_e2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="f_sts" target="f_ecr"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p3_e3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="f_ecr" target="f_gitops"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p3_e4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="f_edge" target="f_vpc"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p3_e5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="f_vpc" target="f_eks"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p3_e6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="f_eks" target="f_argo"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p3_e7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6B4FBB;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;dashed=1;dashPattern=2 4;" edge="1" parent="1" source="f_otel" target="f_back"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p3_e8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6B4FBB;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;dashed=1;dashPattern=2 4;" edge="1" parent="1" source="f_back" target="f_graf"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p3_e9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#6B4FBB;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;dashed=1;dashPattern=2 4;" edge="1" parent="1" source="f_s3" target="f_pub"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p3_e10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="fl0" target="fl1"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p3_e11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="fl1" target="fl2"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p3_e12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="fl2" target="fl3"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p3_e13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="fl3" target="fl4"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p3_e14" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="fl4" target="fl5"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p3_e15" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="fl5" target="fl6"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p3_e16" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="fl6" target="fl7"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p3_e17" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5A6672;strokeWidth=1.5;endArrow=block;endFill=1;endSize=6;fontSize=10;fontColor=#5A6672;fontFamily=Helvetica;" edge="1" parent="1" source="fl7" target="fl8"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="p3_wm" value="Tuhin Zaman" style="text;html=1;align=right;verticalAlign=middle;fontSize=12;fontColor=#9AA4AF;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="1460" y="1072" width="220" height="22" as="geometry"/></mxCell>
+</root></mxGraphModel></diagram>
+</mxfile>
