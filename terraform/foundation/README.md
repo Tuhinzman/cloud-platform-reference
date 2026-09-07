@@ -138,10 +138,11 @@ declares Amazon ECR a persistent shared foundation: one repository per owned
 service, created when that service enters the implemented delivery path.
 checkout is the approved first-digest service. This root now declares four
 repositories: the three `astroshop/` application repositories, and one
-`platform/` repository for the mirrored OpenTelemetry Collector image. Only
-`astroshop/checkout` and its lifecycle policy have been applied.
-`astroshop/shipping`, `astroshop/quote` and `platform/opentelemetry-collector`
-are declarations that have not been planned or applied and do not exist in AWS.
+`platform/` repository for the mirrored OpenTelemetry Collector image. All four
+exist in AWS. `astroshop/checkout`, `astroshop/shipping` and `astroshop/quote`
+each carry a lifecycle policy. `platform/opentelemetry-collector` deliberately
+carries none and is excluded from the CI push policy, because a mirrored image
+is not published by the workload pipeline.
 
 The `astroshop/` prefix is the workload-artifact naming convention, covering the
 services this project builds from source. The `platform/` prefix keeps a

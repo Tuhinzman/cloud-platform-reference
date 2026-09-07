@@ -16,7 +16,7 @@ When this project is complete, the repository should stand on its own. A new eng
 
 Decisions will be recorded alongside the alternatives that were rejected, so the platform can be maintained, extended, or replaced by someone who was not there when it was designed. Claims will rest on captured evidence. The whole thing should finish without unnecessary complexity or uncontrolled cloud cost, because restraint is part of the demonstration.
 
-None of this exists yet. This charter describes the intended outcome, and the rest of the repository has to earn it.
+This charter describes the intended outcome, and the rest of the repository has to earn it.
 
 ## Engineering Approach
 

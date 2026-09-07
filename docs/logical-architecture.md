@@ -233,7 +233,7 @@ Twelve decision areas were expected. All are settled, and the record that settle
 | Progressive-release mechanism | [ADR-0009](decisions/0009-define-the-software-delivery-model.md), which selects rolling updates and records that traffic-directed release is deferred rather than claimed |
 | Observability implementation and alert destination | [ADR-0010](decisions/0010-define-the-observability-model.md) |
 | Backup and recovery implementation | [ADR-0011](decisions/0011-define-the-backup-and-recovery-model.md) |
-| Workload application selection | [ADR-0012](decisions/0012-formalize-the-reference-workload.md) |
+| Workload application selection | [ADR-0012](decisions/0012-formalize-the-reference-workload.md), [ADR-0014](decisions/0014-expand-the-validated-implementation-workload-scope.md) |
 | Operations model and cost guardrails | [ADR-0013](decisions/0013-define-operations-and-cost-guardrails.md) |
 
 Cost attribution is deliberately not a separate decision record at this stage: it is an attribution convention carried in the platform definitions, a review duty of Platform Operations, and an evidence obligation under REQ-019.
