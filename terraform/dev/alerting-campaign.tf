@@ -14,9 +14,12 @@
 # credential endpoint the pod_identity_agent addon provides.
 #
 # The email endpoint is a private execution input: a variable with no committed
-# value, marked sensitive so plan and apply output redact it. The subscription
-# resource is created only when the operator enables it at execution time, so
-# this root plans and validates without any address present.
+# value, marked sensitive so plan and apply output redact it. Sensitive does
+# not encrypt or redact the remote state: the endpoint is stored there in
+# clear, inside the private encrypted-at-rest state bucket, and raw state or
+# `terraform state show` output is never used as evidence for this field. The
+# subscription resource is created only when the operator enables it at
+# execution time, so this root plans and validates without any address present.
 # ---------------------------------------------------------------------------
 
 resource "aws_sns_topic" "alerting" {
