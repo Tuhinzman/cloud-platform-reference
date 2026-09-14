@@ -96,7 +96,7 @@ unused and available. Private subnets are the ones that grow, because pods and
 nodes consume addresses from them, so the room was left on that side
 deliberately.
 
-Every range is written out in `main.tf` as a literal. Deriving them with
+Every range is written out in `networking.tf` as a literal. Deriving them with
 `cidrsubnet()` would mean a reviewer has to evaluate the expression before
 knowing what the plan will create, and an address plan is worth reading
 directly.
@@ -405,6 +405,18 @@ and recovery-window behaviour, which
 requires to be verified, has not been exercised: the seven-day window is
 configured and nothing more.
 
+### Alerting
+
+`alerting-campaign.tf` carries the environment's alert-delivery leg: a notification
+topic, an email subscription created only when `alerting_email_subscription_enabled`
+is true, and the role and policy that let the alerting engine publish to that topic
+through a Pod Identity association on its service account, so no credential is
+mounted into the cluster. The endpoint address is a private input supplied through
+`terraform.tfvars` and never enters the repository or the evidence. These resources
+exist for an alerting window and are destroyed with its runtime. The delivery path
+has been exercised end to end; what that proved and did not is stated in the
+repository README.
+
 ## What this root does not create
 
 No security group, no network ACL, no VPC flow logs, no load balancer, no
@@ -449,14 +461,15 @@ instance size.
 
 ## Lifecycle and current state
 
-This root declares 38 resources, and they are not all meant to exist at the same
-time. Three classes are worth separating.
+This root declares 43 resources, and they are not all meant to exist at the same
+time. Four classes are worth separating.
 
 | Class | Count | What it is |
 |---|---|---|
-| Declared | 38 | Everything in `main.tf` |
+| Declared | 43 | Everything across the `.tf` files in this root |
 | Retained | 21 | The network baseline plus the environment's identity, secret and configuration resources. Present between approved windows |
-| Runtime | 17 | The NAT gateway and its Elastic IP, the private default route, the cluster and node service roles with their four policy attachments, the cluster, the launch template, the node group, the four add-ons, and the Pod Identity association |
+| Runtime | 18 | The NAT gateway and its Elastic IP, the private default route, the cluster and node service roles with their four policy attachments, the cluster, the launch template, the node group, the four add-ons, and the two Pod Identity associations |
+| Alerting campaign | 4 | The notification topic, its subscription, and the role and policy that let the alerting engine publish to it. Created before an alerting window and destroyed with its runtime; see Alerting below |
 
 The retained figure is what Terraform state lists, and what the plan taken after
 the last teardown converged on. It is a statement about managed state rather than
@@ -478,17 +491,19 @@ destroyed more than once, each time from a reviewed plan, with an orphan check
 after teardown and a following plan that reproduced the same 17-resource runtime
 boundary. Private egress was verified from a pod on the private node fleet, which
 resolved DNS and reached an external HTTPS endpoint from a source address
-matching the NAT gateway. A GitOps controller, a secret-synchronisation
-controller and one application service have run on a rebuilt cluster, and that
-service's image was pulled from the project's private registry by digest.
+matching the NAT gateway. Across four windows, Argo CD, the secret-synchronisation
+controller, a three-service workload slice and the four-component observability
+stack have run on rebuilt clusters, and each service's image was pulled from the
+project's private registry by digest.
 `terraform fmt`, `terraform validate` and TFLint have been run against this
 revision and passed.
 
-**What has not.** No ingress, TLS termination, load balancer or observability
-stack has ever existed on this cluster, so no reachability, TLS or capacity claim
-is made. Inbound reachability and NetworkPolicy enforcement are untested. What
-has run is one service of the AstroShop fleet rather than the fleet, so nothing
-here measures this node group under the full application. The state-backend
+**What has not.** No ingress, TLS termination or load balancer has ever existed
+on this cluster, so no reachability, TLS or capacity claim is made. Inbound
+reachability and NetworkPolicy enforcement are untested. What has run is a
+three-service slice of the AstroShop fleet rather than the fleet, so nothing here
+measures this node group under the full application. What the observability stack
+proved and did not is stated in the repository README. The state-backend
 locking contention test, the Terraform state recovery exercise, and the secret
 deletion and recovery-window verification have not run.
 
