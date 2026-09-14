@@ -3,10 +3,7 @@ variable "evidence_bucket_name" {
   type        = string
 
   validation {
-    # Periods are legal in a bucket name but break the wildcard certificate on
-    # virtual-hosted-style HTTPS requests, and the bucket policy in main.tf
-    # makes TLS mandatory, so they are excluded here rather than left to fail
-    # later. The rest of the pattern is the S3 naming rule.
+    # Periods are legal in S3 names but break TLS on virtual-hosted-style requests.
     condition     = can(regex("^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$", var.evidence_bucket_name))
     error_message = "evidence_bucket_name must be 3 to 63 characters using lowercase letters, digits and hyphens only, starting and ending with a letter or digit."
   }
@@ -17,9 +14,7 @@ variable "gitlab_project_id" {
   type        = number
 
   validation {
-    # A whole positive number. The sub claim is matched as an exact string, so a
-    # fractional or negative value would render a condition that never matches,
-    # and the role would silently trust nothing.
+    # The sub claim is matched exactly, so a fractional ID would match nothing.
     condition     = var.gitlab_project_id > 0 && floor(var.gitlab_project_id) == var.gitlab_project_id
     error_message = "gitlab_project_id must be the positive whole number GitLab assigns to the project, digits only."
   }

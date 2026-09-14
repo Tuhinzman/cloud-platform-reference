@@ -3,10 +3,7 @@ variable "state_bucket_name" {
   type        = string
 
   validation {
-    # Periods are legal in a bucket name but break the wildcard certificate on
-    # virtual-hosted-style HTTPS requests, and the bucket policy in main.tf
-    # makes TLS mandatory, so they are excluded here rather than left to fail
-    # later. The rest of the pattern is the S3 naming rule.
+    # Periods are legal in S3 names but break TLS on virtual-hosted-style requests.
     condition     = can(regex("^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$", var.state_bucket_name))
     error_message = "state_bucket_name must be 3 to 63 characters using lowercase letters, digits and hyphens only, starting and ending with a letter or digit."
   }
