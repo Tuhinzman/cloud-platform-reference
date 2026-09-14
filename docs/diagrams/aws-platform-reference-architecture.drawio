@@ -69,7 +69,7 @@ digest is the identity
 
 merge request against
 desired state
-[PLANNED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBEEF1;strokeColor=#B0475A;strokeWidth=1.5;fontSize=13;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="770" y="254" width="180" height="78" as="geometry"/></mxCell>
+[PARTIAL]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBEEF1;strokeColor=#B0475A;strokeWidth=1.5;fontSize=13;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="770" y="254" width="180" height="78" as="geometry"/></mxCell>
 <mxCell id="gitops" value="cloud-platform-gitops
 
 GitLab desired state
@@ -170,8 +170,8 @@ Helm rollback is not used" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF
 browser entry" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1B2733;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="50" y="140" width="130" height="68" as="geometry"/></mxCell>
 <mxCell id="dns" value="Public DNS
 
-Route 53 selected for the
-domain phase (Phase 9)
+Route 53 selected for a
+later domain phase
 [PLANNED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="200" y="140" width="165" height="68" as="geometry"/></mxCell>
 <mxCell id="cert" value="Managed certificates
 
@@ -221,7 +221,7 @@ public and private access enabled
 <mxCell id="live" value="Runtime state
 
 No runtime is live. No window is currently
-authorized. Four windows are closed.
+authorized. Every opened window is closed.
 [NOT LIVE]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F2F4F6;strokeColor=#48535F;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="410" y="700" width="300" height="74" as="geometry"/></mxCell>
 <mxCell id="pf0" value="Terraform state backend
 
@@ -346,7 +346,7 @@ Prometheus
 (decided)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="468" y="344" width="122" height="74" as="geometry"/></mxCell>
 <mxCell id="loki" value="Logs
 
-Loki-class store;
+Loki;
 Loki is the candidate" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="600" y="344" width="122" height="74" as="geometry"/></mxCell>
 <mxCell id="trace" value="Traces
 
@@ -369,10 +369,8 @@ versioned; object versions are its only recovery path" style="rounded=1;whiteSpa
 redacted under the public-artifact rules" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2E5C8A;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="908" y="406" width="344" height="58" as="geometry"/></mxCell>
 <mxCell id="ptgt" value="cloud-platform-reference
 
-public-reference publication target;
-51 local commits, no remote configured,
-publication still owner-gated
-[NOT LIVE]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBEEF1;strokeColor=#B0475A;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="908" y="490" width="344" height="82" as="geometry"/></mxCell>
+published on GitHub;
+documentation and validation summary" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBEEF1;strokeColor=#B0475A;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="908" y="490" width="344" height="82" as="geometry"/></mxCell>
 <mxCell id="lc0" value="1. Approve window
 
 purpose, cost, teardown recorded first" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1308" y="142" width="178" height="72" as="geometry"/></mxCell>
@@ -391,9 +389,9 @@ raw and sanitized" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;str
 <mxCell id="lc5" value="6. Destroy (reverse order)
 
 ephemeral resources only" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1498" y="310" width="178" height="72" as="geometry"/></mxCell>
-<mxCell id="lc6" value="7. Orphan scan
+<mxCell id="lc6" value="7. Orphan census
 
-verified clean in Phase 4b and Phase 5" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1308" y="394" width="178" height="72" as="geometry"/></mxCell>
+verified clean after every teardown" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1308" y="394" width="178" height="72" as="geometry"/></mxCell>
 <mxCell id="lc7" value="8. Rebuild next window
 
 foundation is reused, not rebuilt" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1498" y="394" width="178" height="72" as="geometry"/></mxCell>
@@ -402,8 +400,8 @@ foundation is reused, not rebuilt" style="rounded=1;whiteSpace=wrap;html=1;fillC
 <mxCell id="p2_t2" value="The trace backend is deliberately unselected: ADR-0010 defers the Jaeger-versus-Tempo choice to implementation evidence, and current state keeps Tempo as a provisional candidate only." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="468" y="518" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p2_t3" value="One validated investigation exercise, a deliberately induced fault traced from alert to root cause to verified recovery, is required before this model counts as implemented. It has now run." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="468" y="572" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p2_t4" value="AWS-native audit and control-plane records stay in their AWS services. Neither side ingests the other, and no signal is stored twice." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="468" y="638" width="320" height="40" as="geometry"/></mxCell>
-<mxCell id="p2_t5" value="Evidence is exported before teardown, and only sanitized evidence is ever published. The repository is not yet published, so the publication step is a target rather than a completed state." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="908" y="582" width="320" height="40" as="geometry"/></mxCell>
-<mxCell id="p2_t6" value="Exercised end to end across closed runtime windows RW-1 and RW-2. Ephemeral runtime resources are removed after every approved window; persistent foundation resources are intentionally retained, so the platform never claims to leave nothing behind." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="1308" y="486" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t5" value="Evidence is exported before teardown, and only sanitized evidence is ever published. The repository is published, and its validation summary is the sanitized evidence surface." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="908" y="582" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p2_t6" value="Exercised end to end across every closed runtime window. Ephemeral runtime resources are removed after every approved window; persistent foundation resources are intentionally retained, so the platform never claims to leave nothing behind." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="1308" y="486" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p2_t7" value="Approved runtime window discipline" style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="1322" y="578" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p2_t8" value="VALIDATED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#1D6F42;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1510" y="578" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p2_t9" value="Mandatory teardown after each window" style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="1322" y="595" width="320" height="40" as="geometry"/></mxCell>
@@ -504,25 +502,24 @@ state, registry, secrets, IAM roles, evidence store
 <mxCell id="f_otel" value="OpenTelemetry Collector gateway
 
 one per environment; the only telemetry entry point
-[PLANNED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1EEFA;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="898" y="146" width="364" height="62" as="geometry"/></mxCell>
+[PARTIAL]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1EEFA;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="898" y="146" width="364" height="62" as="geometry"/></mxCell>
 <mxCell id="f_back" value="Metrics, logs, traces
 
-Prometheus; Loki-class store;
-trace backend still deferred
-[PLANNED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="898" y="224" width="364" height="66" as="geometry"/></mxCell>
+Prometheus, Loki, Tempo;
+final trace-backend selection open
+[PARTIAL]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="898" y="224" width="364" height="66" as="geometry"/></mxCell>
 <mxCell id="f_graf" value="Grafana views
 
 health, golden signals, deployed version
-[PLANNED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="898" y="306" width="364" height="52" as="geometry"/></mxCell>
+[PARTIAL]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6B4FBB;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="898" y="306" width="364" height="52" as="geometry"/></mxCell>
 <mxCell id="f_s3" value="S3 evidence destination
 
 versioned; evidence captured before teardown
 [VALIDATED]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="898" y="374" width="364" height="62" as="geometry"/></mxCell>
 <mxCell id="f_pub" value="Public reference repository
 
-sanitized evidence and documentation;
-publication target, not yet published
-[NOT LIVE]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBEEF1;strokeColor=#B0475A;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="898" y="452" width="364" height="68" as="geometry"/></mxCell>
+published on GitHub;
+documentation and validation summary" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FBEEF1;strokeColor=#B0475A;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="898" y="452" width="364" height="68" as="geometry"/></mxCell>
 <mxCell id="f_lc0" value="1.  Approve window" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1318" y="144" width="354" height="44" as="geometry"/></mxCell>
 <mxCell id="f_lc1" value="2.  Terraform create" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1318" y="198" width="354" height="44" as="geometry"/></mxCell>
 <mxCell id="f_lc2" value="3.  GitOps reconcile" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1D6F42;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1318" y="252" width="354" height="44" as="geometry"/></mxCell>
@@ -548,7 +545,7 @@ publication target, not yet published
 <mxCell id="p3_t5" value="VALIDATED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#1D6F42;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1500" y="428" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p3_t6" value="VALIDATED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#1D6F42;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1500" y="482" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p3_t7" value="VALIDATED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#1D6F42;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1500" y="536" width="320" height="40" as="geometry"/></mxCell>
-<mxCell id="p3_t8" value="Validated across four closed runtime windows. Not currently running." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="1318" y="580" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t8" value="Validated across the closed runtime windows. Not currently running." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="1318" y="580" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p3_t9" value="CI/CD:  3 of 17 justified services have a validated build, scan, SBOM and health path (checkout, shipping, quote).  3 of 17 are lint-only or partial (frontend, payment, product-catalog).  11 of 17 are not yet wired." style="text;html=1;align=left;verticalAlign=top;fontSize=12.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="52" y="660" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p3_t10" value="Coverage for all 17 justified services is mandatory under Accepted ADR-0014 and is incomplete today. Language-tier templates are an implementation mechanism, never a scope gate." style="text;html=1;align=left;verticalAlign=top;fontSize=12.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="52" y="698" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p3_t11" value="Runtime is not live and no window is currently authorized.  0 publish jobs have been executed in this publication epoch, so no fleet-wide image publication and no immutable digest evidence exists.  Promotion and rollback are accepted architecture and have not been exercised." style="text;html=1;align=left;verticalAlign=top;fontSize=12.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="52" y="736" width="320" height="40" as="geometry"/></mxCell>

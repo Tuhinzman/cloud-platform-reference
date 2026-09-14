@@ -35,7 +35,7 @@ place to start.
 |---|---|---|
 | **cloud-platform-reference** (this repository, GitHub) | Architecture, decisions, the Terraform that provisions AWS, implementation and validation documentation | Public |
 | [**cloud-platform-workload**](https://gitlab.com/tuinzaman/cloud-platform-workload) (GitLab) | The reference workload, its container builds and the CI/CD pipelines that build, scan and publish it: [`.gitlab-ci.yml`](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/.gitlab-ci.yml), [shared templates](https://gitlab.com/tuinzaman/cloud-platform-workload/-/tree/main/ci/templates), per-service `ci.yml` | Public |
-| **cloud-platform-gitops** (GitLab) | The authoritative desired state Argo CD reconciles: values layers and the image digest each environment runs | Private, because its pins carry live registry coordinates. The model it implements is documented here |
+| **cloud-platform-gitops** (GitLab) | The authoritative desired state Argo CD reconciles: values layers and the image digest each environment runs | Private, because its pins carry live registry coordinates. The model it implements is documented in [GitOps Delivery](docs/implementation/gitops-delivery.md) |
 
 The platform, meaning the Terraform, the CI templates, the GitOps desired state and the
 validation harness, is original to this project. The workload, AstroShop, is a derivation
@@ -100,12 +100,12 @@ deliberately does not, and what has been validated against AWS.
 
 The roots are applied in order, each from its own directory with a reviewed plan.
 Prerequisites are one dedicated AWS account, Terraform, and an operator identity as
-described in [operator access](docs/operator-access.md).
+described in [operator access](docs/implementation/operator-access.md).
 
 1. [terraform/bootstrap](terraform/bootstrap/README.md): the remote-state backend. Applied once with local state, then migrated.
 2. [terraform/foundation](terraform/foundation/README.md): resources that outlive every environment, meaning the evidence store, the container registry and the CI push identity.
 3. [terraform/dev](terraform/dev/README.md): the Dev environment, split into a retained baseline and a runtime created for each approved window and destroyed at its close.
-4. Cluster bootstrap and GitOps: Argo CD reconciles the private desired-state repository against the running cluster; the delivery model is in [ADR-0009](docs/decisions/0009-define-the-software-delivery-model.md).
+4. Cluster bootstrap and GitOps: Argo CD reconciles the private desired-state repository against the running cluster; the bootstrap order, the value layering and the digest pin are in [GitOps Delivery](docs/implementation/gitops-delivery.md), and the decision behind them in [ADR-0009](docs/decisions/0009-define-the-software-delivery-model.md).
 5. The workload is built and published by the [workload repository's pipelines](https://gitlab.com/tuinzaman/cloud-platform-workload) and deployed by digest through step 4.
 
 Every root reads its private inputs from an untracked `terraform.tfvars`; the tracked
@@ -113,6 +113,12 @@ Every root reads its private inputs from an untracked `terraform.tfvars`; the tr
 repositories requires the owner's account identifier, addresses, state or evidence to be
 understood or reproduced; the manual steps that remain are the owner merges the protected
 branches require.
+
+Implementation is explained in [docs/implementation](docs/implementation/): how a source
+change becomes a running container by digest ([GitOps Delivery](docs/implementation/gitops-delivery.md))
+and how an operator reaches the platform ([operator access](docs/implementation/operator-access.md)).
+Validation results are summarized once, in
+[docs/validation/runtime-validation.md](docs/validation/runtime-validation.md).
 
 Each platform topic follows the same documentation flow:
 
@@ -125,8 +131,11 @@ Validation → Evidence → Lessons Learned
 
 Architecture planning is complete: the foundation documents are in place and every
 decision record listed above is accepted. Implementation is under way and has passed
-first reconciliation. Four Dev runtime windows have been opened, validated, evidenced and
-destroyed. In the most recent two, six Argo CD applications reconciled Synced and Healthy
+first reconciliation. Six Dev runtime windows have been opened, evidenced and destroyed:
+the first validated the EKS runtime alone, one was aborted at its first gate on a measured
+defect, and four completed their validation scope; the per-window results are in
+[Runtime Validation](docs/validation/runtime-validation.md). In the most recent two, six Argo
+CD applications reconciled Synced and Healthy
 across the workload and its observability stack, a deliberately induced fault was applied
 and a governed restore returned the tree to its anchor, and each window closed with a
 zero-residual resource census.
@@ -252,10 +261,10 @@ fleet has not been deployed, rollback has not been exercised, promotion between
 environments has not been performed, and the Validation and Production-Validation
 environments have not been built at all.
 
-Evidence exists for what has been validated, and it is not published here. Raw evidence
-is retained outside this repository, and the sanitized subset that will support the
-claims in these pages goes through its own review rather than accumulating as
-implementation proceeds. Read every implementation statement in this repository as scoped
+Raw evidence is retained outside this repository. The sanitized summary that supports the
+claims in these pages is [Runtime Validation](docs/validation/runtime-validation.md): one
+row per window, what each capability has demonstrated, the recovery pattern, and the
+limitations. Read every implementation statement in this repository as scoped
 to what its own stated validation covers. None of it is a production-readiness claim: the
 [Project Charter](docs/project-charter.md) defines this as a production-inspired platform
 rather than a hosted service, and the limitations each decision record states still

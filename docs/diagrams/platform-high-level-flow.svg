@@ -96,18 +96,18 @@
 <rect x="898" y="146" width="4" height="62" rx="2" fill="#6B4FBB"/>
 <text x="1080.0" y="167" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">OpenTelemetry Collector gateway</text>
 <text x="1080.0" y="182" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">one per environment; the only telemetry entry point</text>
-<g><rect x="1187.0" y="137.0" width="65.0" height="17" rx="8.5" fill="#FDF3E3" stroke="#E8C98A" stroke-width="1"/><text x="1219.5" y="149.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#8A5A00" text-anchor="middle" letter-spacing="0.4">PLANNED</text></g>
+<g><rect x="1187.0" y="137.0" width="65.0" height="17" rx="8.5" fill="#E4F2F5" stroke="#A5D3DE" stroke-width="1"/><text x="1219.5" y="149.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#0B5C6E" text-anchor="middle" letter-spacing="0.4">PARTIAL</text></g>
 <rect x="898" y="224" width="364" height="66" rx="8" fill="#FFFFFF" stroke="#6B4FBB" stroke-width="1.5"/>
 <rect x="898" y="224" width="4" height="66" rx="2" fill="#6B4FBB"/>
 <text x="1080.0" y="245" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Metrics, logs, traces</text>
-<text x="1080.0" y="260" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Prometheus; Loki-class store;</text>
-<text x="1080.0" y="273" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">trace backend still deferred</text>
-<g><rect x="1187.0" y="215.0" width="65.0" height="17" rx="8.5" fill="#FDF3E3" stroke="#E8C98A" stroke-width="1"/><text x="1219.5" y="227.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#8A5A00" text-anchor="middle" letter-spacing="0.4">PLANNED</text></g>
+<text x="1080.0" y="260" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Prometheus, Loki, Tempo;</text>
+<text x="1080.0" y="273" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">final trace-backend selection open</text>
+<g><rect x="1187.0" y="215.0" width="65.0" height="17" rx="8.5" fill="#E4F2F5" stroke="#A5D3DE" stroke-width="1"/><text x="1219.5" y="227.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#0B5C6E" text-anchor="middle" letter-spacing="0.4">PARTIAL</text></g>
 <rect x="898" y="306" width="364" height="52" rx="8" fill="#FFFFFF" stroke="#6B4FBB" stroke-width="1.5"/>
 <rect x="898" y="306" width="4" height="52" rx="2" fill="#6B4FBB"/>
 <text x="1080.0" y="327" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Grafana views</text>
 <text x="1080.0" y="342" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">health, golden signals, deployed version</text>
-<g><rect x="1187.0" y="297.0" width="65.0" height="17" rx="8.5" fill="#FDF3E3" stroke="#E8C98A" stroke-width="1"/><text x="1219.5" y="309.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#8A5A00" text-anchor="middle" letter-spacing="0.4">PLANNED</text></g>
+<g><rect x="1187.0" y="297.0" width="65.0" height="17" rx="8.5" fill="#E4F2F5" stroke="#A5D3DE" stroke-width="1"/><text x="1219.5" y="309.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#0B5C6E" text-anchor="middle" letter-spacing="0.4">PARTIAL</text></g>
 <rect x="898" y="374" width="364" height="62" rx="8" fill="#FEF3E9" stroke="#EC7211" stroke-width="1.5"/>
 <rect x="898" y="374" width="4" height="62" rx="2" fill="#EC7211"/>
 <text x="1080.0" y="395" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">S3 evidence destination</text>
@@ -116,9 +116,9 @@
 <rect x="898" y="452" width="364" height="68" rx="8" fill="#FBEEF1" stroke="#B0475A" stroke-width="1.5"/>
 <rect x="898" y="452" width="4" height="68" rx="2" fill="#B0475A"/>
 <text x="1080.0" y="473" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Public reference repository</text>
-<text x="1080.0" y="488" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">sanitized evidence and documentation;</text>
-<text x="1080.0" y="501" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">publication target, not yet published</text>
-<g><rect x="1180.0" y="443.0" width="72.0" height="17" rx="8.5" fill="#EEF0F2" stroke="#C8CDD4" stroke-width="1"/><text x="1216.0" y="455.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#48535F" text-anchor="middle" letter-spacing="0.4">NOT LIVE</text></g>
+<text x="1080.0" y="488" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">published on GitHub;</text>
+<text x="1080.0" y="501" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">documentation and validation summary</text>
+
 <rect x="1318" y="144" width="354" height="44" rx="8" fill="#FFFFFF" stroke="#1D6F42" stroke-width="1.5"/>
 <rect x="1318" y="144" width="4" height="44" rx="2" fill="#1D6F42"/>
 <text x="1332.0" y="165" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="start">1. Approve window</text>
@@ -179,7 +179,7 @@
 <text x="1650" y="442" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#1D6F42" text-anchor="end">VALIDATED</text>
 <text x="1650" y="496" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#1D6F42" text-anchor="end">VALIDATED</text>
 <text x="1650" y="550" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#1D6F42" text-anchor="end">VALIDATED</text>
-<text x="1318" y="594" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">Validated across four closed runtime windows. Not</text>
+<text x="1318" y="594" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">Validated across the closed runtime windows. Not</text>
 <text x="1318" y="608.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">currently running.</text>
 <text x="52" y="674" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1B2733" text-anchor="start">CI/CD: 3 of 17 justified services have a validated build, scan, SBOM and health path (checkout, shipping, quote). 3 of 17 are lint-only or partial</text>
 <text x="52" y="690.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#1B2733" text-anchor="start">(frontend, payment, product-catalog). 11 of 17 are not yet wired.</text>
