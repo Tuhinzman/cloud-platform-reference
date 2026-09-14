@@ -103,7 +103,7 @@
 <rect x="410" y="700" width="4" height="74" rx="2" fill="#48535F"/>
 <text x="560.0" y="721" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Runtime state</text>
 <text x="560.0" y="736" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">No runtime is live. No window is currently</text>
-<text x="560.0" y="749" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">authorized. RW-1 and RW-2 are closed.</text>
+<text x="560.0" y="749" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">authorized. Four windows are closed.</text>
 <g><rect x="628.0" y="691.0" width="72.0" height="17" rx="8.5" fill="#EEF0F2" stroke="#C8CDD4" stroke-width="1"/><text x="664.0" y="703.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#48535F" text-anchor="middle" letter-spacing="0.4">NOT LIVE</text></g>
 <rect x="1226" y="128" width="448" height="46" rx="8" fill="#FFFFFF" stroke="#2C6049" stroke-width="1.5"/>
 <rect x="1226" y="128" width="4" height="46" rx="2" fill="#2C6049"/>

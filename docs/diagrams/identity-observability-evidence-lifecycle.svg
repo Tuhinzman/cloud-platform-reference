@@ -7,10 +7,10 @@
 <rect x="30" y="92" width="400" height="616" rx="10" fill="#F7FBF8" stroke="#1D6F42" stroke-width="1.4" opacity="0.98"/>
 <text x="46" y="116" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#1D6F42" letter-spacing="0.3">1)  WORKLOAD IDENTITY AND SECRETS</text>
 <g><rect x="323.9" y="102.0" width="79.0" height="17" rx="8.5" fill="#E3F2E8" stroke="#A8D5B8" stroke-width="1"/><text x="363.4" y="114.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#1D6F42" text-anchor="middle" letter-spacing="0.4">VALIDATED</text></g>
-<text x="46" y="696" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" font-style="italic">Validated inside closed runtime windows RW-1 and RW-2. No runtime is live now.</text>
+<text x="46" y="696" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" font-style="italic">Validated inside four closed runtime windows. No runtime is live now.</text>
 <rect x="450" y="92" width="420" height="616" rx="10" fill="#FFFBF3" stroke="#8A5A00" stroke-width="1.4" opacity="0.98"/>
 <text x="466" y="116" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#8A5A00" letter-spacing="0.3">2)  OBSERVABILITY</text>
-<g><rect x="611.1" y="102.0" width="65.0" height="17" rx="8.5" fill="#FDF3E3" stroke="#E8C98A" stroke-width="1"/><text x="643.6" y="114.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#8A5A00" text-anchor="middle" letter-spacing="0.4">PLANNED</text></g>
+<g><rect x="611.1" y="102.0" width="65.0" height="17" rx="8.5" fill="#FDF3E3" stroke="#E8C98A" stroke-width="1"/><text x="643.6" y="114.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#8A5A00" text-anchor="middle" letter-spacing="0.4">PARTIAL</text></g>
 <rect x="890" y="92" width="380" height="616" rx="10" fill="#F7FBF8" stroke="#1D6F42" stroke-width="1.4" opacity="0.98"/>
 <text x="906" y="116" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="700" fill="#1D6F42" letter-spacing="0.3">3)  EVIDENCE FLOW</text>
 <g><rect x="1051.1" y="102.0" width="79.0" height="17" rx="8.5" fill="#E3F2E8" stroke="#A8D5B8" stroke-width="1"/><text x="1090.6" y="114.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#1D6F42" text-anchor="middle" letter-spacing="0.4">VALIDATED</text></g>
@@ -137,8 +137,8 @@
 <rect x="908" y="490" width="4" height="82" rx="2" fill="#B0475A"/>
 <text x="1080.0" y="511" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">cloud-platform-reference</text>
 <text x="1080.0" y="526" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">public-reference publication target;</text>
-<text x="1080.0" y="539" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">51 local commits, no remote configured,</text>
-<text x="1080.0" y="552" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">publication still owner-gated</text>
+<text x="1080.0" y="539" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">published to its public remote;</text>
+<text x="1080.0" y="552" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">further publication still owner-gated</text>
 <g><rect x="1170.0" y="481.0" width="72.0" height="17" rx="8.5" fill="#EEF0F2" stroke="#C8CDD4" stroke-width="1"/><text x="1206.0" y="493.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#48535F" text-anchor="middle" letter-spacing="0.4">NOT LIVE</text></g>
 <rect x="1308" y="142" width="178" height="72" rx="8" fill="#FFFFFF" stroke="#1D6F42" stroke-width="1.5"/>
 <rect x="1308" y="142" width="4" height="72" rx="2" fill="#1D6F42"/>
@@ -180,16 +180,16 @@
 <text x="48" y="406" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">Pod Identity was selected because its role trust names one</text>
 <text x="48" y="420.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">generic EKS service principal, so IAM roles stay durable and</text>
 <text x="48" y="435.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">an ephemeral cluster only recreates lightweight associations.</text>
-<text x="468" y="122" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#8A5A00" text-anchor="start" font-style="italic">Designed and measured clusterlessly. Runtime validation on EKS</text>
-<text x="468" y="136.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#8A5A00" text-anchor="start" font-style="italic">has not happened and no window is authorized. Clusterless</text>
-<text x="468" y="151.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#8A5A00" text-anchor="start" font-style="italic">measurement is not EKS runtime proof.</text>
+<text x="468" y="122" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#8A5A00" text-anchor="start" font-style="italic">Measured clusterlessly, then validated on EKS inside closed</text>
+<text x="468" y="136.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#8A5A00" text-anchor="start" font-style="italic">runtime windows. No runtime is live now. Clusterless</text>
+<text x="468" y="151.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#8A5A00" text-anchor="start" font-style="italic">measurement alone is not EKS runtime proof.</text>
 <text x="468" y="532" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">The trace backend is deliberately unselected: ADR-0010 defers</text>
 <text x="468" y="546.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">the Jaeger-versus-Tempo choice to implementation evidence, and</text>
 <text x="468" y="561.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">current state keeps Tempo as a provisional candidate only.</text>
 <text x="468" y="586" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">One validated investigation exercise, a deliberately induced</text>
 <text x="468" y="600.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">fault traced from alert to root cause to verified recovery, is</text>
-<text x="468" y="615.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">required before this model counts as implemented. It has not</text>
-<text x="468" y="629.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">run.</text>
+<text x="468" y="615.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">required before this model counts as implemented. It has</text>
+<text x="468" y="629.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">now run.</text>
 <text x="468" y="652" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">AWS-native audit and control-plane records stay in their AWS</text>
 <text x="468" y="666.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">services. Neither side ingests the other, and no signal is</text>
 <text x="468" y="681.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">stored twice.</text>

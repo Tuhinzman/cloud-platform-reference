@@ -46,7 +46,7 @@ editable source, [aws-platform-reference-architecture.drawio](docs/diagrams/aws-
 - [Identity, Secrets, Observability, Evidence and Lifecycle](docs/diagrams/identity-observability-evidence-lifecycle.svg): the four platform concerns and what each has proven
 
 Every significant choice is recorded in [docs/decisions](docs/decisions/), one decision per
-record, each with its alternatives, consequences, and a revisit trigger. All fourteen are
+record, each with its alternatives, consequences, and a revisit trigger. All fifteen are
 accepted.
 
 | Record | Decision |
@@ -65,6 +65,7 @@ accepted.
 | [ADR-0012](docs/decisions/0012-formalize-the-reference-workload.md) | The reference workload as an instrument for validating the platform, not a deliverable. |
 | [ADR-0013](docs/decisions/0013-define-operations-and-cost-guardrails.md) | Who operates the platform and what it may cost. A three-level monthly budget, one create-to-cleanup lifecycle for every environment, and a development environment that is recreated on demand rather than left running. |
 | [ADR-0014](docs/decisions/0014-expand-the-validated-implementation-workload-scope.md) | Widens the implemented workload to the complete justified application fleet, so that delivery, reconciliation, telemetry attribution, and teardown are exercised across breadth rather than a handful of services. Supersedes only the service-count limit in ADR-0012. |
+| [ADR-0015](docs/decisions/0015-define-security-admission-and-exception-governance-for-platform-managed-runtime-components.md) | Security admission and exception governance for platform-managed runtime components. A fixed admission gate evaluated per component, per digest and per runtime window, with every exception written down, justified and expiring with the window that used it. |
 
 ADR-0013 also supersedes part of what came before it. The assumption that a development
 environment runs continuously originates in ADR-0004 and is restated in ADR-0006 and
@@ -82,11 +83,13 @@ Validation → Evidence → Lessons Learned
 
 ## Current Status
 
-Architecture planning is complete: the foundation documents are in place and fourteen
-decision records are accepted. Implementation is under way and has reached first
-reconciliation: an application image built and published by pipeline was deployed to the
-Dev cluster by the GitOps controller, observed running, and then destroyed along with the
-runtime that carried it.
+Architecture planning is complete: the foundation documents are in place and every
+decision record listed above is accepted. Implementation is under way and has passed
+first reconciliation. Four Dev runtime windows have been opened, validated, evidenced and
+destroyed. In the most recent two, six Argo CD applications reconciled Synced and Healthy
+across the workload and its observability stack, a deliberately induced fault was applied
+and a governed restore returned the tree to its anchor, and each window closed with a
+zero-residual resource census.
 
 The platform the records describe is one AWS account in `us-east-1` running three
 environment roles, each with its own VPC, its own EKS cluster, and its own telemetry,
@@ -122,7 +125,8 @@ settles attribution. That the controller authenticated to AWS as its own Pod Ide
 and that one identified read in the audit trail is the read that served that
 synchronization, are unproven and are not claimed here.
 
-The build and delivery path is now validated for the first service. Its pipeline runs on
+The build and delivery path is validated for the services that carry it, checkout first
+and since then others in the fleet. A service's pipeline runs on
 hosted runners, executes the service's own tests, builds the image, scans it before
 anything is published, generates a software bill of materials, and starts the built
 container to confirm it comes up and accepts a connection on its port. The pipeline
@@ -141,26 +145,57 @@ model, and one teardown are exercised across breadth. That is decided in
 which changed no requirement and no other accepted record. It sets the approved scope. It
 is not a description of what has been deployed.
 
-What has been deployed is one slice of that scope. On the most recent Dev runtime window,
-Argo CD reconciled against the private GitOps repository and applied the checkout service:
-one Deployment, one Service, and one ServiceAccount, reaching Synced and Healthy after a
-single manual sync the owner authorized. The Deployment came up at one of one replica, the
-pod ran and stayed ready with no restarts, and the image identifier read back from the
-running container matched by digest the artifact the pipeline had published, which is what
-joins the build path to the runtime. The rest of the fleet was not deployed, so nothing
-here says how the platform behaves under the full application.
+What has been deployed is a slice of that scope. On the most recent Dev runtime windows,
+Argo CD reconciled against the private GitOps repository and applied six applications: a
+workload slice of three services and the four-component observability stack that observes
+them, each reaching Synced and Healthy. Pods ran and stayed ready, and the image
+identifier read back from each running container matched by digest the artifact its
+pipeline had published, which is what joins the build path to the runtime. The rest of the
+fleet was not deployed, so nothing here says how the platform behaves under the full
+application.
 
-That runtime is gone. Terraform created seventeen resources to open the window and
-destroyed the same seventeen to close it, the plan taken afterwards converged on
-rebuilding exactly those seventeen, and a resource census confirmed nothing of the runtime
-class was left behind. No environment runtime is live as this is written.
+Those runtimes are gone. Terraform created the runtime resources to open each window and
+destroyed the same set to close it, the plan taken afterwards converged on rebuilding
+exactly those resources, and a resource census confirmed nothing of the runtime class was
+left behind. No environment runtime is live as this is written.
 
-Reconciliation working once is easy to read as more than it is, so the boundary is worth
-stating plainly. The full application fleet has not been deployed. Observability is
-decided and not implemented at runtime. Rollback has not been exercised, promotion between
+Reconciliation working is easy to read as more than it is, so the boundary is worth
+stating plainly, in the vocabulary this repository uses throughout: IMPLEMENTED, PROVEN,
+PARTIALLY PROVEN, NOT PROVEN, DECLARED LIMITATION.
+
+Observability is IMPLEMENTED and PARTIALLY PROVEN at runtime. The collector gateway, the
+metric, log and trace stores, the operational views, the alert rules, the notification
+destination and the retention configuration all run from version-controlled desired state.
+PROVEN on EKS: Kubernetes identity survives the full collection path on metrics, logs and
+traces; for one service the deployed digest reconciles across four independent signals,
+with a wrong-digest control that fires; and one deliberately induced workload fault was
+followed from its alert through workload and platform signals to root cause, to a governed
+restore, to verified recovery. That is the standing investigation exercise ADR-0010
+requires, and it is discharged.
+
+Two facts about alert delivery are kept separate because they are separate. The delivery
+mechanism is PROVEN end to end: an alert reached the engineer through the declared
+channel, using workload identity to publish to the notification service, with receipt
+attested. Separately, a refinement added after the criterion was frozen asserted an exact
+notification cardinality that runtime measurement then falsified; that assumption is
+withdrawn. The path worked. The over-specific assumption about what it would emit did not.
+
+DECLARED LIMITATIONS, stated rather than smoothed over: the trace-store selection ADR-0010
+defers to implementation evidence is still open, and the trace-to-logs traversal through
+the operational view is NOT PROVEN, because the log-store datasource plugin unregistered
+itself at runtime and the correlation evidence was collected through the store APIs
+instead; telemetry enrichment is not uniform, so one service's logs do not carry the
+container-level identity the digest reconciliation needs and another was not on the
+exercised request path; retention is proven as combined evidence, meaning the deletion
+mechanism was measured and the running configuration was read back, not that object
+deletion was observed on EKS; and during one continuous fault the alert transitioned
+several times and produced six notifications in roughly nineteen minutes, with the exact
+mechanism not conclusively isolated.
+
+Still NOT PROVEN, each an obligation its own decision record carries: the full application
+fleet has not been deployed, rollback has not been exercised, promotion between
 environments has not been performed, and the Validation and Production-Validation
-environments have not been built at all. Each of those is an obligation its own decision
-record still carries.
+environments have not been built at all.
 
 Evidence exists for what has been validated, and it is not published here. Raw evidence
 is retained outside this repository, and the sanitized subset that will support the

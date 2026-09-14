@@ -75,7 +75,7 @@ flowchart LR
 ## Assumptions and Open Decisions
 
 - Container-based workloads are the approved workload boundary.
-- Nothing on this list is open any more. The application, the runtime, the provider, the environment topology, and every product choice this context deferred are settled in the [decision records](decisions/), and the actor and interaction model above held without amendment as each one landed. That is the useful result: the boundary was drawn correctly before the technology was known.
+- Nothing on this list is open any more. The application, the runtime, the provider and the environment topology this context deferred are settled in the [decision records](decisions/), and the actor and interaction model above held without amendment as each one landed. That is the useful result: the boundary was drawn correctly before the technology was known. One product choice inside a settled decision is still open by design: ADR-0010 defers the trace-store selection to implementation evidence, and that evidence is not complete.
 - Organizational separation of duties is not demonstrated by this solo project.
 
 ## Relationship to Logical Architecture
