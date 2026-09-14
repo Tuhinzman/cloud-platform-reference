@@ -4,13 +4,13 @@
 
 This baseline turns the target capabilities of the [Platform Capability Model](capability-model.md) into measurable obligations. Each requirement states a condition the platform must satisfy and the observable proof that will count as satisfying it. Architecture and implementation will be judged against these conditions.
 
-None of these requirements are met at the time of writing. Each will be validated, with captured evidence, as the platform is built.
+Requirement status is not carried in this file. Each requirement is validated with captured evidence as the platform is built, and the current discharged, partially proven and not-yet-proven set is stated in the repository README.
 
 ## How to Read This Baseline
 
 Requirements are numbered `REQ-001` onward, sequentially, with no meaning attached to the order beyond grouping by domain. Every requirement carries the same seven fields: an ID, a title, a business reason, the capability IDs it serves, the requirement itself, acceptance criteria, and its architecture impact.
 
-The `Capability` field references exact IDs from the capability model; the Coverage Summary at the end is the single owner of capability-to-requirement traceability. Acceptance criteria describe the proof that will count, not the steps that produce it. All wording is target-state: "must" marks an obligation the platform does not yet meet.
+The `Capability` field references exact IDs from the capability model; the Coverage Summary at the end is the single owner of capability-to-requirement traceability. Acceptance criteria describe the proof that will count, not the steps that produce it. All wording is target-state: "must" marks an obligation, not a status. Whether a given obligation is met today is stated in the README, not here.
 
 ## Platform Foundation
 

@@ -3,11 +3,7 @@ variable "operator_cidr" {
   type        = string
 
   validation {
-    # A /0 is rejected on purpose. The reason this variable exists is that the
-    # AWS default of 0.0.0.0/0 leaves authentication as the only barrier in
-    # front of the API server, and a /0 supplied here would restore exactly
-    # that. cidrhost rejects an address the shape pattern alone would accept,
-    # such as 300.1.1.1/32.
+    # cidrhost rejects what the pattern alone accepts, such as 300.1.1.1/32.
     condition     = can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}/([1-9]|[12][0-9]|3[0-2])$", var.operator_cidr)) && can(cidrhost(var.operator_cidr, 0))
     error_message = "operator_cidr must be one IPv4 CIDR with a prefix between /1 and /32. A /0 is rejected because it would reopen the public endpoint to the whole internet."
   }

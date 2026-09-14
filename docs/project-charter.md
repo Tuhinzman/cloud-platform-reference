@@ -76,7 +76,7 @@ Here, production-inspired means the project applies selected professional practi
 
 ## Success Criteria
 
-The project will be judged against the following outcomes, none of which are met at the time of writing. These are outcome statements; their measurable form belongs to the requirements baseline.
+The project will be judged against the following outcomes. These are outcome statements; their measurable form belongs to the requirements baseline, and current status is stated in the README.
 
 - The documentation allows another engineer to understand, evaluate, and reproduce the intended platform design.
 - The platform can be recreated from documented prerequisites and procedures.
