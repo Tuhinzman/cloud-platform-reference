@@ -8,7 +8,7 @@ Long-lived IAM user access keys are not the approved operating model for this
 platform, and that includes bootstrap work.
 
 The reasoning, the alternatives, and the boundaries are recorded in
-[ADR-0005](decisions/0005-adopt-centralized-identity-and-least-privilege-access.md).
+[ADR-0005](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md).
 This document is the procedure only.
 
 ## One-time setup

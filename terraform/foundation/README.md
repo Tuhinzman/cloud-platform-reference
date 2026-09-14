@@ -187,8 +187,9 @@ needed. The shipping and quote repositories are declared because a project
 pipeline for both services has been authored as a prerequisite of later work,
 and the Collector repository is declared because that work requires its image
 mirrored into this registry rather than pulled from an external one at pod
-start. None of those three publications or mirrors has been authorized or
-performed. No requirement for the remaining fleet repositories has been
+start. All three have since been performed: shipping and quote publish through
+their own pipelines by digest, and the Collector image is mirrored into its
+repository. No requirement for the remaining fleet repositories has been
 demonstrated or authorized yet.
 
 ## CI push identity
@@ -223,7 +224,7 @@ identity question and is not implemented here. Nothing here grants repository
 deletion, lifecycle-policy mutation, IAM, or any other service. The permissions
 the observed checkout push path required were exercised successfully by that
 push; the set as a whole is not claimed to have been exhaustively exercised,
-and no push has been performed for shipping or quote.
+and shipping and quote have since pushed through the same identity.
 Environment pull access is a separate identity concern and is not implemented
 here.
 
@@ -241,8 +242,8 @@ The artifact registry is applied. `astroshop/checkout` exists as the first
 artifact-registry repository together with its lifecycle policy: the apply
 added those two resources and nothing else, AWS read-back verified the
 declared repository configuration, the lifecycle policy, and the six
-mandatory tags, and the plan after apply reported no changes. The repository
-holds 1 image, tag `bf07e2ea`, digest
+mandatory tags, and the plan after apply reported no changes. At that validation
+the repository held one image, tag `bf07e2ea`, digest
 `sha256:ff23800f3e82d75d1bf79331aae337a72bfff50f62c2d33746d02c7c535b8365`. The
 checkout build and delivery path is validated.
 

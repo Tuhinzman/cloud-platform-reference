@@ -102,7 +102,7 @@
 <text x="860.0" y="275" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1B2733" text-anchor="middle">Digest-only change</text>
 <text x="860.0" y="291" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">merge request against</text>
 <text x="860.0" y="304" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">desired state</text>
-<g><rect x="875.0" y="245.0" width="65.0" height="17" rx="8.5" fill="#FDF3E3" stroke="#E8C98A" stroke-width="1"/><text x="907.5" y="257.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#8A5A00" text-anchor="middle" letter-spacing="0.4">PLANNED</text></g>
+<g><rect x="875.0" y="245.0" width="65.0" height="17" rx="8.5" fill="#E4F2F5" stroke="#A5D3DE" stroke-width="1"/><text x="907.5" y="257.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#0B5C6E" text-anchor="middle" letter-spacing="0.4">PARTIAL</text></g>
 <rect x="970" y="254" width="180" height="78" rx="8" fill="#FBEEF1" stroke="#B0475A" stroke-width="1.5"/>
 <rect x="970" y="254" width="4" height="78" rx="2" fill="#B0475A"/>
 <text x="1060.0" y="275" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1B2733" text-anchor="middle">cloud-platform-gitops</text>

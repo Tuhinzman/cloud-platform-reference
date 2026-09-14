@@ -40,8 +40,8 @@
 <rect x="200" y="140" width="165" height="68" rx="8" fill="#FEF3E9" stroke="#EC7211" stroke-width="1.5"/>
 <rect x="200" y="140" width="4" height="68" rx="2" fill="#EC7211"/>
 <text x="282.5" y="161" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Public DNS</text>
-<text x="282.5" y="176" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Route 53 selected for the</text>
-<text x="282.5" y="189" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">domain phase (Phase 9)</text>
+<text x="282.5" y="176" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Route 53 selected for a</text>
+<text x="282.5" y="189" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">later domain phase</text>
 <g><rect x="290.0" y="131.0" width="65.0" height="17" rx="8.5" fill="#FDF3E3" stroke="#E8C98A" stroke-width="1"/><text x="322.5" y="143.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#8A5A00" text-anchor="middle" letter-spacing="0.4">PLANNED</text></g>
 <rect x="385" y="140" width="165" height="68" rx="8" fill="#FEF3E9" stroke="#EC7211" stroke-width="1.5"/>
 <rect x="385" y="140" width="4" height="68" rx="2" fill="#EC7211"/>
@@ -103,7 +103,7 @@
 <rect x="410" y="700" width="4" height="74" rx="2" fill="#48535F"/>
 <text x="560.0" y="721" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Runtime state</text>
 <text x="560.0" y="736" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">No runtime is live. No window is currently</text>
-<text x="560.0" y="749" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">authorized. Four windows are closed.</text>
+<text x="560.0" y="749" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">authorized. Every opened window is closed.</text>
 <g><rect x="628.0" y="691.0" width="72.0" height="17" rx="8.5" fill="#EEF0F2" stroke="#C8CDD4" stroke-width="1"/><text x="664.0" y="703.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#48535F" text-anchor="middle" letter-spacing="0.4">NOT LIVE</text></g>
 <rect x="1226" y="128" width="448" height="46" rx="8" fill="#FFFFFF" stroke="#2C6049" stroke-width="1.5"/>
 <rect x="1226" y="128" width="4" height="46" rx="2" fill="#2C6049"/>

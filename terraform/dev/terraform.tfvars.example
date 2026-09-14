@@ -10,3 +10,9 @@ allowed_account_id = "000000000000"
 # network, so expect to update the filled copy and re-apply. The value below is
 # from the RFC 5737 documentation range and reaches nothing.
 operator_cidr = "203.0.113.10/32"
+
+# Alerting campaign. Off by default; the topic, role and policy are created only
+# when enabled, and the subscription only when an endpoint is set. The endpoint
+# is a private input and never enters the repository.
+# alerting_email_subscription_enabled = true
+# alerting_email_endpoint             = "<the address that receives alerts>"

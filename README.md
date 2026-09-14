@@ -1,7 +1,10 @@
 # Cloud Platform Reference
 
-A production-inspired cloud platform, designed and documented from first
-principles, and implemented step by step with evidence.
+A production-inspired cloud platform on AWS, designed and documented from first
+principles and implemented step by step with evidence: EKS provisioned by Terraform,
+GitLab CI building immutable images, Argo CD delivering desired state from Git, and
+OpenTelemetry-based observability with alert delivery, validated in bounded runtime
+windows that are created, exercised, evidenced and destroyed.
 
 ## Why This Project Exists
 
@@ -21,6 +24,23 @@ claim stands without captured evidence.
   evidence as they are added, in enough depth to judge the work.
 - **Engineers learning platform work**: the reasoning behind each choice,
   not just the commands.
+
+## Repositories
+
+The platform is delivered from three repositories, each with one responsibility
+([ADR-0009](docs/decisions/0009-define-the-software-delivery-model.md)). This one is the
+place to start.
+
+| Repository | Holds | Visibility |
+|---|---|---|
+| **cloud-platform-reference** (this repository, GitHub) | Architecture, decisions, the Terraform that provisions AWS, implementation and validation documentation | Public |
+| [**cloud-platform-workload**](https://gitlab.com/tuinzaman/cloud-platform-workload) (GitLab) | The reference workload, its container builds and the CI/CD pipelines that build, scan and publish it: [`.gitlab-ci.yml`](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/.gitlab-ci.yml), [shared templates](https://gitlab.com/tuinzaman/cloud-platform-workload/-/tree/main/ci/templates), per-service `ci.yml` | Public |
+| **cloud-platform-gitops** (GitLab) | The authoritative desired state Argo CD reconciles: values layers and the image digest each environment runs | Private, because its pins carry live registry coordinates. The model it implements is documented in [GitOps Delivery](docs/implementation/gitops-delivery.md) |
+
+The platform, meaning the Terraform, the CI templates, the GitOps desired state and the
+validation harness, is original to this project. The workload, AstroShop, is a derivation
+of the OpenTelemetry Demo; what was taken, changed and excluded is recorded in the
+workload repository's [DERIVATION.md](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/DERIVATION.md).
 
 ## How This Repository Is Organized
 
@@ -76,6 +96,30 @@ Infrastructure definitions live in [terraform/](terraform/), one directory per
 configuration root. Each root has its own README covering what it creates, what it
 deliberately does not, and what has been validated against AWS.
 
+## Reproducing the Platform
+
+The roots are applied in order, each from its own directory with a reviewed plan.
+Prerequisites are one dedicated AWS account, Terraform, and an operator identity as
+described in [operator access](docs/implementation/operator-access.md).
+
+1. [terraform/bootstrap](terraform/bootstrap/README.md): the remote-state backend. Applied once with local state, then migrated.
+2. [terraform/foundation](terraform/foundation/README.md): resources that outlive every environment, meaning the evidence store, the container registry and the CI push identity.
+3. [terraform/dev](terraform/dev/README.md): the Dev environment, split into a retained baseline and a runtime created for each approved window and destroyed at its close.
+4. Cluster bootstrap and GitOps: Argo CD reconciles the private desired-state repository against the running cluster; the bootstrap order, the value layering and the digest pin are in [GitOps Delivery](docs/implementation/gitops-delivery.md), and the decision behind them in [ADR-0009](docs/decisions/0009-define-the-software-delivery-model.md).
+5. The workload is built and published by the [workload repository's pipelines](https://gitlab.com/tuinzaman/cloud-platform-workload) and deployed by digest through step 4.
+
+Every root reads its private inputs from an untracked `terraform.tfvars`; the tracked
+`terraform.tfvars.example` beside each root lists what must be supplied. Nothing in these
+repositories requires the owner's account identifier, addresses, state or evidence to be
+understood or reproduced; the manual steps that remain are the owner merges the protected
+branches require.
+
+Implementation is explained in [docs/implementation](docs/implementation/): how a source
+change becomes a running container by digest ([GitOps Delivery](docs/implementation/gitops-delivery.md))
+and how an operator reaches the platform ([operator access](docs/implementation/operator-access.md)).
+Validation results are summarized once, in
+[docs/validation/runtime-validation.md](docs/validation/runtime-validation.md).
+
 Each platform topic follows the same documentation flow:
 
 Why → Requirements → Architecture → Decision → Diagram → Implementation →
@@ -83,13 +127,20 @@ Validation → Evidence → Lessons Learned
 
 ## Current Status
 
+### Where things stand
+
 Architecture planning is complete: the foundation documents are in place and every
 decision record listed above is accepted. Implementation is under way and has passed
-first reconciliation. Four Dev runtime windows have been opened, validated, evidenced and
-destroyed. In the most recent two, six Argo CD applications reconciled Synced and Healthy
+first reconciliation. Six Dev runtime windows have been opened, evidenced and destroyed:
+the first validated the EKS runtime alone, one was aborted at its first gate on a measured
+defect, and four completed their validation scope; the per-window results are in
+[Runtime Validation](docs/validation/runtime-validation.md). In the most recent two, six Argo
+CD applications reconciled Synced and Healthy
 across the workload and its observability stack, a deliberately induced fault was applied
 and a governed restore returned the tree to its anchor, and each window closed with a
 zero-residual resource census.
+
+### The platform as declared
 
 The platform the records describe is one AWS account in `us-east-1` running three
 environment roles, each with its own VPC, its own EKS cluster, and its own telemetry,
@@ -107,6 +158,8 @@ verified clean. Both are decided in
 [ADR-0013](docs/decisions/0013-define-operations-and-cost-guardrails.md), and the second
 is why the answer to what exists right now has two halves.
 
+### What exists right now
+
 What persists is the Terraform state backend and the durable evidence destination, which
 outlive every environment, together with the retained part of the Dev environment: its
 network baseline and the identity, secret, and configuration resources scoped to that
@@ -114,6 +167,8 @@ environment. What is not running is the billable Dev runtime, meaning the EKS co
 plane, the managed node group, and the NAT gateway. Those are declared in Terraform,
 created inside an approved window, and destroyed when it closes. They have been built and
 torn down more than once, and the definitions that rebuild them are in this repository.
+
+### What has been exercised
 
 The secrets and workload-identity path has been exercised, with two attributions left
 open. A secret was rotated at its source and observed reaching a running consumer without
@@ -126,13 +181,20 @@ and that one identified read in the audit trail is the read that served that
 synchronization, are unproven and are not claimed here.
 
 The build and delivery path is validated for the services that carry it, checkout first
-and since then others in the fleet. A service's pipeline runs on
-hosted runners, executes the service's own tests, builds the image, scans it before
+and since then shipping and quote. A service's pipeline
+([`.gitlab-ci.yml`](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/.gitlab-ci.yml) composed from
+[shared templates](https://gitlab.com/tuinzaman/cloud-platform-workload/-/tree/main/ci/templates)) runs on
+hosted runners, executes the service's own tests, builds the image,
+[scans it](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/ci/templates/trivy-scan.yml) before
 anything is published, generates a software bill of materials, and starts the built
 container to confirm it comes up and accepts a connection on its port. The pipeline
 holds no cloud credential: it exchanges a short-lived identity token for temporary
-credentials at the moment it needs them, and the image is published to the registry by
-digest. That digest was read back from the registry
+credentials at the moment it needs them, and the image is
+[published to the registry by digest](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/ci/templates/ecr-publish.yml).
+Coverage is partial and stated as measured: of the seventeen components, three carry
+the full path, three carry lint only, and eleven are not wired because their six
+language tiers have no template yet; the per-component record is the workload
+repository's [SERVICE-INVENTORY.md](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/SERVICE-INVENTORY.md). That digest was read back from the registry
 independently to confirm the published artifact is the one the pipeline built. The image
 carries no fixable high or critical findings, and that was reached by updating the
 toolchain and dependencies rather than by adding exceptions to the security gate. That
@@ -158,6 +220,8 @@ Those runtimes are gone. Terraform created the runtime resources to open each wi
 destroyed the same set to close it, the plan taken afterwards converged on rebuilding
 exactly those resources, and a resource census confirmed nothing of the runtime class was
 left behind. No environment runtime is live as this is written.
+
+### Proven, partially proven, not proven
 
 Reconciliation working is easy to read as more than it is, so the boundary is worth
 stating plainly, in the vocabulary this repository uses throughout: IMPLEMENTED, PROVEN,
@@ -197,10 +261,10 @@ fleet has not been deployed, rollback has not been exercised, promotion between
 environments has not been performed, and the Validation and Production-Validation
 environments have not been built at all.
 
-Evidence exists for what has been validated, and it is not published here. Raw evidence
-is retained outside this repository, and the sanitized subset that will support the
-claims in these pages goes through its own review rather than accumulating as
-implementation proceeds. Read every implementation statement in this repository as scoped
+Raw evidence is retained outside this repository. The sanitized summary that supports the
+claims in these pages is [Runtime Validation](docs/validation/runtime-validation.md): one
+row per window, what each capability has demonstrated, the recovery pattern, and the
+limitations. Read every implementation statement in this repository as scoped
 to what its own stated validation covers. None of it is a production-readiness claim: the
 [Project Charter](docs/project-charter.md) defines this as a production-inspired platform
 rather than a hosted service, and the limitations each decision record states still
