@@ -201,8 +201,10 @@ artifact carried no fixable high or critical findings under the configured gate,
 was reached by updating the toolchain and dependencies rather than by adding exceptions to
 the security gate. That exact artifact is the one the platform later deployed in the
 recorded validation windows. This is a point-in-time scan result rather than a current
-vulnerability attestation: checkout's dependencies have moved since, and that artifact has
-not been rescanned against a current database.
+vulnerability attestation. Checkout source has since received a HIGH gRPC remediation,
+CVE-2026-84445, by moving to grpc v1.83.2; that change was merged after the deployed
+artifact was built and has not been republished as that artifact, which has not been
+rescanned against a current vulnerability database.
 
 The workload scope the platform is built toward is the complete justified application
 fleet rather than a handful of services, so that one delivery pipeline, one reconciliation
