@@ -195,10 +195,14 @@ Coverage is partial and stated as measured: of the seventeen components, three c
 the full path, three carry lint only, and eleven are not wired because their six
 language tiers have no template yet; the per-component record is the workload
 repository's [SERVICE-INVENTORY.md](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/SERVICE-INVENTORY.md). That digest was read back from the registry
-independently to confirm the published artifact is the one the pipeline built. The image
-carries no fixable high or critical findings, and that was reached by updating the
-toolchain and dependencies rather than by adding exceptions to the security gate. That
-artifact is the one the platform later deployed.
+independently to confirm the published artifact is the one the pipeline built. At that
+2026-08-15 publication scan, against the vulnerability database the pipeline had then, the
+artifact carried no fixable high or critical findings under the configured gate, and that
+was reached by updating the toolchain and dependencies rather than by adding exceptions to
+the security gate. That exact artifact is the one the platform later deployed in the
+recorded validation windows. This is a point-in-time scan result rather than a current
+vulnerability attestation: checkout's dependencies have moved since, and that artifact has
+not been rescanned against a current database.
 
 The workload scope the platform is built toward is the complete justified application
 fleet rather than a handful of services, so that one delivery pipeline, one reconciliation
