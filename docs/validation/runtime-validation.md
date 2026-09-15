@@ -63,6 +63,11 @@ linkable; the pattern is described in the delivery model in
 
 ## Declared limitations
 
+- Every observability and alert-delivery result on this page was observed while five
+  platform-managed images — Prometheus, kube-state-metrics, Grafana, Loki and Tempo — ran
+  under bounded, per-digest ADR-0015 exceptions approved only for those Development runtime
+  windows and expired with them; those results are reported as observed under exception,
+  not as clean, vulnerability-free, or security-gate-passed.
 - The final trace-store selection ADR-0010 defers to implementation evidence is still open.
 - Trace-to-logs traversal through the operational view is NOT PROVEN: the log-store
   datasource plugin unregistered itself at runtime during a background upgrade.

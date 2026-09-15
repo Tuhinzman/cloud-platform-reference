@@ -244,6 +244,12 @@ attested. Separately, a refinement added after the criterion was frozen asserted
 notification cardinality that runtime measurement then falsified; that assumption is
 withdrawn. The path worked. The over-specific assumption about what it would emit did not.
 
+The observability and alert-delivery results above were observed while five
+platform-managed images — Prometheus, kube-state-metrics, Grafana, Loki and Tempo — ran
+under bounded, per-digest ADR-0015 exceptions approved only for those Development runtime
+windows and expired with them. These results are therefore reported as observed under
+exception, not as clean, vulnerability-free, or security-gate-passed.
+
 DECLARED LIMITATIONS, stated rather than smoothed over: the trace-store selection ADR-0010
 defers to implementation evidence is still open, and the trace-to-logs traversal through
 the operational view is NOT PROVEN, because the log-store datasource plugin unregistered
