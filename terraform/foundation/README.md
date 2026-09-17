@@ -136,13 +136,14 @@ the bucket still bills and still refuses to be deleted.
 [ADR-0009](../../docs/decisions/0009-define-the-software-delivery-model.md)
 declares Amazon ECR a persistent shared foundation: one repository per owned
 service, created when that service enters the implemented delivery path.
-checkout is the approved first-digest service. This root now declares four
-repositories: the three `astroshop/` application repositories, and one
-`platform/` repository for the mirrored OpenTelemetry Collector image. All four
-exist in AWS. `astroshop/checkout`, `astroshop/shipping` and `astroshop/quote`
-each carry a lifecycle policy. `platform/opentelemetry-collector` deliberately
-carries none and is excluded from the CI push policy, because a mirrored image
-is not published by the workload pipeline.
+checkout is the approved first-digest service. This root declares the
+`astroshop/` workload repositories over one set, because they differ only by
+name, and one `platform/` repository for the mirrored OpenTelemetry Collector
+image separately. Every `astroshop/` repository carries the same lifecycle
+policy. `platform/opentelemetry-collector` deliberately carries none and is
+excluded from the CI push policy, because a mirrored image is not published by
+the workload pipeline; keeping it outside the set is what makes that exclusion
+structural rather than a list that happens to omit it.
 
 The `astroshop/` prefix is the workload-artifact naming convention, covering the
 services this project builds from source. The `platform/` prefix keeps a
@@ -153,8 +154,8 @@ policy namespace and no security boundary in ECR.
 
 | Resource | Purpose |
 |---|---|
-| `aws_ecr_repository` | Four declared image repositories: `astroshop/checkout`, `astroshop/shipping`, `astroshop/quote` and `platform/opentelemetry-collector`. Immutable tags, encryption at rest under an AWS-managed key, native scan-on-push off because Trivy owns the scanning gate |
-| `aws_ecr_lifecycle_policy` | Bounds storage on the three `astroshop/` repositories with a count-based rule: the newest 10 tagged images are retained, and older ones expire only once the count passes 10. The Collector repository carries no lifecycle policy, because it is consumed by immutable digest and a tag-count rule could expire a digest still referenced |
+| `aws_ecr_repository` | The `astroshop/` workload repositories declared over one set, plus `platform/opentelemetry-collector` declared separately. Immutable tags, encryption at rest under an AWS-managed key, native scan-on-push off because Trivy owns the scanning gate |
+| `aws_ecr_lifecycle_policy` | Bounds storage on every `astroshop/` repository with a count-based rule: the newest 10 tagged images are retained, and older ones expire only once the count passes 10. The Collector repository carries no lifecycle policy, because it is consumed by immutable digest and a tag-count rule could expire a digest still referenced |
 
 Its purpose is to retain immutable workload artifacts across environment
 lifecycles, so promotion moves a digest that already passed its gates instead
@@ -189,8 +190,11 @@ and the Collector repository is declared because that work requires its image
 mirrored into this registry rather than pulled from an external one at pod
 start. All three have since been performed: shipping and quote publish through
 their own pipelines by digest, and the Collector image is mirrored into its
-repository. No requirement for the remaining fleet repositories has been
-demonstrated or authorized yet.
+repository. `astroshop/frontend-proxy` and `astroshop/image-provider` are
+declared for the next authorized delivery step and hold no image yet. No
+requirement for the remaining project-built components has been demonstrated or
+authorized, so they are absent: membership follows the delivery path ADR-0009
+describes, not the fleet inventory.
 
 ## CI push identity
 
@@ -214,12 +218,13 @@ GitLab project ID, supplied as a Terraform input and uncommitted, like the
 other values this root takes.
 
 The role's permissions are push side only: authenticate to the registry,
-upload layers, publish a manifest, scoped to an explicit list of the three
-`astroshop/` application repositories. Only the registry-level authentication
+upload layers, publish a manifest, scoped to the declared `astroshop/`
+repositories. The list is derived from the same set that declares them, so a
+repository cannot enter the registry and be forgotten in the policy. Only the registry-level authentication
 call is unscoped, because it accepts no repository ARN. The declared widening
 from one repository to three adds no action and changes no trust condition.
-`platform/opentelemetry-collector` is deliberately absent from that list, so
-this role cannot push the Collector mirror; that mechanism is a separate
+`platform/opentelemetry-collector` is absent from that list because it is not
+a member of that set, so this role cannot push the Collector mirror; that mechanism is a separate
 identity question and is not implemented here. Nothing here grants repository
 deletion, lifecycle-policy mutation, IAM, or any other service. The permissions
 the observed checkout push path required were exercised successfully by that
