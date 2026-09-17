@@ -54,11 +54,11 @@ resource "aws_iam_role_policy" "ci_checkout_ecr_push" {
           "ecr:PutImage",
           "ecr:BatchGetImage",
         ]
-        Resource = [
-          aws_ecr_repository.checkout.arn,
-          aws_ecr_repository.shipping.arn,
-          aws_ecr_repository.quote.arn,
-        ]
+        # Every declared workload repository and nothing else. Deriving the list from the
+        # set means a repository cannot be added to the registry and forgotten here, and
+        # platform/opentelemetry-collector stays out because it is a separate resource
+        # rather than an omission from a hand-kept list.
+        Resource = [for repository in aws_ecr_repository.workload : repository.arn]
       },
       # Registry-level call; it accepts no repository ARN.
       {
