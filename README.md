@@ -222,9 +222,15 @@ it to be reconstructed: shipping first, then image-provider. Each bundle keeps t
 manifest bytes whose SHA-256 is the published digest, so a
 reader recomputes that digest from the retained bytes instead of trusting a number the
 pipeline printed, and the same manifest names the image configuration the scan and the
-bill of materials recorded. That is the whole of the claim: neither artifact has runtime
-validation, neither is pinned in the deployment repository, and nothing here says the fleet
-is delivered.
+bill of materials recorded.
+
+Which artifact carries which evidence is worth separating. The shipping image the runtime
+windows validated is an earlier publication, pinned by digest in the deployment repository
+and reconciled there across four independent signals; its raw scan and bill of materials
+were not retained by the pipeline and had to be recovered by hand afterwards. The two
+bundled publications are the reverse: provenance retained natively, and neither has run in
+a validation window or been pinned for deployment. Shipping therefore has both kinds of
+evidence, on two different digests, and nothing here says the fleet is delivered.
 
 [ADR-0014](docs/decisions/0014-expand-the-validated-implementation-workload-scope.md)
 widened the implemented workload to the complete justified application fleet, so that one
