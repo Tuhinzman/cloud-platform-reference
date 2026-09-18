@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (2026-09-18)
+Accepted (2026-09-18)
 
 Supersedes one selection in ADR-0014: that the implemented fleet is the
 complete justified AstroShop application fleet. Everything else ADR-0014

@@ -66,7 +66,7 @@ editable source, [aws-platform-reference-architecture.drawio](docs/diagrams/aws-
 - [Identity, Secrets, Observability, Evidence and Lifecycle](docs/diagrams/identity-observability-evidence-lifecycle.svg): the four platform concerns and what each has proven
 
 Every significant choice is recorded in [docs/decisions](docs/decisions/), one decision per
-record, each with its alternatives, consequences, and a revisit trigger. All fifteen are
+record, each with its alternatives, consequences, and a revisit trigger. All sixteen are
 accepted.
 
 | Record | Decision |
@@ -86,11 +86,21 @@ accepted.
 | [ADR-0013](docs/decisions/0013-define-operations-and-cost-guardrails.md) | Who operates the platform and what it may cost. A three-level monthly budget, one create-to-cleanup lifecycle for every environment, and a development environment that is recreated on demand rather than left running. |
 | [ADR-0014](docs/decisions/0014-expand-the-validated-implementation-workload-scope.md) | Widens the implemented workload to the complete justified application fleet, so that delivery, reconciliation, telemetry attribution, and teardown are exercised across breadth rather than a handful of services. Supersedes only the service-count limit in ADR-0012. |
 | [ADR-0015](docs/decisions/0015-define-security-admission-and-exception-governance-for-platform-managed-runtime-components.md) | Security admission and exception governance for platform-managed runtime components. A fixed admission gate evaluated per component, per digest and per runtime window, with every exception written down, justified and expiring with the window that used it. |
+| [ADR-0016](docs/decisions/0016-bound-the-implemented-workload-scope-to-demonstrated-validation-value.md) | Bounds the implemented workload by demonstrated platform-validation value rather than fleet completeness, with five checkable stopping conditions and an owner-decided admission test for any further component. Supersedes only ADR-0014's selection of the complete justified fleet as the implementation scope. |
 
 ADR-0013 also supersedes part of what came before it. The assumption that a development
 environment runs continuously originates in ADR-0004 and is restated in ADR-0006 and
 ADR-0007. Accepted records are never edited here, so ADR-0013 is the single place that
 states how far that supersession reaches and what in those three records is untouched.
+
+ADR-0016 supersedes part of ADR-0014 in the same way. ADR-0014 remains accepted, and only
+its selection of the complete justified AstroShop fleet as the implemented workload scope
+is superseded, because the work still outstanding under that scope no longer advances the
+breadth properties the scope was chosen for. Everything else in that record stays in
+force: the minimum-evidence-set and implemented-fleet model, the component
+classification, the evidence-depth model, the reusable delivery and two-pass scanning
+models, and the risk-based security exception policy. ADR-0016 is the single place that
+states how far that supersession reaches and what in ADR-0014 is untouched.
 
 Infrastructure definitions live in [terraform/](terraform/), one directory per
 configuration root. Each root has its own README covering what it creates, what it
