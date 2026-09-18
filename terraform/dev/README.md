@@ -480,7 +480,7 @@ cleanup.
 [ADR-0013](../../docs/decisions/0013-define-operations-and-cost-guardrails.md)
 requires that of every environment role including Dev, superseding the earlier
 assumption that a development environment stays continuously active. Between
-windows the 17 runtime resources are configuration and nothing else. Within this
+windows the 18 runtime resources are configuration and nothing else. Within this
 root, the retained resources currently introduce no hourly runtime charge, and
 the two Secrets Manager entries remain the known recurring retained-resource
 charge.
@@ -488,8 +488,9 @@ charge.
 **What has been exercised.** The network baseline was applied and read back from
 AWS, with a following plan reporting no changes. The runtime has been created and
 destroyed more than once, each time from a reviewed plan, with an orphan check
-after teardown and a following plan that reproduced the same 17-resource runtime
-boundary. Private egress was verified from a pod on the private node fleet, which
+after teardown and a following plan that reproduced the same runtime boundary: 17
+resources in the five windows that preceded the alerting campaign, and 18 once its
+Pod Identity association joined the runtime class. Private egress was verified from a pod on the private node fleet, which
 resolved DNS and reached an external HTTPS endpoint from a source address
 matching the NAT gateway. Across four windows, Argo CD, the secret-synchronisation
 controller, a three-service workload slice and the four-component observability

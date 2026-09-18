@@ -103,6 +103,14 @@ carried out.
 
 ### Stage 1, create the bucket
 
+`backend.tf` is present in this directory today, because stage 2 added it. A
+reproducer starting from a clone therefore has the stage 2 end state in the
+working tree before stage 1 has run, and `terraform init` would try to reach a
+bucket that does not exist yet. Move `backend.tf` outside the root for the
+duration of this stage and restore it at stage 2 step 3, which is the point at
+which this sequence introduced it. Do not comment the block out: the reason is
+in "Why the backend block arrived second" above.
+
 1. Initialize the root on the default local backend with `terraform init`
 2. Validate the configuration, then produce and review the plan
 3. Under separate first-billable-resource authorization, apply the reviewed

@@ -27,7 +27,7 @@ not billing statements; the Cost Explorer actual was not retrieved at window clo
 
 | Capability | Status | Basis |
 |---|---|---|
-| EKS runtime provisioned and destroyed from Terraform | PROVEN | Six windows; each opened with exactly 17 additions and closed with exactly 17 deletions; the post-destroy plan converges on rebuilding the same set |
+| EKS runtime provisioned and destroyed from Terraform | PROVEN | Six windows; the five before the alerting window each opened with exactly 17 additions and closed with exactly 17 deletions. The alerting window opened with 18, that set plus the Pod Identity association its alerting path needs, and its teardown destroyed 22: that runtime set plus the four alerting-campaign resources created before it. Every post-destroy plan converged on rebuilding the same set |
 | Private node egress through the NAT gateway | PROVEN | A pod resolved DNS and reached an external HTTPS endpoint from the NAT address (2026-08-14) |
 | Argo CD reconciliation of Git desired state | PROVEN | RW-2 first sync; six applications Synced and Healthy in the two most recent windows |
 | Image identity: running container digest equals the published digest | PROVEN for shipping, PARTIALLY PROVEN for quote and checkout | Four independent signals agree for shipping in both recent windows; for quote and checkout the container-level signals fail, one from an enrichment gap and one because the service was not on the exercised path. The wrong-digest control fires |

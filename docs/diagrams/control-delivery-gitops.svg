@@ -74,17 +74,17 @@
 <rect x="1500" y="124" width="175" height="250" rx="8" fill="#FFFBF3" stroke="#B7791F" stroke-width="1.5"/>
 <rect x="1500" y="124" width="4" height="250" rx="2" fill="#B7791F"/>
 <text x="1587.5" y="145" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">CI/CD coverage today</text>
-<text x="1587.5" y="160" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">3 / 17 full validated path</text>
-<text x="1587.5" y="173" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">checkout, shipping, quote</text>
-<text x="1587.5" y="186" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">3 / 17 lint-only / partial</text>
-<text x="1587.5" y="199" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">frontend, payment,</text>
-<text x="1587.5" y="212" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">product-catalog</text>
-<text x="1587.5" y="225" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">11 / 17 not yet wired</text>
-<text x="1587.5" y="238" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Coverage for all 17</text>
-<text x="1587.5" y="251" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">justified</text>
-<text x="1587.5" y="264" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">services is MANDATORY under</text>
-<text x="1587.5" y="277" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Accepted ADR-0014 and is</text>
-<text x="1587.5" y="290" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">incomplete today.</text>
+<text x="1587.5" y="160" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">5 / 17 full validated path</text>
+<text x="1587.5" y="173" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">checkout, shipping, quote,</text>
+<text x="1587.5" y="186" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">frontend-proxy,</text>
+<text x="1587.5" y="199" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">image-provider</text>
+<text x="1587.5" y="212" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">3 / 17 lint-only / partial</text>
+<text x="1587.5" y="225" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">frontend, payment,</text>
+<text x="1587.5" y="238" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">product-catalog</text>
+<text x="1587.5" y="251" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">9 / 17 not yet wired</text>
+<text x="1587.5" y="264" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Scope is bounded by</text>
+<text x="1587.5" y="277" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Accepted ADR-0016, not by</text>
+<text x="1587.5" y="290" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">fleet completeness.</text>
 <rect x="400" y="254" width="150" height="78" rx="8" fill="#FEF3E9" stroke="#EC7211" stroke-width="1.5"/>
 <rect x="400" y="254" width="4" height="78" rx="2" fill="#EC7211"/>
 <text x="475.0" y="275" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1B2733" text-anchor="middle">Manual publish</text>
@@ -187,8 +187,8 @@
 <text x="235.0" y="619.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">MR + owner approval</text>
 <rect x="373.2" y="608.0" width="133.6" height="15" rx="3" fill="#FFFFFF" stroke="#C8CDD4" stroke-width="0.6"/>
 <text x="440.0" y="619.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">MR + owner approval</text>
-<text x="404" y="348" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">0 publish jobs executed in the current publication epoch. 3 ECR repositories exist (astroshop/checkout, astroshop/shipping, astroshop/quote) plus</text>
-<text x="404" y="362.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">platform/opentelemetry-collector; per-service digest evidence exists, fleet-wide publication does not.</text>
+<text x="404" y="348" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">Publish is owner-triggered; shipping and image-provider have published in this epoch. 6 ECR repositories exist (astroshop/checkout, shipping, quote,</text>
+<text x="404" y="362.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">frontend-proxy, image-provider) plus platform/opentelemetry-collector; per-service digest evidence exists, fleet-wide publication does not.</text>
 <text x="1000" y="600" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#1B2733" text-anchor="start">The same immutable digest moves between environment roles. Promotion is a Git</text>
 <text x="1000" y="615.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#1B2733" text-anchor="start">change that Argo CD reconciles; it is not a rebuild.</text>
 <text x="1000" y="640" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">ADR-0009 states its implementation is not complete until one validated rollback</text>
