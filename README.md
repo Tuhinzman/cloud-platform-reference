@@ -181,7 +181,7 @@ and that one identified read in the audit trail is the read that served that
 synchronization, are unproven and are not claimed here.
 
 The build and delivery path is validated for the services that carry it, checkout first
-and since then shipping and quote. A service's pipeline
+and since then shipping, quote and image-provider. A service's pipeline
 ([`.gitlab-ci.yml`](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/.gitlab-ci.yml) composed from
 [shared templates](https://gitlab.com/tuinzaman/cloud-platform-workload/-/tree/main/ci/templates)) runs on
 hosted runners, executes the service's own tests, builds the image,
@@ -191,8 +191,8 @@ container to confirm it comes up and accepts a connection on its port. The pipel
 holds no cloud credential: it exchanges a short-lived identity token for temporary
 credentials at the moment it needs them, and the image is
 [published to the registry by digest](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/ci/templates/ecr-publish.yml).
-Coverage is partial and stated as measured: of the seventeen components, three carry
-the full path, three carry lint only, and eleven are not wired because their six
+Coverage is partial and stated as measured: of the seventeen components, five carry
+the full path, three carry lint only, and nine are not wired because their six
 language tiers have no template yet; the per-component record is the workload
 repository's [SERVICE-INVENTORY.md](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/SERVICE-INVENTORY.md). That digest was read back from the registry
 independently to confirm the published artifact is the one the pipeline built. At that
@@ -205,6 +205,15 @@ vulnerability attestation. Checkout source has since received a HIGH gRPC remedi
 CVE-2026-84445, by moving to grpc v1.83.2; that change was merged after the deployed
 artifact was built and has not been republished as that artifact, which has not been
 rescanned against a current vulnerability database.
+
+The most recent publication is image-provider's, and it is the first for which the
+pipeline retained the provenance itself rather than leaving it to be reconstructed. The
+bundle keeps the registry manifest bytes whose SHA-256 is the published digest, so a
+reader recomputes that digest from the retained bytes instead of trusting a number the
+pipeline printed, and the same manifest names the image configuration the scan and the
+bill of materials recorded. That is the whole of the claim: image-provider has no runtime
+validation, it is not pinned in the deployment repository, and nothing here says the fleet
+is delivered.
 
 The workload scope the platform is built toward is the complete justified application
 fleet rather than a handful of services, so that one delivery pipeline, one reconciliation
