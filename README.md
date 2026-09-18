@@ -201,9 +201,10 @@ container to confirm it comes up and accepts a connection on its port. The pipel
 holds no cloud credential: it exchanges a short-lived identity token for temporary
 credentials at the moment it needs them, and the image is
 [published to the registry by digest](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/ci/templates/ecr-publish.yml).
-Coverage is partial and stated as measured: of the seventeen components, five carry
-the full path, three carry lint only, and nine are not wired because their six
-language tiers have no template yet; the per-component record is the workload
+Coverage is partial and stated as measured: of the seventeen components, eight are
+wired, five of them carrying the full path and three lint only, and nine are not
+wired because their six language tiers have no template. ADR-0016 bounds that rather
+than carrying it as outstanding work; the per-component record is the workload
 repository's [SERVICE-INVENTORY.md](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/SERVICE-INVENTORY.md). That digest was read back from the registry
 independently to confirm the published artifact is the one the pipeline built. At that
 2026-08-15 publication scan, against the vulnerability database the pipeline had then, the
@@ -216,21 +217,27 @@ CVE-2026-84445, by moving to grpc v1.83.2; that change was merged after the depl
 artifact was built and has not been republished as that artifact, which has not been
 rescanned against a current vulnerability database.
 
-The most recent publication is image-provider's, and it is the first for which the
-pipeline retained the provenance itself rather than leaving it to be reconstructed. The
-bundle keeps the registry manifest bytes whose SHA-256 is the published digest, so a
+Two publications have had the pipeline retain that provenance itself rather than leaving
+it to be reconstructed: shipping first, then image-provider. Each bundle keeps the registry
+manifest bytes whose SHA-256 is the published digest, so a
 reader recomputes that digest from the retained bytes instead of trusting a number the
 pipeline printed, and the same manifest names the image configuration the scan and the
-bill of materials recorded. That is the whole of the claim: image-provider has no runtime
-validation, it is not pinned in the deployment repository, and nothing here says the fleet
+bill of materials recorded. That is the whole of the claim: neither artifact has runtime
+validation, neither is pinned in the deployment repository, and nothing here says the fleet
 is delivered.
 
-The workload scope the platform is built toward is the complete justified application
-fleet rather than a handful of services, so that one delivery pipeline, one reconciliation
-model, and one teardown are exercised across breadth. That is decided in
-[ADR-0014](docs/decisions/0014-expand-the-validated-implementation-workload-scope.md),
-which changed no requirement and no other accepted record. It sets the approved scope. It
-is not a description of what has been deployed.
+[ADR-0014](docs/decisions/0014-expand-the-validated-implementation-workload-scope.md)
+widened the implemented workload to the complete justified application fleet, so that one
+delivery pipeline, one reconciliation model, and one teardown would be exercised across
+breadth. It remains accepted, and its two-scope model, component classification, evidence
+tiers and risk-based exception policy all still hold.
+[ADR-0016](docs/decisions/0016-bound-the-implemented-workload-scope-to-demonstrated-validation-value.md)
+supersedes one selection in it. The implemented scope is now bounded by demonstrated
+platform-validation value rather than by fleet completeness, and a further component is
+admitted only when it validates a platform property the current scope has not already
+demonstrated. Bounded is not complete: nine components remain unwired, full-fleet CI/CD is
+not claimed, and the fleet-scale properties ADR-0014 wanted are recorded as declared
+limitations rather than as outstanding work.
 
 What has been deployed is a slice of that scope. On the most recent Dev runtime windows,
 Argo CD reconciled against the private GitOps repository and applied six applications: a
@@ -287,10 +294,11 @@ deletion was observed on EKS; and during one continuous fault the alert transiti
 several times and produced six notifications in roughly nineteen minutes, with the exact
 mechanism not conclusively isolated.
 
-Still NOT PROVEN, each an obligation its own decision record carries: the full application
-fleet has not been deployed, rollback has not been exercised, promotion between
-environments has not been performed, and the Validation and Production-Validation
-environments have not been built at all.
+Still NOT PROVEN, each an obligation its own decision record carries: rollback has not
+been exercised, promotion between environments has not been performed, and the Validation
+and Production-Validation environments have not been built at all. The full application
+fleet has not been deployed either; under ADR-0016 that is a declared limitation rather
+than an outstanding obligation.
 
 Raw evidence is retained outside this repository. The sanitized summary that supports the
 claims in these pages is [Runtime Validation](docs/validation/runtime-validation.md): one

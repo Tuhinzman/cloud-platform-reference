@@ -42,19 +42,20 @@ container starts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;stro
 <mxCell id="cov" value="CI/CD coverage today
 
 
-3 / 17  full validated path
-checkout, shipping, quote
+5 / 17  full validated path
+checkout, shipping, quote,
+frontend-proxy,
+image-provider
 
 3 / 17  lint-only / partial
 frontend, payment,
 product-catalog
 
-11 / 17  not yet wired
+9 / 17  not yet wired
 
-Coverage for all 17 justified
-services is MANDATORY under
-Accepted ADR-0014 and is
-incomplete today." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFBF3;strokeColor=#B7791F;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1500" y="124" width="175" height="250" as="geometry"/></mxCell>
+Scope is bounded by
+Accepted ADR-0016, not by
+fleet completeness." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFBF3;strokeColor=#B7791F;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1500" y="124" width="175" height="250" as="geometry"/></mxCell>
 <mxCell id="pub" value="Manual publish
 
 owner-triggered
@@ -123,7 +124,7 @@ environment role" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;stro
 
 Git revert of the digest pin;
 Helm rollback is not used" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B7791F;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="720" y="592" width="250" height="68" as="geometry"/></mxCell>
-<mxCell id="p0_t0" value="0 publish jobs executed in the current publication epoch. 3 ECR repositories exist (astroshop/checkout, astroshop/shipping, astroshop/quote) plus platform/opentelemetry-collector; per-service digest evidence exists, fleet-wide publication does not." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="404" y="334" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p0_t0" value="Publish is owner-triggered; shipping and image-provider have published in this epoch. 6 ECR repositories exist (astroshop/checkout, shipping, quote, frontend-proxy, image-provider) plus platform/opentelemetry-collector; per-service digest evidence exists, fleet-wide publication does not." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="404" y="334" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p0_t1" value="The same immutable digest moves between environment roles. Promotion is a Git change that Argo CD reconciles; it is not a rebuild." style="text;html=1;align=left;verticalAlign=top;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="1000" y="586" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p0_t2" value="ADR-0009 states its implementation is not complete until one validated rollback exercise has run. That exercise has not run, so promotion, cross-environment promotion and rollback all remain open claims." style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="1000" y="626" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p0_t3" value="Data / artifact flow" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="48" y="754" width="320" height="40" as="geometry"/></mxCell>
@@ -469,7 +470,7 @@ short-lived credentials; no static keys
 <mxCell id="f_ecr" value="Amazon ECR
 
 immutable tags; the digest is the artifact identity
-3 service repositories exist, not 17
+5 service repositories exist, not 17
 [PARTIAL]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3E9;strokeColor=#EC7211;strokeWidth=1.5;fontSize=12;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="48" y="400" width="354" height="66" as="geometry"/></mxCell>
 <mxCell id="f_gitops" value="cloud-platform-gitops
 
@@ -546,9 +547,9 @@ documentation and validation summary" style="rounded=1;whiteSpace=wrap;html=1;fi
 <mxCell id="p3_t6" value="VALIDATED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#1D6F42;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1500" y="482" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p3_t7" value="VALIDATED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#1D6F42;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1500" y="536" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p3_t8" value="Validated across the closed runtime windows. Not currently running." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="1318" y="580" width="320" height="40" as="geometry"/></mxCell>
-<mxCell id="p3_t9" value="CI/CD:  3 of 17 justified services have a validated build, scan, SBOM and health path (checkout, shipping, quote).  3 of 17 are lint-only or partial (frontend, payment, product-catalog).  11 of 17 are not yet wired." style="text;html=1;align=left;verticalAlign=top;fontSize=12.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="52" y="660" width="320" height="40" as="geometry"/></mxCell>
-<mxCell id="p3_t10" value="Coverage for all 17 justified services is mandatory under Accepted ADR-0014 and is incomplete today. Language-tier templates are an implementation mechanism, never a scope gate." style="text;html=1;align=left;verticalAlign=top;fontSize=12.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="52" y="698" width="320" height="40" as="geometry"/></mxCell>
-<mxCell id="p3_t11" value="Runtime is not live and no window is currently authorized.  0 publish jobs have been executed in this publication epoch, so no fleet-wide image publication and no immutable digest evidence exists.  Promotion and rollback are accepted architecture and have not been exercised." style="text;html=1;align=left;verticalAlign=top;fontSize=12.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="52" y="736" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t9" value="CI/CD:  5 of 17 components have a validated build, scan, SBOM and health path (checkout, shipping, quote, frontend-proxy, image-provider).  3 of 17 are lint-only (frontend, payment, product-catalog).  9 of 17 are not wired." style="text;html=1;align=left;verticalAlign=top;fontSize=12.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="52" y="660" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t10" value="Implementation scope is bounded by Accepted ADR-0016 to demonstrated validation value, not fleet completeness. Language-tier templates are an implementation mechanism, never a scope gate." style="text;html=1;align=left;verticalAlign=top;fontSize=12.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="52" y="698" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t11" value="Runtime is not live and no window is currently authorized.  Four components have published images read back by digest, so there is per-service digest evidence but no fleet-wide publication.  Promotion and rollback are accepted architecture and have not been exercised." style="text;html=1;align=left;verticalAlign=top;fontSize=12.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="52" y="736" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p3_t12" value="The sequence above is the target flow, not a statement that it runs today; the status panel states which segments are proven.  Ephemeral runtime resources are removed after every approved window, and persistent foundation resources are intentionally retained.  The platform is the product, and AstroShop is the workload used to validate it." style="text;html=1;align=left;verticalAlign=top;fontSize=11.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="52" y="926" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p3_t13" value="Data / artifact flow" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="48" y="1020" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p3_t14" value="Control / identity flow  (dashed)" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontColor=#5A6672;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="48" y="1040" width="320" height="40" as="geometry"/></mxCell>
