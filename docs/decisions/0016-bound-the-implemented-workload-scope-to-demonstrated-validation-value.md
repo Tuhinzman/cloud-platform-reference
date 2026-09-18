@@ -59,7 +59,9 @@ not project-built. Both classes that can carry it now have a verified
 CI-native evidence bundle with a DIRECT published-digest binding, where
 the SHA-256 of the retained registry manifest bytes is the published
 digest. That is complete within the scope where completeness is
-possible, and it was reached with five components rather than sixteen.
+possible, and it was established by two components: shipping for
+project-built application services, and image-provider for project-built
+configured components.
 
 None of this makes ADR-0014 wrong. It was a sound decision on the
 evidence available in August, and its cost model was accurate about
@@ -106,9 +108,12 @@ five hold, and each is checkable rather than asserted.
    work only if a future owner-authorized runtime window is justified on
    its own engineering value rather than on completing this scope.
 5. A component is admitted only when it validates a platform property
-   not already demonstrated by the representative scope. The
-   justification is written down before the work, and names the
-   property.
+   not already demonstrated by the representative scope. Before
+   implementation begins, three things must hold: the property is named
+   explicitly, admission is an explicit owner decision, and that
+   decision is recorded in `STATE.yaml` or in an architectural record.
+   A session report, an implementation plan, or an implementation
+   agent's recommendation does not satisfy this condition on its own.
 
 **What remains in force.** Everything ADR-0014 decided except the one
 selection named above, specifically: the two-scope model separating the
@@ -243,15 +248,13 @@ be implied by silence.
 ## Deferred Decisions
 
 Whether any further language tier is implemented at all is left open. If
-one is, the written justification required by stopping condition 5 names
-the property it validates; the ecosystem with no lockfile-based
-dependency graph is the one currently most likely to qualify, and that
-is an observation rather than a decision. Whether a future runtime
-window is opened for the three declared limitations is an owner decision
-under the existing runtime authorization model and the cost guardrails
-in ADR-0013. Whether the remaining components are eventually removed
-from the fleet inventory, or left as described but unimplemented, is not
-decided here.
+one is, it is admitted through stopping condition 5 on the same terms as
+any other component, and no ecosystem is favoured here. Whether a future
+runtime window is opened for the three declared limitations is an owner
+decision under the existing runtime authorization model and the cost
+guardrails in ADR-0013. Whether the remaining components are eventually
+removed from the fleet inventory, or left as described but
+unimplemented, is not decided here.
 
 ## Revisit Triggers
 
