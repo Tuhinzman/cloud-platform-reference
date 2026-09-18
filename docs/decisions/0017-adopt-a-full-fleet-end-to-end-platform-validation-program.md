@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (2026-09-18)
+Accepted (2026-09-18)
 
 Supersedes ADR-0016's scope-bounding Decision, that implementation scope
 is bounded by demonstrated platform-validation value rather than by fleet
