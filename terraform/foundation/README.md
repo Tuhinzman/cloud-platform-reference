@@ -190,8 +190,9 @@ and the Collector repository is declared because that work requires its image
 mirrored into this registry rather than pulled from an external one at pod
 start. All three have since been performed: shipping and quote publish through
 their own pipelines by digest, and the Collector image is mirrored into its
-repository. `astroshop/frontend-proxy` and `astroshop/image-provider` are
-declared for the next authorized delivery step and hold no image yet. No
+repository. `astroshop/image-provider` now holds one image, published by its
+own pipeline and read back from this registry by digest; `astroshop/frontend-proxy`
+is wired for the same path and holds no image yet. No
 requirement for the remaining project-built components has been demonstrated or
 authorized, so they are absent: membership follows the delivery path ADR-0009
 describes, not the fleet inventory.
@@ -206,8 +207,9 @@ AWS credential exists in CI.
 
 One role rather than one per service. The subject claim this role trusts carries
 the GitLab project and the ref and nothing that separates one service's pipeline
-from another's, and checkout, shipping and quote publish from the same project on
-the same branch. Per-service roles would carry identical trust conditions, so a
+from another's, and checkout, shipping, quote and image-provider publish from
+the same project on the same branch. Per-service roles would carry identical
+trust conditions, so a
 job able to assume one could assume any of them, and the separation would be in
 name only. The permission boundary is the repository list below.
 
@@ -229,7 +231,8 @@ identity question and is not implemented here. Nothing here grants repository
 deletion, lifecycle-policy mutation, IAM, or any other service. The permissions
 the observed checkout push path required were exercised successfully by that
 push; the set as a whole is not claimed to have been exhaustively exercised,
-and shipping and quote have since pushed through the same identity.
+and shipping, quote and image-provider have since pushed through the same
+identity.
 Environment pull access is a separate identity concern and is not implemented
 here.
 
