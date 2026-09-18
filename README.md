@@ -205,12 +205,14 @@ Coverage is partial and stated as measured: of the seventeen components, eight a
 wired, five of them carrying the full path and three lint only, and nine are not
 wired because their six language tiers have no template. ADR-0016 bounds that rather
 than carrying it as outstanding work; the per-component record is the workload
-repository's [SERVICE-INVENTORY.md](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/SERVICE-INVENTORY.md). That digest was read back from the registry
-independently to confirm the published artifact is the one the pipeline built. At that
-2026-08-15 publication scan, against the vulnerability database the pipeline had then, the
-artifact carried no fixable high or critical findings under the configured gate, and that
-was reached by updating the toolchain and dependencies rather than by adding exceptions to
-the security gate. That exact artifact is the one the platform later deployed in the
+repository's [SERVICE-INVENTORY.md](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/SERVICE-INVENTORY.md). Checkout's first published digest was read back
+from the registry independently to confirm that published artifact was the one the
+pipeline built. At that 2026-08-15 publication scan, against the vulnerability database the
+pipeline had then, that one artifact carried no fixable high or critical findings under the
+configured gate, and that was reached by updating the toolchain and dependencies rather than
+by adding exceptions to the security gate. The result belongs to that artifact and that
+moment: every other published digest carries the scan result of its own build, and none of
+them inherits this one. That exact artifact is the one the platform later deployed in the
 recorded validation windows. This is a point-in-time scan result rather than a current
 vulnerability attestation. Checkout source has since received a HIGH gRPC remediation,
 CVE-2026-84445, by moving to grpc v1.83.2; that change was merged after the deployed
