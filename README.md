@@ -213,8 +213,9 @@ credentials at the moment it needs them, and the image is
 [published to the registry by digest](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/ci/templates/ecr-publish.yml).
 Coverage is partial and stated as measured: of the seventeen components, eight are
 wired, five of them carrying the full path and three lint only, and nine are not
-wired because their six language tiers have no template. ADR-0016 bounds that rather
-than carrying it as outstanding work; the per-component record is the workload
+wired because their six language tiers have no template. ADR-0017 makes the full
+justified inventory the programme target, so those nine are selected work that has not
+been started rather than work ruled out; the per-component record is the workload
 repository's [SERVICE-INVENTORY.md](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/SERVICE-INVENTORY.md). Checkout's first published digest was read back
 from the registry independently to confirm that published artifact was the one the
 pipeline built. At that 2026-08-15 publication scan, against the vulnerability database the
@@ -250,12 +251,16 @@ delivery pipeline, one reconciliation model, and one teardown would be exercised
 breadth. It remains accepted, and its two-scope model, component classification, evidence
 tiers and risk-based exception policy all still hold.
 [ADR-0016](docs/decisions/0016-bound-the-implemented-workload-scope-to-demonstrated-validation-value.md)
-supersedes one selection in it. The implemented scope is now bounded by demonstrated
-platform-validation value rather than by fleet completeness, and a further component is
-admitted only when it validates a platform property the current scope has not already
-demonstrated. Bounded is not complete: nine components remain unwired, full-fleet CI/CD is
-not claimed, and the fleet-scale properties ADR-0014 wanted are recorded as declared
-limitations rather than as outstanding work.
+superseded one selection in it and bounded the implemented scope by demonstrated
+platform-validation value rather than by fleet completeness. It remains accepted.
+[ADR-0017](docs/decisions/0017-adopt-a-full-fleet-end-to-end-platform-validation-program.md)
+supersedes that bounding decision for the justified project-built inventory, and selects
+that whole inventory as the target of an owner-selected end-to-end programme. Selected is
+not delivered: nine components remain unwired, no work has begun on that breadth, and
+full-fleet CI/CD is not claimed. The fleet-scale properties ADR-0016 recorded as declared
+limitations stay declared limitations until measured evidence retires them, because
+ADR-0017 does not supersede that part of it. Accepting ADR-0017 authorizes no
+implementation, no infrastructure change, no cost and no runtime window.
 
 What has been deployed is a slice of that scope. On the most recent Dev runtime windows,
 Argo CD reconciled against the private GitOps repository and applied six applications: a
@@ -315,8 +320,8 @@ mechanism not conclusively isolated.
 Still NOT PROVEN, each an obligation its own decision record carries: rollback has not
 been exercised, promotion between environments has not been performed, and the Validation
 and Production-Validation environments have not been built at all. The full application
-fleet has not been deployed either; under ADR-0016 that is a declared limitation rather
-than an outstanding obligation.
+fleet has not been deployed either: ADR-0017 now selects it as the programme target, and
+no part of that breadth has been implemented or deployed.
 
 Raw evidence is retained outside this repository. The sanitized summary that supports the
 claims in these pages is [Runtime Validation](docs/validation/runtime-validation.md): one
