@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (2026-09-18)
+Accepted (2026-09-18)
 
 Supersedes nothing. This record is additive and edits no Accepted
 decision. It settles decisions ADR-0007 explicitly deferred and decides
