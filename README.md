@@ -93,6 +93,15 @@ environment runs continuously originates in ADR-0004 and is restated in ADR-0006
 ADR-0007. Accepted records are never edited here, so ADR-0013 is the single place that
 states how far that supersession reaches and what in those three records is untouched.
 
+ADR-0016 supersedes part of ADR-0014 in the same way. ADR-0014 remains accepted, and only
+its selection of the complete justified AstroShop fleet as the implemented workload scope
+is superseded, because the work still outstanding under that scope no longer advances the
+breadth properties the scope was chosen for. Everything else in that record stays in
+force: the minimum-evidence-set and implemented-fleet model, the component
+classification, the evidence-depth model, the reusable delivery and two-pass scanning
+models, and the risk-based security exception policy. ADR-0016 is the single place that
+states how far that supersession reaches and what in ADR-0014 is untouched.
+
 Infrastructure definitions live in [terraform/](terraform/), one directory per
 configuration root. Each root has its own README covering what it creates, what it
 deliberately does not, and what has been validated against AWS.
