@@ -207,9 +207,19 @@ and since then shipping, quote and image-provider. A service's pipeline
 hosted runners, executes the service's own tests, builds the image,
 [scans it](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/ci/templates/trivy-scan.yml) before
 anything is published, generates a software bill of materials, and starts the built
-container to confirm it comes up and accepts a connection on its port. The pipeline
-holds no cloud credential: it exchanges a short-lived identity token for temporary
-credentials at the moment it needs them, and the image is
+container to confirm it comes up and accepts a connection on its port.
+
+What that scan observes is bounded, and the bound belongs beside the result. The scanner
+reads operating-system packages, and an application's own dependencies wherever the build
+leaves them legible inside the image. A service compiled to a single binary with its
+dependencies linked in leaves none, so its bill of materials describes the base image
+rather than the application's dependency tree. Shipping is built that way, which makes its
+clean image scan a statement about its base image and not about its dependencies.
+Source-level dependency scanning is not part of the blocking gate today, and that gap is
+recorded here rather than left to be inferred from a passing scan.
+
+The pipeline holds no cloud credential: it exchanges a short-lived identity token for
+temporary credentials at the moment it needs them, and the image is
 [published to the registry by digest](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/ci/templates/ecr-publish.yml).
 Coverage is partial and stated as measured. Of the seventeen justified project-built
 components, some carry the full path through build, scan, SBOM and publication, some
