@@ -207,14 +207,25 @@ and since then shipping, quote and image-provider. A service's pipeline
 hosted runners, executes the service's own tests, builds the image,
 [scans it](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/ci/templates/trivy-scan.yml) before
 anything is published, generates a software bill of materials, and starts the built
-container to confirm it comes up and accepts a connection on its port. The pipeline
-holds no cloud credential: it exchanges a short-lived identity token for temporary
-credentials at the moment it needs them, and the image is
+container to confirm it comes up and accepts a connection on its port.
+
+What that scan observes is bounded, and the bound belongs beside the result. The scanner
+reads operating-system packages, and an application's own dependencies only where the
+build leaves them legible in the image. That varies by language rather than by packaging:
+a Go binary carries its module graph inside it and is read, while a Rust binary and a .NET
+single-file bundle carry nothing the scanner can parse, so for those services the bill of
+materials describes the base image and the gate result speaks to that. The blocking gate
+is the image scan. Source-level dependency scanning is a separate control and is not what
+gates this pipeline, which is worth stating so a passing gate is not read as more than it
+measured.
+
+The pipeline holds no cloud credential: it exchanges a short-lived identity token for
+temporary credentials at the moment it needs them, and the image is
 [published to the registry by digest](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/ci/templates/ecr-publish.yml).
 Coverage is partial and stated as measured. Of the seventeen justified project-built
 components, some carry the full path through build, scan, SBOM and publication, some
-reach lint only, and the rest are not wired because their language tiers have no
-template yet. ADR-0017 makes the full justified inventory the programme target, so the
+reach lint only, and the rest are not wired. ADR-0017 makes the full justified
+inventory the programme target, so the
 unwired components are selected work rather than work ruled out, and full-fleet CI/CD is
 not claimed. Which component is in which state changes as the programme runs, so the
 current per-component record is kept in one place rather than restated here: the workload
@@ -323,7 +334,7 @@ Still NOT PROVEN, each an obligation its own decision record carries: rollback h
 been exercised, promotion between environments has not been performed, and the Validation
 and Production-Validation environments have not been built at all. The full application
 fleet has not been deployed either: ADR-0017 now selects it as the programme target, and
-no part of that breadth has been implemented or deployed.
+no part of that breadth has reached a runtime.
 
 Raw evidence is retained outside this repository. The sanitized summary that supports the
 claims in these pages is [Runtime Validation](docs/validation/runtime-validation.md): one
