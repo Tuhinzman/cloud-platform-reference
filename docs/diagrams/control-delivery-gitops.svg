@@ -74,14 +74,14 @@
 <rect x="1500" y="124" width="175" height="250" rx="8" fill="#FFFBF3" stroke="#B7791F" stroke-width="1.5"/>
 <rect x="1500" y="124" width="4" height="250" rx="2" fill="#B7791F"/>
 <text x="1587.5" y="145" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">CI/CD coverage today</text>
-<text x="1587.5" y="160" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">5 / 17 full validated path</text>
-<text x="1587.5" y="173" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">checkout, shipping, quote,</text>
-<text x="1587.5" y="186" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">frontend-proxy,</text>
-<text x="1587.5" y="199" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">image-provider</text>
-<text x="1587.5" y="212" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">3 / 17 lint-only / partial</text>
-<text x="1587.5" y="225" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">frontend, payment,</text>
-<text x="1587.5" y="238" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">product-catalog</text>
-<text x="1587.5" y="251" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">9 / 17 not yet wired</text>
+<text x="1587.5" y="160" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Full-chain delivery:</text>
+<text x="1587.5" y="173" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">partial</text>
+<text x="1587.5" y="186" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Partial / lint-only:</text>
+<text x="1587.5" y="199" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">present</text>
+<text x="1587.5" y="212" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Unwired components:</text>
+<text x="1587.5" y="225" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">remain</text>
+<text x="1587.5" y="238" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Per component: workload</text>
+<text x="1587.5" y="251" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">SERVICE-INVENTORY.md</text>
 <text x="1587.5" y="264" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">ADR-0017 targets the full</text>
 <text x="1587.5" y="277" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">justified fleet; delivery</text>
 <text x="1587.5" y="290" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">is partial today.</text>

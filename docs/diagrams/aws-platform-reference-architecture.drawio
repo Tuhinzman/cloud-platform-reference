@@ -42,16 +42,17 @@ container starts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;stro
 <mxCell id="cov" value="CI/CD coverage today
 
 
-5 / 17  full validated path
-checkout, shipping, quote,
-frontend-proxy,
-image-provider
+Full-chain delivery:
+partial
 
-3 / 17  lint-only / partial
-frontend, payment,
-product-catalog
+Partial / lint-only:
+present
 
-9 / 17  not yet wired
+Unwired components:
+remain
+
+Per component: workload
+SERVICE-INVENTORY.md
 
 ADR-0017 targets the full
 justified fleet; delivery
@@ -547,7 +548,7 @@ documentation and validation summary" style="rounded=1;whiteSpace=wrap;html=1;fi
 <mxCell id="p3_t6" value="VALIDATED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#1D6F42;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1500" y="482" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p3_t7" value="VALIDATED" style="text;html=1;align=left;verticalAlign=top;fontSize=9.5;fontColor=#1D6F42;fontFamily=Helvetica;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1500" y="536" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p3_t8" value="Validated across the closed runtime windows. Not currently running." style="text;html=1;align=left;verticalAlign=top;fontSize=10.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="1318" y="580" width="320" height="40" as="geometry"/></mxCell>
-<mxCell id="p3_t9" value="CI/CD:  5 of 17 components have a validated build, scan, SBOM and health path (checkout, shipping, quote, frontend-proxy, image-provider).  3 of 17 are lint-only (frontend, payment, product-catalog).  9 of 17 are not wired." style="text;html=1;align=left;verticalAlign=top;fontSize=12.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="52" y="660" width="320" height="40" as="geometry"/></mxCell>
+<mxCell id="p3_t9" value="CI/CD:  coverage across the seventeen justified project-built components is partial. Some carry the full validated build, scan, SBOM and health path, some reach lint only, and the rest are not wired. Per-component status: workload SERVICE-INVENTORY.md." style="text;html=1;align=left;verticalAlign=top;fontSize=12.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="52" y="660" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p3_t10" value="Accepted ADR-0017 selects the full justified project-built fleet as the programme target; implementation has not begun for that breadth. Language-tier templates are an implementation mechanism, never a scope gate." style="text;html=1;align=left;verticalAlign=top;fontSize=12.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="52" y="698" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p3_t11" value="Runtime is not live and no window is currently authorized.  Four components have published images read back by digest, so there is per-service digest evidence but no fleet-wide publication.  Promotion and rollback are accepted architecture and have not been exercised." style="text;html=1;align=left;verticalAlign=top;fontSize=12.5;fontColor=#1B2733;fontFamily=Helvetica;" vertex="1" parent="1"><mxGeometry x="52" y="736" width="320" height="40" as="geometry"/></mxCell>
 <mxCell id="p3_t12" value="The sequence above is the target flow, not a statement that it runs today; the status panel states which segments are proven.  Ephemeral runtime resources are removed after every approved window, and persistent foundation resources are intentionally retained.  The platform is the product, and AstroShop is the workload used to validate it." style="text;html=1;align=left;verticalAlign=top;fontSize=11.5;fontColor=#5A6672;fontFamily=Helvetica;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="52" y="926" width="320" height="40" as="geometry"/></mxCell>

@@ -211,11 +211,13 @@ container to confirm it comes up and accepts a connection on its port. The pipel
 holds no cloud credential: it exchanges a short-lived identity token for temporary
 credentials at the moment it needs them, and the image is
 [published to the registry by digest](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/ci/templates/ecr-publish.yml).
-Coverage is partial and stated as measured: of the seventeen components, eight are
-wired, five of them carrying the full path and three lint only, and nine are not
-wired because their six language tiers have no template. ADR-0017 makes the full
-justified inventory the programme target, so those nine are selected work that has not
-been started rather than work ruled out; the per-component record is the workload
+Coverage is partial and stated as measured. Of the seventeen justified project-built
+components, some carry the full path through build, scan, SBOM and publication, some
+reach lint only, and the rest are not wired because their language tiers have no
+template yet. ADR-0017 makes the full justified inventory the programme target, so the
+unwired components are selected work rather than work ruled out, and full-fleet CI/CD is
+not claimed. Which component is in which state changes as the programme runs, so the
+current per-component record is kept in one place rather than restated here: the workload
 repository's [SERVICE-INVENTORY.md](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/SERVICE-INVENTORY.md). Checkout's first published digest was read back
 from the registry independently to confirm that published artifact was the one the
 pipeline built. At that 2026-08-15 publication scan, against the vulnerability database the
@@ -256,9 +258,9 @@ platform-validation value rather than by fleet completeness. It remains accepted
 [ADR-0017](docs/decisions/0017-adopt-a-full-fleet-end-to-end-platform-validation-program.md)
 supersedes that bounding decision for the justified project-built inventory, and selects
 that whole inventory as the target of an owner-selected end-to-end programme. Selected is
-not delivered: nine components remain unwired, no work has begun on that breadth, and
-full-fleet CI/CD is not claimed. The fleet-scale properties ADR-0016 recorded as declared
-limitations stay declared limitations until measured evidence retires them, because
+not delivered: components remain unwired and full-fleet CI/CD is not claimed. The
+fleet-scale properties ADR-0016 recorded as declared limitations stay declared
+limitations until measured evidence retires them, because
 ADR-0017 does not supersede that part of it. Accepting ADR-0017 authorizes no
 implementation, no infrastructure change, no cost and no runtime window.
 
