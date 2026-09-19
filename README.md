@@ -258,9 +258,9 @@ platform-validation value rather than by fleet completeness. It remains accepted
 [ADR-0017](docs/decisions/0017-adopt-a-full-fleet-end-to-end-platform-validation-program.md)
 supersedes that bounding decision for the justified project-built inventory, and selects
 that whole inventory as the target of an owner-selected end-to-end programme. Selected is
-not delivered: nine components remain unwired, no work has begun on that breadth, and
-full-fleet CI/CD is not claimed. The fleet-scale properties ADR-0016 recorded as declared
-limitations stay declared limitations until measured evidence retires them, because
+not delivered: components remain unwired and full-fleet CI/CD is not claimed. The
+fleet-scale properties ADR-0016 recorded as declared limitations stay declared
+limitations until measured evidence retires them, because
 ADR-0017 does not supersede that part of it. Accepting ADR-0017 authorizes no
 implementation, no infrastructure change, no cost and no runtime window.
 
