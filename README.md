@@ -209,15 +209,36 @@ hosted runners, executes the service's own tests, builds the image,
 anything is published, generates a software bill of materials, and starts the built
 container to confirm it comes up and accepts a connection on its port.
 
-What that scan observes is bounded, and the bound belongs beside the result. The scanner
-reads operating-system packages, and an application's own dependencies only where the
-build leaves them legible in the image. That varies by language rather than by packaging:
-a Go binary carries its module graph inside it and is read, while a Rust binary and a .NET
-single-file bundle carry nothing the scanner can parse, so for those services the bill of
-materials describes the base image and the gate result speaks to that. The blocking gate
-is the image scan. Source-level dependency scanning is a separate control and is not what
-gates this pipeline, which is worth stating so a passing gate is not read as more than it
-measured.
+Source-level dependency scanning is required by ADR-0009 and was not implemented in the
+earlier image-only delivery path. It is now implemented for the currently wired
+dependency-bearing services, and the two gates cover different things: measurement showed
+neither view contains the other.
+
+What an image scan observes depends on what the build leaves legible inside the image, and
+that varies by language rather than by packaging: a Go binary carries its module graph and
+is read, a PHP service carries its vendor directory and is read, while a Rust binary and a
+.NET single-file bundle carry nothing the scanner can parse. For those two the image scan
+had no dependency view to report at all. The source pass runs the same pinned scanner at
+the same threshold, blocking on fixable HIGH and CRITICAL. Neither result is recorded as
+evidence for the other, and neither is a claim about components that are not wired.
+
+A gate that scans a lock file is only worth its evidence if the build installs from that
+same lock file, so the two are tied rather than assumed. The PHP vendor stage copies the
+lock file and installs from it, and the installed tree was compared against the lock
+package by package; the .NET tier restores in locked mode, so a dependency that disagrees
+with the lock fails the job instead of quietly rewriting it.
+
+The second gate carries a coverage declaration, which is the part worth borrowing. A
+scanner reports nothing for a project whose dependency set it cannot resolve, and nothing
+looks exactly like clean: two services here resolved zero packages and reported zero
+findings before a lock file existed. A service that declares managed dependencies must now
+resolve at least one package or its job fails, so a blind spot blocks instead of passing
+quietly. The per-component coverage is recorded in the workload repository's service
+inventory rather than restated here.
+
+One bound stays. The bill of materials is generated from the image, so for a statically
+linked or single-file service it still describes the base image rather than the
+application's dependency graph, and that is a limitation rather than a finding of none.
 
 The pipeline holds no cloud credential: it exchanges a short-lived identity token for
 temporary credentials at the moment it needs them, and the image is
