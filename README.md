@@ -209,14 +209,24 @@ hosted runners, executes the service's own tests, builds the image,
 anything is published, generates a software bill of materials, and starts the built
 container to confirm it comes up and accepts a connection on its port.
 
-Two gates run, not one, because measurement showed neither view contains the other. What
-an image scan observes depends on what the build leaves legible inside the image, and that
-varies by language rather than by packaging: a Go binary carries its module graph and is
-read, a PHP service carries its vendor directory and is read, while a Rust binary and a
+Source-level dependency scanning is required by ADR-0009 and was not implemented in the
+earlier image-only delivery path. It is now implemented for the currently wired
+dependency-bearing services, and the two gates cover different things: measurement showed
+neither view contains the other.
+
+What an image scan observes depends on what the build leaves legible inside the image, and
+that varies by language rather than by packaging: a Go binary carries its module graph and
+is read, a PHP service carries its vendor directory and is read, while a Rust binary and a
 .NET single-file bundle carry nothing the scanner can parse. For those two the image scan
-had no dependency view to report at all, so the pipeline now also runs the same scanner
-against the source tree, at the same threshold, blocking on fixable HIGH and CRITICAL.
-Neither result is recorded as evidence for the other.
+had no dependency view to report at all. The source pass runs the same pinned scanner at
+the same threshold, blocking on fixable HIGH and CRITICAL. Neither result is recorded as
+evidence for the other, and neither is a claim about components that are not wired.
+
+A gate that scans a lock file is only worth its evidence if the build installs from that
+same lock file, so the two are tied rather than assumed. The PHP vendor stage copies the
+lock file and installs from it, and the installed tree was compared against the lock
+package by package; the .NET tier restores in locked mode, so a dependency that disagrees
+with the lock fails the job instead of quietly rewriting it.
 
 The second gate carries a coverage declaration, which is the part worth borrowing. A
 scanner reports nothing for a project whose dependency set it cannot resolve, and nothing
