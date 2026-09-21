@@ -19,14 +19,20 @@ variable "allowed_account_id" {
   }
 }
 
+variable "alerting_campaign_enabled" {
+  description = "Creates the REQ-015 alerting campaign: the topic, the publish role and policy, and the Pod Identity association. Off by default so an ordinary window apply does not create it."
+  type        = bool
+  default     = false
+}
+
 variable "alerting_email_subscription_enabled" {
-  description = "Creates the REQ-015 alerting email subscription when true. Off by default so the root plans and validates without the private endpoint; the operator enables it for the alerting window."
+  description = "Creates the REQ-015 alerting email subscription when true and alerting_campaign_enabled is true. Off by default so the root plans and validates without the private endpoint; the operator enables it for the alerting window."
   type        = bool
   default     = false
 }
 
 variable "alerting_email_endpoint" {
-  description = "Owner-controlled email address that subscribes to the REQ-015 alerting topic. A private execution input: never committed, never written to evidence, redacted in plan and apply output. Required only when alerting_email_subscription_enabled is true."
+  description = "Owner-controlled email address that subscribes to the REQ-015 alerting topic. A private execution input: never committed, never written to evidence, redacted in plan and apply output. Required only when alerting_campaign_enabled and alerting_email_subscription_enabled are both true."
   type        = string
   default     = null
   sensitive   = true

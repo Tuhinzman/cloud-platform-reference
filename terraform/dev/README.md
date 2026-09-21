@@ -407,12 +407,13 @@ configured and nothing more.
 
 ### Alerting
 
-`alerting-campaign.tf` carries the environment's alert-delivery leg: a notification
-topic, an email subscription created only when `alerting_email_subscription_enabled`
-is true, and the role and policy that let the alerting engine publish to that topic
-through a Pod Identity association on its service account, so no credential is
-mounted into the cluster. The endpoint address is a private input supplied through
-`terraform.tfvars` and never enters the repository or the evidence. These resources
+`alerting-campaign.tf` carries the environment's alert-delivery leg, created only when
+`alerting_campaign_enabled` is true: a notification topic, an email subscription created
+only when `alerting_email_subscription_enabled` is also true, and the role and policy
+that let the alerting engine publish to that topic through a Pod Identity association
+on its service account, so no credential is mounted into the cluster. The endpoint
+address is a private input supplied through `terraform.tfvars` and never enters the
+repository or the evidence. These resources
 exist for an alerting window and are destroyed with its runtime. The delivery path
 has been exercised end to end; what that proved and did not is stated in the
 repository README.
@@ -468,8 +469,8 @@ time. Four classes are worth separating.
 |---|---|---|
 | Declared | 43 | Everything across the `.tf` files in this root |
 | Retained | 21 | The network baseline plus the environment's identity, secret and configuration resources. Present between approved windows |
-| Runtime | 18 | The NAT gateway and its Elastic IP, the private default route, the cluster and node service roles with their four policy attachments, the cluster, the launch template, the node group, the four add-ons, and the two Pod Identity associations |
-| Alerting campaign | 4 | The notification topic, its subscription, and the role and policy that let the alerting engine publish to it. Created before an alerting window and destroyed with its runtime; see Alerting below |
+| Runtime | 17 | The NAT gateway and its Elastic IP, the private default route, the cluster and node service roles with their four policy attachments, the cluster, the launch template, the node group, the four add-ons, and the External Secrets Pod Identity association |
+| Alerting campaign | 5 | The notification topic, its subscription, the role and policy that let the alerting engine publish to it, and the Pod Identity association that binds that role to the engine's service account. Created only when `alerting_campaign_enabled` is true, for an alerting window, and destroyed with its runtime; see Alerting below |
 
 The retained figure is what Terraform state lists, and what the plan taken after
 the last teardown converged on. It is a statement about managed state rather than
@@ -480,7 +481,7 @@ cleanup.
 [ADR-0013](../../docs/decisions/0013-define-operations-and-cost-guardrails.md)
 requires that of every environment role including Dev, superseding the earlier
 assumption that a development environment stays continuously active. Between
-windows the 18 runtime resources are configuration and nothing else. Within this
+windows the 17 runtime resources are configuration and nothing else. Within this
 root, the retained resources currently introduce no hourly runtime charge, and
 the two Secrets Manager entries remain the known recurring retained-resource
 charge.
@@ -489,8 +490,8 @@ charge.
 AWS, with a following plan reporting no changes. The runtime has been created and
 destroyed more than once, each time from a reviewed plan, with an orphan check
 after teardown and a following plan that reproduced the same runtime boundary: 17
-resources in the five windows that preceded the alerting campaign, and 18 once its
-Pod Identity association joined the runtime class. Private egress was verified from a pod on the private node fleet, which
+resources in the five windows that preceded the alerting campaign, and 18 in the
+alerting window, which added the campaign's Pod Identity association. Private egress was verified from a pod on the private node fleet, which
 resolved DNS and reached an external HTTPS endpoint from a source address
 matching the NAT gateway. Across four windows, Argo CD, the secret-synchronisation
 controller, a three-service workload slice and the four-component observability
