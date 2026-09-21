@@ -264,15 +264,26 @@ serves a public HTTPS endpoint under that domain.
 The zone is applied on its own first. The registrar is then pointed at the four
 name servers in the `public_zone_name_servers` output, and the certificate is
 added only once the parent zone answers with them, because its DNS validation
-depends on that delegation. The certificate is not in this root yet.
+depends on that delegation.
+
+`certificate.tf` adds one ACM public certificate for the apex and a wildcard
+beneath it, non-exportable so it carries no charge, validated through a record
+in the zone. That record stays after validation, because ACM renews the
+certificate through it.
+
+A rebuild from nothing follows the same order, because a recreated zone gets new
+name servers: `terraform apply -target=aws_route53_zone.public`, set the name
+servers at the registrar and confirm the parent answers with them, then run the
+full apply.
 
 `prevent_destroy` guards the zone. To retire it, point the registrar elsewhere
 first, wait out the longer of the parent's name-server TTL and the zone's own NS
 TTL (172800 seconds in Route 53), then lift the guard in a reviewed change and
-destroy.
+destroy. Retire the certificate first, once no listener uses it; the zone deletes
+only when its NS and SOA records alone remain.
 
 The zone costs 0.50 USD a month, not prorated, so the month of creation is
-charged in full, plus 0.40 USD per million queries.
+charged in full, plus 0.40 USD per million queries. The certificate is free.
 
 ## Status
 
@@ -308,5 +319,4 @@ destination remains undemonstrated.
 The public DNS zone is applied: the apply added the hosted zone and nothing
 else, AWS read-back verified a public zone with four assigned name servers and
 the six mandatory tags, and the plan after apply reported no changes. The
-registrar has not been pointed at those name servers, so public DNS for the
-domain does not use this zone yet.
+certificate is not applied.
