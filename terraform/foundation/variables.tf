@@ -29,3 +29,13 @@ variable "allowed_account_id" {
     error_message = "allowed_account_id must be the 12-digit AWS account ID, digits only."
   }
 }
+
+variable "public_domain" {
+  description = "Registered apex domain whose public hosted zone this root creates. An owner-private execution input under ADR-0018, supplied at execution time and never committed."
+  type        = string
+
+  validation {
+    condition     = can(regex("^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+([a-z]{2,63}|xn--[a-z0-9-]{1,59})$", var.public_domain))
+    error_message = "public_domain must be a lowercase domain name such as example.com, without a trailing dot."
+  }
+}

@@ -1,10 +1,10 @@
 # Persistent shared foundations
 
 This root holds the platform's persistent shared foundations: the resources
-whose lifecycle and recovery duties outlive every environment window. Two are
-declared here, the durable evidence destination and the artifact registry. The
-sections through Final decommission describe the evidence destination, and the
-artifact registry section follows them.
+whose lifecycle and recovery duties outlive every environment window. Three are
+declared here: the durable evidence destination, the artifact registry, and the
+public DNS zone. The sections through Final decommission describe the evidence
+destination, and the sections after them cover the other two.
 
 Raw evidence has to outlive the environment that produced it. Environments are
 created for an approved window and destroyed afterward, and raw evidence is
@@ -62,19 +62,25 @@ not before the first object lands.
 
 ## Input
 
-Two required variables, neither with a default, both supplied at execution time
-and neither committed. `terraform.tfvars.example` shows their shape.
+Four required variables, none with a default, all supplied at execution time and
+none committed. `terraform.tfvars.example` shows their shape.
 
 `evidence_bucket_name` names this bucket. Choose a name that identifies the
 platform and the bucket's purpose, that is unlikely to collide, and that reveals
 nothing about the account behind it. A validation rule rejects anything outside
 the S3 naming rule, and also rejects periods: they are legal in a bucket name but
-break the wildcard certificate on virtual-hosted-style HTTPS requests, and this
+break S3's own wildcard certificate on virtual-hosted-style HTTPS requests, and this
 bucket refuses plain HTTP.
 
 `allowed_account_id` is the dedicated project account. The provider checks the
 caller's account against it before doing anything, so running with a credential
 for another account fails immediately.
+
+`gitlab_project_id` is the numeric ID of the GitLab project whose main-branch
+pipelines may assume the CI push role.
+
+`public_domain` is the registered apex domain for the public hosted zone,
+lowercase and without a trailing dot. It is an owner-private input.
 
 `backend.hcl` is a third value and a different one. It carries the **state**
 bucket the bootstrap root created, which is where this root's own state object
@@ -238,6 +244,36 @@ identity.
 Environment pull access is a separate identity concern and is not implemented
 here.
 
+## Public DNS
+
+`dns.tf` creates one public hosted zone for the registered apex domain, which
+[ADR-0018](../../docs/decisions/0018-define-the-public-entry-implementation-dns-and-certificate-model.md)
+places in this root as a persistent shared foundation; the
+[architecture baseline](../../docs/architecture-baseline.md) records its purpose,
+recovery and lifecycle. The domain is the owner-private input `public_domain` and
+is never committed. Environment records are to be created inside a window by the
+record controller ADR-0018 requires, which is not implemented yet; this root
+creates none.
+
+No role this repository declares can write the zone. Until the record
+controller's role exists, scoped to this zone alone, write access comes only from
+administrative access to the account, and whoever can write the zone can have a
+certificate issued for the domain. The zone is needed for as long as the platform
+serves a public HTTPS endpoint under that domain.
+
+The zone is applied on its own first. The registrar is then pointed at the four
+name servers in the `public_zone_name_servers` output, and the certificate is
+added only once the parent zone answers with them, because its DNS validation
+depends on that delegation. The certificate is not in this root yet.
+
+`prevent_destroy` guards the zone. To retire it, point the registrar elsewhere
+first, wait out the longer of the parent's name-server TTL and the zone's own NS
+TTL (172800 seconds in Route 53), then lift the guard in a reviewed change and
+destroy.
+
+The zone costs 0.50 USD a month, not prorated, so the month of creation is
+charged in full, plus 0.40 USD per million queries.
+
 ## Status
 
 The evidence bucket exists. `terraform apply` created the five evidence
@@ -268,3 +304,5 @@ inline policy, and the six mandatory tags.
 A pipeline has assumed the role and pushed, so end-to-end OIDC authentication
 is proven for the checkout push path. The access boundary of the evidence
 destination remains undemonstrated.
+
+The public DNS zone is not applied.

@@ -14,3 +14,7 @@ allowed_account_id = "000000000000"
 # given as the immutable numeric project ID the OIDC sub claim carries. Read it
 # from the project's Settings, General page. The value below is a placeholder.
 gitlab_project_id = 12345678
+
+# The registered apex domain whose public hosted zone this root creates. The
+# value below is reserved for documentation (RFC 2606), not a domain you own.
+public_domain = "example.com"
