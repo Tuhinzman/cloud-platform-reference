@@ -120,6 +120,8 @@ resource "aws_vpc_endpoint" "s3" {
 
 # Single NAT is a validation-cost trade-off.
 resource "aws_eip" "nat" {
+  count = var.worker_capacity_enabled ? 1 : 0
+
   domain = "vpc"
 
   tags = {
@@ -128,7 +130,9 @@ resource "aws_eip" "nat" {
 }
 
 resource "aws_nat_gateway" "dev" {
-  allocation_id = aws_eip.nat.id
+  count = var.worker_capacity_enabled ? 1 : 0
+
+  allocation_id = aws_eip.nat[0].id
   subnet_id     = aws_subnet.public_a.id
 
   tags = {
@@ -139,7 +143,9 @@ resource "aws_nat_gateway" "dev" {
 }
 
 resource "aws_route" "private_default" {
+  count = var.worker_capacity_enabled ? 1 : 0
+
   route_table_id         = aws_route_table.private.id
   destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = aws_nat_gateway.dev.id
+  nat_gateway_id         = aws_nat_gateway.dev[0].id
 }

@@ -11,6 +11,9 @@ allowed_account_id = "000000000000"
 # from the RFC 5737 documentation range and reaches nothing.
 operator_cidr = "203.0.113.10/32"
 
+# Observation mode: the cluster and its four add-ons with no worker capacity.
+# worker_capacity_enabled = false
+
 # Alerting campaign. Off by default; the topic, role, policy and association are
 # created only when enabled, and the subscription only when it is also enabled.
 # The endpoint is a private input and never enters the repository.

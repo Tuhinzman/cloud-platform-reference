@@ -1,4 +1,6 @@
 resource "aws_iam_role" "eks_node" {
+  count = var.worker_capacity_enabled ? 1 : 0
+
   name = "cloud-platform-reference-dev-eks-node"
 
   assume_role_policy = jsonencode({
@@ -20,22 +22,30 @@ resource "aws_iam_role" "eks_node" {
 }
 
 resource "aws_iam_role_policy_attachment" "eks_node_worker" {
-  role       = aws_iam_role.eks_node.name
+  count = var.worker_capacity_enabled ? 1 : 0
+
+  role       = aws_iam_role.eks_node[0].name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
 }
 
 resource "aws_iam_role_policy_attachment" "eks_node_cni" {
-  role       = aws_iam_role.eks_node.name
+  count = var.worker_capacity_enabled ? 1 : 0
+
+  role       = aws_iam_role.eks_node[0].name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
 }
 
 resource "aws_iam_role_policy_attachment" "eks_node_ecr_pull" {
-  role       = aws_iam_role.eks_node.name
+  count = var.worker_capacity_enabled ? 1 : 0
+
+  role       = aws_iam_role.eks_node[0].name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly"
 }
 
 # Node-group tags and provider default_tags never reach the instances or volumes.
 resource "aws_launch_template" "eks_node" {
+  count = var.worker_capacity_enabled ? 1 : 0
+
   name_prefix = "cloud-platform-reference-dev-node-"
 
   # disk_size is unavailable on a node group that uses a launch template.
@@ -90,9 +100,11 @@ resource "aws_launch_template" "eks_node" {
 }
 
 resource "aws_eks_node_group" "dev" {
+  count = var.worker_capacity_enabled ? 1 : 0
+
   cluster_name    = aws_eks_cluster.dev.name
   node_group_name = "cloud-platform-reference-dev-nodes"
-  node_role_arn   = aws_iam_role.eks_node.arn
+  node_role_arn   = aws_iam_role.eks_node[0].arn
 
   subnet_ids = [
     aws_subnet.private_a.id,
@@ -105,8 +117,8 @@ resource "aws_eks_node_group" "dev" {
 
   # latest_version makes a template edit a rolling node replacement.
   launch_template {
-    id      = aws_launch_template.eks_node.id
-    version = aws_launch_template.eks_node.latest_version
+    id      = aws_launch_template.eks_node[0].id
+    version = aws_launch_template.eks_node[0].latest_version
   }
 
   scaling_config {

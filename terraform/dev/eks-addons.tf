@@ -16,12 +16,21 @@ resource "aws_eks_addon" "coredns" {
   addon_version               = "v1.14.3-eksbuild.3"
   resolve_conflicts_on_create = "OVERWRITE"
 
+  # Observation mode has no node: zero replicas creates the Deployment without scheduling a pod.
+  configuration_values = var.worker_capacity_enabled ? null : jsonencode({ replicaCount = 0 })
+
   tags = {
     Component = "runtime"
   }
 
   # CoreDNS needs schedulable capacity before it can become healthy.
   depends_on = [aws_eks_node_group.dev]
+
+  # The provider waits on DEGRADED as if it were pending; with no node that wait would run
+  # out the 20-minute default.
+  timeouts {
+    create = var.worker_capacity_enabled ? null : "5m"
+  }
 }
 
 resource "aws_eks_addon" "kube_proxy" {

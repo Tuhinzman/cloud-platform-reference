@@ -357,7 +357,8 @@ EKS installs its own self-managed copies of `vpc-cni`, `coredns` and
 take those over as Terraform-managed add-ons, and
 `resolve_conflicts_on_create = "OVERWRITE"` is what settles the field conflicts
 that transition produces. The Pod Identity agent is not part of that bootstrap
-set and needs no conflict resolution.
+set and needs no conflict resolution. In observation mode, described under
+Lifecycle below, the cluster is created without the self-managed copies.
 
 `aws-ebs-csi-driver` is out of scope for this slice, so this cluster has no
 dynamic block storage provisioner.
@@ -471,6 +472,13 @@ time. Four classes are worth separating.
 | Retained | 21 | The network baseline plus the environment's identity, secret and configuration resources. Present between approved windows |
 | Runtime | 17 | The NAT gateway and its Elastic IP, the private default route, the cluster and node service roles with their four policy attachments, the cluster, the launch template, the node group, the four add-ons, and the External Secrets Pod Identity association |
 | Alerting campaign | 5 | The notification topic, its subscription, the role and policy that let the alerting engine publish to it, and the Pod Identity association that binds that role to the engine's service account. Created only when `alerting_campaign_enabled` is true, for an alerting window, and destroyed with its runtime; see Alerting below |
+
+`worker_capacity_enabled = false` selects observation mode, 7 of the 17 runtime
+resources: the cluster, its role and policy attachment, and the four add-ons. No
+node group, NAT path or Pod Identity association is created, so the add-ons'
+workload objects can be read without any of their containers running. CoreDNS is
+set to zero replicas and its create wait is bounded at five minutes, because with
+no node EKS can report it DEGRADED, which the provider keeps waiting on.
 
 The retained figure is what Terraform state lists, and what the plan taken after
 the last teardown converged on. It is a statement about managed state rather than

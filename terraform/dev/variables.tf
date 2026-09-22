@@ -19,6 +19,12 @@ variable "allowed_account_id" {
   }
 }
 
+variable "worker_capacity_enabled" {
+  description = "Creates the worker capacity and what exists only to serve it: the node group with its role, policy attachments and launch template, the NAT path, and the External Secrets Pod Identity association. False gives the control-plane-only observation shape, the cluster and its four pinned add-ons with no node, so no add-on container can run."
+  type        = bool
+  default     = true
+}
+
 variable "alerting_campaign_enabled" {
   description = "Creates the REQ-015 alerting campaign: the topic, the publish role and policy, and the Pod Identity association. Off by default so an ordinary window apply does not create it."
   type        = bool
