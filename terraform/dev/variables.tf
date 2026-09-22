@@ -1,6 +1,9 @@
 variable "operator_cidr" {
   description = "The single public IPv4 CIDR permitted to reach the EKS public API endpoint. It is the operator's own address, it changes with the network they work from, and it is never committed. Supplied at execution time."
   type        = string
+  # Keeps the address out of plan and apply text. State and JSON output still carry it, so
+  # captured evidence is redacted as well.
+  sensitive = true
 
   validation {
     # cidrhost rejects what the pattern alone accepts, such as 300.1.1.1/32.
