@@ -1,6 +1,9 @@
 variable "operator_cidr" {
   description = "The single public IPv4 CIDR permitted to reach the EKS public API endpoint. It is the operator's own address, it changes with the network they work from, and it is never committed. Supplied at execution time."
   type        = string
+  # Keeps the address out of plan and apply text. State and JSON output still carry it, so
+  # captured evidence is redacted as well.
+  sensitive = true
 
   validation {
     # cidrhost rejects what the pattern alone accepts, such as 300.1.1.1/32.
@@ -17,6 +20,12 @@ variable "allowed_account_id" {
     condition     = can(regex("^[0-9]{12}$", var.allowed_account_id))
     error_message = "allowed_account_id must be the 12-digit AWS account ID, digits only."
   }
+}
+
+variable "worker_capacity_enabled" {
+  description = "Creates the worker capacity and what exists only to serve it: the node group with its role, policy attachments and launch template, the NAT path, and the External Secrets Pod Identity association. False gives the control-plane-only observation shape, the cluster and its four pinned add-ons with no node, so no add-on container can run."
+  type        = bool
+  default     = true
 }
 
 variable "alerting_campaign_enabled" {

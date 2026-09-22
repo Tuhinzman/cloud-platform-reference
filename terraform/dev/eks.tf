@@ -31,6 +31,11 @@ resource "aws_eks_cluster" "dev" {
 
   deletion_protection = false
 
+  # Observation mode installs no self-managed copies, so every kube-system workload comes
+  # from a pinned add-on. Forces replacement, which is safe only because the cluster never
+  # outlives a window.
+  bootstrap_self_managed_addons = var.worker_capacity_enabled ? null : false
+
   vpc_config {
     subnet_ids = [
       aws_subnet.private_a.id,

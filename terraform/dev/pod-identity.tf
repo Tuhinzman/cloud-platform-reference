@@ -92,6 +92,8 @@ resource "aws_iam_role_policy" "external_secrets" {
 }
 
 resource "aws_eks_pod_identity_association" "external_secrets" {
+  count = var.worker_capacity_enabled ? 1 : 0
+
   cluster_name    = aws_eks_cluster.dev.name
   namespace       = "external-secrets"
   service_account = "external-secrets"
