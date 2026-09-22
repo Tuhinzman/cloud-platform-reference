@@ -1,11 +1,5 @@
-# One repository per owned service, per ADR-0009. The workload repositories share every
-# setting except their name, so they are declared once over a set rather than copied per
-# service: adding the next one is a line here, not another forty-line block to keep in step.
-#
-# Membership is the demonstrated delivery path, not the fleet inventory. ADR-0009 creates a
-# repository when a service enters that path, and ADR-0013 asks every persistent foundation
-# for evidence that it is still needed, so the remaining project-built components are absent
-# until their pipeline work is authorized.
+# One repository per owned service, created when it enters the delivery path (ADR-0009);
+# ADR-0013 requires each persistent foundation to show it is still needed.
 locals {
   workload_repositories = toset([
     "checkout",
@@ -13,6 +7,10 @@ locals {
     "quote",
     "frontend-proxy",
     "image-provider",
+    "cart",
+    "frontend",
+    "payment",
+    "product-catalog",
   ])
 }
 

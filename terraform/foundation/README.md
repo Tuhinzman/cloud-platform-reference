@@ -192,10 +192,12 @@ start. All three have since been performed: shipping and quote publish through
 their own pipelines by digest, and the Collector image is mirrored into its
 repository. `astroshop/image-provider` now holds one image, published by its
 own pipeline and read back from this registry by digest; `astroshop/frontend-proxy`
-is wired for the same path and holds no image yet. No
-requirement for the remaining project-built components has been demonstrated or
-authorized, so they are absent: membership follows the delivery path ADR-0009
-describes, not the fleet inventory.
+is wired for the same path and holds no image yet. `astroshop/cart`,
+`astroshop/frontend`, `astroshop/payment` and `astroshop/product-catalog` are
+declared because each now has a build-and-scan pipeline; none holds an image until
+its publication is separately authorized. Components without a pipeline are
+absent: membership follows the delivery path ADR-0009 describes, not the fleet
+inventory.
 
 ## CI push identity
 
@@ -223,8 +225,8 @@ The role's permissions are push side only: authenticate to the registry,
 upload layers, publish a manifest, scoped to the declared `astroshop/`
 repositories. The list is derived from the same set that declares them, so a
 repository cannot enter the registry and be forgotten in the policy. Only the registry-level authentication
-call is unscoped, because it accepts no repository ARN. The declared widening
-from one repository to three adds no action and changes no trust condition.
+call is unscoped, because it accepts no repository ARN. Adding a repository to the set
+widens only that resource list; it adds no action and changes no trust condition.
 `platform/opentelemetry-collector` is absent from that list because it is not
 a member of that set, so this role cannot push the Collector mirror; that mechanism is a separate
 identity question and is not implemented here. Nothing here grants repository
