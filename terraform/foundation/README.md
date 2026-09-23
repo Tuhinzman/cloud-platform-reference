@@ -319,4 +319,13 @@ destination remains undemonstrated.
 The public DNS zone is applied: the apply added the hosted zone and nothing
 else, AWS read-back verified a public zone with four assigned name servers and
 the six mandatory tags, and the plan after apply reported no changes. The
-certificate is not applied.
+parent zone now answers with those four name servers, so the registrar delegates
+the domain to this zone.
+
+The certificate is applied: the apply added the certificate, its validation
+record and the validation resource and nothing else. AWS read-back verified an
+issued certificate for the apex and one wildcard, both validated through DNS,
+not exportable, with the six mandatory tags; the zone holds only its NS and SOA
+records and the one validation CNAME, with a TTL of 300 seconds; and the plan
+after apply reported no changes. No AWS resource uses the certificate yet, and
+ACM reports it as not eligible for managed renewal.
