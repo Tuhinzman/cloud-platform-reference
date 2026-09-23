@@ -36,4 +36,7 @@ security group carry no charge.
 
 ## Status
 
-Not applied. Nothing in this root has been validated against AWS.
+The network boundary and the two secret containers are applied. The apply added the subnet
+group, the security group, its two ingress rules and the two containers, and nothing else, and
+AWS read-back verified each of them with the six mandatory tags. Neither container holds a
+value yet. The database instance is not created.

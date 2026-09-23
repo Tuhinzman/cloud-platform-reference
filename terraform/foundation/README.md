@@ -305,4 +305,8 @@ A pipeline has assumed the role and pushed, so end-to-end OIDC authentication
 is proven for the checkout push path. The access boundary of the evidence
 destination remains undemonstrated.
 
-The public DNS zone is not applied.
+The public DNS zone is applied: the apply added the hosted zone and nothing
+else, AWS read-back verified a public zone with four assigned name servers and
+the six mandatory tags, and the plan after apply reported no changes. The
+registrar has not been pointed at those name servers, so public DNS for the
+domain does not use this zone yet.
