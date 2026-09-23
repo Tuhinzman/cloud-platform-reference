@@ -82,7 +82,7 @@ pipelines may assume the CI push role.
 `public_domain` is the registered apex domain for the public hosted zone,
 lowercase and without a trailing dot. It is an owner-private input.
 
-`backend.hcl` is a third value and a different one. It carries the **state**
+`backend.hcl` is a separate value and a different one. It carries the **state**
 bucket the bootstrap root created, which is where this root's own state object
 goes. It is not this bucket. Both filled copies stay untracked.
 

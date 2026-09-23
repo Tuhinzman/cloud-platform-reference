@@ -19,9 +19,9 @@ fixes the single account, the region and the two-AZ baseline.
 
 ## Why it is a separate root
 
-The two existing roots hold persistent shared foundations: the Terraform state
-backend and the durable evidence destination. Both outlive every environment and
-are decommissioned at project end.
+The bootstrap and foundation roots hold persistent shared foundations, among
+them the Terraform state backend and the durable evidence destination. Both
+outlive every environment and are decommissioned at project end.
 
 This root holds environment-lifecycle resources rather than persistent shared
 foundations.
@@ -177,20 +177,16 @@ protecting, and neither is known in a slice that creates no workload.
 
 The six mandatory tags of ADR-0013 come from the provider's `default_tags`, so
 every taggable resource starts with all six and a resource needing a different
-value overrides that one key on itself. Four resource types here expose no AWS
-tags at all: routes, route table associations, IAM role policy attachments and
-inline role policies. They carry none, and no wrapper resource was invented to
-give them any.
+value overrides that one key on itself. Five resource types here expose no AWS
+tags at all: routes, route table associations, IAM role policy attachments,
+inline role policies and SNS topic subscriptions. They carry none, and no
+wrapper resource was invented to give them any.
 
 `Lifecycle` describes retention, not what a resource does. The default is
 `ephemeral`, meaning the resource belongs to the environment lifecycle rather
 than to the persistent shared foundations, which is the distinction ADR-0013
 draws between what is retained across windows and what is recreated. It does not
-mean the VPC is destroyed at the end of each working session. How long a
-particular approved window keeps this network is a separate operational
-decision, and ADR-0013's networking retention rule decides it on rebuild-time
-drift, dependency cleanup, CIDR reuse and teardown-proof grounds rather than on
-the environment's name.
+mean the VPC is destroyed at the end of each working session.
 
 Five resources override `Lifecycle` to `persistent`: the two Secrets Manager
 entries, the Parameter Store entry and the two Pod Identity roles. Those outlive
@@ -471,7 +467,7 @@ time. Four classes are worth separating.
 | Declared | 43 | Everything across the `.tf` files in this root |
 | Retained | 21 | The network baseline plus the environment's identity, secret and configuration resources. Present between approved windows |
 | Runtime | 17 | The NAT gateway and its Elastic IP, the private default route, the cluster and node service roles with their four policy attachments, the cluster, the launch template, the node group, the four add-ons, and the External Secrets Pod Identity association |
-| Alerting campaign | 5 | The notification topic, its subscription, the role and policy that let the alerting engine publish to it, and the Pod Identity association that binds that role to the engine's service account. Created only when `alerting_campaign_enabled` is true, for an alerting window, and destroyed with its runtime; see Alerting below |
+| Alerting campaign | 5 | The notification topic, its subscription, the role and policy that let the alerting engine publish to it, and the Pod Identity association that binds that role to the engine's service account. Created only when `alerting_campaign_enabled` is true, for an alerting window, and destroyed with its runtime; see Alerting above |
 
 `worker_capacity_enabled = false` selects observation mode, 7 of the 17 runtime
 resources: the cluster, its role and policy attachment, and the four add-ons. No
