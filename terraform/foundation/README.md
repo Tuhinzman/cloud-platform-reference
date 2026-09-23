@@ -1,10 +1,11 @@
 # Persistent shared foundations
 
 This root holds the platform's persistent shared foundations: the resources
-whose lifecycle and recovery duties outlive every environment window. Three are
-declared here: the durable evidence destination, the artifact registry, and the
-public DNS zone. The sections through Final decommission describe the evidence
-destination, and the sections after them cover the other two.
+whose lifecycle and recovery duties outlive every environment window. It
+declares the durable evidence destination, the artifact registry, the CI push
+identity, and the public DNS zone with its certificate. The sections through
+Final decommission describe the evidence destination, and the sections after
+them cover the rest.
 
 Raw evidence has to outlive the environment that produced it. Environments are
 created for an approved window and destroyed afterward, and raw evidence is
@@ -268,8 +269,9 @@ depends on that delegation.
 
 `certificate.tf` adds one ACM public certificate for the apex and a wildcard
 beneath it, non-exportable so it carries no charge, validated through a record
-in the zone. That record stays after validation, because ACM renews the
-certificate through it.
+in the zone. That record stays after validation because renewal uses it too, and
+ACM renews a DNS-validated certificate automatically only if an AWS service is
+using the certificate when ACM checks it before expiry.
 
 A rebuild from nothing follows the same order, because a recreated zone gets new
 name servers: `terraform apply -target=aws_route53_zone.public`, set the name
