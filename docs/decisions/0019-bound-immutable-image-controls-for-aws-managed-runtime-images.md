@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (2026-09-22)
+Accepted (2026-09-22)
 
 Narrowly supersedes one sentence and one clause of ADR-0017's Decision,
 named exactly in **Supersession** below and bounded to one measured image
