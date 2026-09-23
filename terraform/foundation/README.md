@@ -1,10 +1,11 @@
 # Persistent shared foundations
 
 This root holds the platform's persistent shared foundations: the resources
-whose lifecycle and recovery duties outlive every environment window. Three are
-declared here: the durable evidence destination, the artifact registry, and the
-public DNS zone. The sections through Final decommission describe the evidence
-destination, and the sections after them cover the other two.
+whose lifecycle and recovery duties outlive every environment window. It
+declares the durable evidence destination, the artifact registry, the CI push
+identity, and the public DNS zone with its certificate. The sections through
+Final decommission describe the evidence destination, and the sections after
+them cover the rest.
 
 Raw evidence has to outlive the environment that produced it. Environments are
 created for an approved window and destroyed afterward, and raw evidence is
@@ -264,15 +265,27 @@ serves a public HTTPS endpoint under that domain.
 The zone is applied on its own first. The registrar is then pointed at the four
 name servers in the `public_zone_name_servers` output, and the certificate is
 added only once the parent zone answers with them, because its DNS validation
-depends on that delegation. The certificate is not in this root yet.
+depends on that delegation.
+
+`certificate.tf` adds one ACM public certificate for the apex and a wildcard
+beneath it, non-exportable so it carries no charge, validated through a record
+in the zone. That record stays after validation because renewal uses it too, and
+ACM renews a DNS-validated certificate automatically only if an AWS service is
+using the certificate when ACM checks it before expiry.
+
+A rebuild from nothing follows the same order, because a recreated zone gets new
+name servers: `terraform apply -target=aws_route53_zone.public`, set the name
+servers at the registrar and confirm the parent answers with them, then run the
+full apply.
 
 `prevent_destroy` guards the zone. To retire it, point the registrar elsewhere
 first, wait out the longer of the parent's name-server TTL and the zone's own NS
 TTL (172800 seconds in Route 53), then lift the guard in a reviewed change and
-destroy.
+destroy. Retire the certificate first, once no listener uses it; the zone deletes
+only when its NS and SOA records alone remain.
 
 The zone costs 0.50 USD a month, not prorated, so the month of creation is
-charged in full, plus 0.40 USD per million queries.
+charged in full, plus 0.40 USD per million queries. The certificate is free.
 
 ## Status
 
@@ -308,5 +321,13 @@ destination remains undemonstrated.
 The public DNS zone is applied: the apply added the hosted zone and nothing
 else, AWS read-back verified a public zone with four assigned name servers and
 the six mandatory tags, and the plan after apply reported no changes. The
-registrar has not been pointed at those name servers, so public DNS for the
-domain does not use this zone yet.
+parent zone now answers with those four name servers, so the registrar delegates
+the domain to this zone.
+
+The certificate is applied: the apply added the certificate, its validation
+record and Terraform's validation step and nothing else. AWS read-back verified
+an issued certificate for the apex and one wildcard, both validated through DNS,
+not exportable, with the six mandatory tags; the zone holds only its NS and SOA
+records and the one validation CNAME, with a TTL of 300 seconds; and the plan
+after apply reported no changes. No AWS resource uses the certificate yet, and
+ACM reports it as not eligible for managed renewal.

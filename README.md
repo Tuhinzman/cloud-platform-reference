@@ -124,7 +124,7 @@ Prerequisites are one dedicated AWS account, Terraform, and an operator identity
 described in [operator access](docs/implementation/operator-access.md).
 
 1. [terraform/bootstrap](terraform/bootstrap/README.md): the remote-state backend. Applied once with local state, then migrated.
-2. [terraform/foundation](terraform/foundation/README.md): resources that outlive every environment, meaning the evidence store, the container registry, the CI push identity and the public DNS zone.
+2. [terraform/foundation](terraform/foundation/README.md): resources that outlive every environment, meaning the evidence store, the container registry, the CI push identity, and the public DNS zone with its certificate, applied in two steps around the registrar delegation.
 3. [terraform/dev](terraform/dev/README.md): the Dev environment, split into a retained baseline and a runtime created for each approved window and destroyed at its close.
 4. [terraform/dev-datastore](terraform/dev-datastore/README.md): the Dev datastore's network boundary and credential containers, kept outside every runtime window's teardown.
 5. Cluster bootstrap and GitOps: Argo CD reconciles the private desired-state repository against the running cluster; the bootstrap order, the value layering and the digest pin are in [GitOps Delivery](docs/implementation/gitops-delivery.md), and the decision behind them in [ADR-0009](docs/decisions/0009-define-the-software-delivery-model.md).
