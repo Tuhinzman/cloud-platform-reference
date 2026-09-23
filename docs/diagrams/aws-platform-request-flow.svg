@@ -40,8 +40,8 @@
 <rect x="200" y="140" width="165" height="68" rx="8" fill="#FEF3E9" stroke="#EC7211" stroke-width="1.5"/>
 <rect x="200" y="140" width="4" height="68" rx="2" fill="#EC7211"/>
 <text x="282.5" y="161" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#1B2733" text-anchor="middle">Public DNS</text>
-<text x="282.5" y="176" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Route 53 selected for a</text>
-<text x="282.5" y="189" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">later domain phase</text>
+<text x="282.5" y="176" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">Route 53 zone retained;</text>
+<text x="282.5" y="189" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">records per environment</text>
 <g><rect x="290.0" y="131.0" width="65.0" height="17" rx="8.5" fill="#FDF3E3" stroke="#E8C98A" stroke-width="1"/><text x="322.5" y="143.2" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#8A5A00" text-anchor="middle" letter-spacing="0.4">PLANNED</text></g>
 <rect x="385" y="140" width="165" height="68" rx="8" fill="#FEF3E9" stroke="#EC7211" stroke-width="1.5"/>
 <rect x="385" y="140" width="4" height="68" rx="2" fill="#EC7211"/>
@@ -128,7 +128,7 @@
 <rect x="1226" y="368" width="448" height="46" rx="8" fill="#FFFFFF" stroke="#2C6049" stroke-width="1.5"/>
 <rect x="1226" y="368" width="4" height="46" rx="2" fill="#2C6049"/>
 <text x="1240.0" y="389" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="start">DNS hosted zone</text>
-<text x="1240.0" y="403.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="start">created in the domain phase, not before</text>
+<text x="1240.0" y="403.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="start">Route 53, with the ACM certificate and its validation record</text>
 <rect x="1226" y="416" width="448" height="46" rx="8" fill="#FFFFFF" stroke="#2C6049" stroke-width="1.5"/>
 <rect x="1226" y="416" width="4" height="46" rx="2" fill="#2C6049"/>
 <text x="1240.0" y="437" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="start">Durable workload datastore</text>
@@ -157,14 +157,14 @@
 <text x="327.0" y="405.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">egress</text>
 <rect x="548.0" y="394.0" width="108.0" height="15" rx="3" fill="#FFFFFF" stroke="#C8CDD4" stroke-width="0.6"/>
 <text x="602.0" y="405.0" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="middle">cross-AZ egress</text>
-<text x="50" y="236" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">ADR-0007 decides a managed internet-facing load-balancing boundary, public DNS and managed certificates without naming products. Route 53 and ACM are</text>
-<text x="50" y="250.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">the recorded implementation selection for the domain phase. No hosted zone, certificate or load balancer exists in Terraform today.</text>
+<text x="50" y="236" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">ADR-0018 selects Route 53, ACM and an Application Load Balancer for the public entry ADR-0007 decides. Terraform owns the hosted zone, the certificate</text>
+<text x="50" y="250.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#5A6672" text-anchor="start" font-style="italic">and its DNS validation record, all applied. The load balancer is controller-owned, outside Terraform, and none exists while no runtime is live.</text>
 <text x="1660" y="152" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#2C6049" text-anchor="end">RETAINED</text>
 <text x="1660" y="200" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#2C6049" text-anchor="end">RETAINED</text>
 <text x="1660" y="248" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#2C6049" text-anchor="end">RETAINED</text>
 <text x="1660" y="296" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#2C6049" text-anchor="end">RETAINED</text>
 <text x="1660" y="344" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#2C6049" text-anchor="end">RETAINED</text>
-<text x="1660" y="392" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#8A5A00" text-anchor="end">PLANNED</text>
+<text x="1660" y="392" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#2C6049" text-anchor="end">RETAINED</text>
 <text x="1660" y="440" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#5B4780" text-anchor="end">DEFERRED</text>
 <text x="50" y="800" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#1B2733" text-anchor="start">Request path: Client -&gt; public DNS -&gt; load-balancing boundary -&gt; ingress and service boundary -&gt; AstroShop</text>
 <text x="50" y="815.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#1B2733" text-anchor="start">services in private subnets.</text>
