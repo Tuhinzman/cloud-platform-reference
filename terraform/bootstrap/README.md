@@ -166,8 +166,7 @@ holds the permissions the backend actually needs, and no more:
 
 - listing the bucket for the state prefix in use
 - reading and writing the state object
-- reading, writing, and deleting the `.tflock` object, once native locking is
-  enabled
+- reading, writing, and deleting the `.tflock` object
 
 Bootstrap execution runs on the short-lived federated human credentials that
 ADR-0005 already selected, which that record applies to bootstrap work
