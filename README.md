@@ -121,7 +121,7 @@ deliberately does not, and what has been validated against AWS.
 
 The roots are applied in order, each from its own directory with a reviewed plan.
 Prerequisites are one dedicated AWS account, Terraform, and an operator identity as
-described in [operator access](docs/implementation/operator-access.md).
+described in [operator access](docs/runbooks/operator-access.md).
 
 1. [terraform/bootstrap](terraform/bootstrap/README.md): the remote-state backend. Applied once with local state, then migrated.
 2. [terraform/foundation](terraform/foundation/README.md): resources that outlive every environment, meaning the evidence store, the container registry, the CI push identity, and the public DNS zone with its certificate, applied in two steps around the registrar delegation.
@@ -138,7 +138,7 @@ branches require.
 
 Implementation is explained in [docs/implementation](docs/implementation/): how a source
 change becomes a running container by digest ([GitOps Delivery](docs/implementation/gitops-delivery.md))
-and how an operator reaches the platform ([operator access](docs/implementation/operator-access.md)).
+and how an operator reaches the platform ([operator access](docs/runbooks/operator-access.md)).
 Validation results are summarized once, in
 [docs/validation/runtime-validation.md](docs/validation/runtime-validation.md).
 
