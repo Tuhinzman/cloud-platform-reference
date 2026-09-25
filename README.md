@@ -121,7 +121,10 @@ deliberately does not, and what has been validated against AWS.
 
 The roots are applied in order, each from its own directory with a reviewed plan.
 Prerequisites are one dedicated AWS account, Terraform, and an operator identity as
-described in [operator access](docs/runbooks/operator-access.md).
+described in [operator access](docs/runbooks/operator-access.md). The step-by-step procedure
+for steps 1 to 4, and where public reproduction currently stops, is the runbook
+[build order](docs/runbooks/README.md#build-order). Do not run a plain `terraform apply` in
+`terraform/dev`: it creates the billable runtime; its first build is targeted.
 
 1. [terraform/bootstrap](terraform/bootstrap/README.md): the remote-state backend. Applied once with local state, then migrated.
 2. [terraform/foundation](terraform/foundation/README.md): resources that outlive every environment, meaning the evidence store, the container registry, the CI push identity, and the public DNS zone with its certificate, applied in two steps around the registrar delegation.
