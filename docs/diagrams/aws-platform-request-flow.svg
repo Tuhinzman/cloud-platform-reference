@@ -132,7 +132,7 @@
 <rect x="1226" y="416" width="448" height="46" rx="8" fill="#FFFFFF" stroke="#2C6049" stroke-width="1.5"/>
 <rect x="1226" y="416" width="4" height="46" rx="2" fill="#2C6049"/>
 <text x="1240.0" y="437" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="start">Durable workload datastore</text>
-<text x="1240.0" y="451.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="start">product deferred to implementation</text>
+<text x="1240.0" y="451.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" fill="#5A6672" text-anchor="start">RDS for PostgreSQL 17, deletion-protected, final snapshot on delete</text>
 <rect x="1226" y="564" width="448" height="60" rx="8" fill="#FFFFFF" stroke="#2E5C8A" stroke-width="1.5"/>
 <rect x="1226" y="564" width="4" height="60" rx="2" fill="#2E5C8A"/>
 <text x="1240.0" y="585" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1B2733" text-anchor="start">SSM Parameter Store</text>
@@ -165,7 +165,7 @@
 <text x="1660" y="296" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#2C6049" text-anchor="end">RETAINED</text>
 <text x="1660" y="344" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#2C6049" text-anchor="end">RETAINED</text>
 <text x="1660" y="392" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#2C6049" text-anchor="end">RETAINED</text>
-<text x="1660" y="440" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#5B4780" text-anchor="end">DEFERRED</text>
+<text x="1660" y="440" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9.5" font-weight="700" fill="#2C6049" text-anchor="end">RETAINED</text>
 <text x="50" y="800" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#1B2733" text-anchor="start">Request path: Client -&gt; public DNS -&gt; load-balancing boundary -&gt; ingress and service boundary -&gt; AstroShop</text>
 <text x="50" y="815.5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#1B2733" text-anchor="start">services in private subnets.</text>
 <text x="50" y="846" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="400" fill="#1B2733" text-anchor="start">Egress path: private subnet pods -&gt; single NAT Gateway -&gt; Internet Gateway -&gt; approved external destinations.</text>

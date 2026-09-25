@@ -126,7 +126,7 @@ described in [operator access](docs/implementation/operator-access.md).
 1. [terraform/bootstrap](terraform/bootstrap/README.md): the remote-state backend. Applied once with local state, then migrated.
 2. [terraform/foundation](terraform/foundation/README.md): resources that outlive every environment, meaning the evidence store, the container registry, the CI push identity, and the public DNS zone with its certificate, applied in two steps around the registrar delegation.
 3. [terraform/dev](terraform/dev/README.md): the Dev environment, split into a retained baseline and a runtime created for each approved window and destroyed at its close.
-4. [terraform/dev-datastore](terraform/dev-datastore/README.md): the Dev datastore's network boundary and credential containers, kept outside every runtime window's teardown.
+4. [terraform/dev-datastore](terraform/dev-datastore/README.md): the Dev datastore, a PostgreSQL instance with its network boundary and credential containers, kept outside every runtime window's teardown.
 5. Cluster bootstrap and GitOps: Argo CD reconciles the private desired-state repository against the running cluster; the bootstrap order, the value layering and the digest pin are in [GitOps Delivery](docs/implementation/gitops-delivery.md), and the decision behind them in [ADR-0009](docs/decisions/0009-define-the-software-delivery-model.md).
 6. The workload is built and published by the [workload repository's pipelines](https://gitlab.com/tuinzaman/cloud-platform-workload) and deployed by digest through step 5.
 
@@ -184,8 +184,9 @@ is why the answer to what exists right now has two halves.
 
 What persists is the Terraform state backend and the durable evidence destination, which
 outlive every environment, together with the retained part of the Dev environment: its
-network baseline and the identity, secret, and configuration resources scoped to that
-environment. What is not running is the billable Dev runtime, meaning the EKS control
+network baseline, the identity, secret, and configuration resources scoped to that
+environment, and its datastore, a PostgreSQL instance that bills for as long as it exists.
+What is not running is the billable Dev runtime, meaning the EKS control
 plane, the managed node group, and the NAT gateway. Those are declared in Terraform,
 created inside an approved window, and destroyed when it closes. They have been built and
 torn down more than once, and the definitions that rebuild them are in this repository.
