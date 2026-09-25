@@ -121,7 +121,7 @@ deliberately does not, and what has been validated against AWS.
 
 The roots are applied in order, each from its own directory with a reviewed plan.
 Prerequisites are one dedicated AWS account, Terraform, and an operator identity as
-described in [operator access](docs/implementation/operator-access.md).
+described in [operator access](docs/runbooks/operator-access.md).
 
 1. [terraform/bootstrap](terraform/bootstrap/README.md): the remote-state backend. Applied once with local state, then migrated.
 2. [terraform/foundation](terraform/foundation/README.md): resources that outlive every environment, meaning the evidence store, the container registry, the CI push identity, and the public DNS zone with its certificate, applied in two steps around the registrar delegation.
@@ -133,12 +133,16 @@ described in [operator access](docs/implementation/operator-access.md).
 Every root reads its private inputs from an untracked `terraform.tfvars`; the tracked
 `terraform.tfvars.example` beside each root lists what must be supplied. Nothing in these
 repositories requires the owner's account identifier, addresses, state or evidence to be
-understood or reproduced; the manual steps that remain are the owner merges the protected
-branches require.
+understood or reproduced. Some steps stay manual by design, as owner or operator boundaries
+rather than gaps in automation: the Identity Center and account prerequisites, the budget and
+its alerts, the registrar name-server change, placing secret values out of band, the explicit
+authorization and execution of every infrastructure apply, and the merges the protected
+branches require. The [runbooks](docs/runbooks/README.md) describe how far each of these has
+been operated and validated, and name those with no published procedure.
 
 Implementation is explained in [docs/implementation](docs/implementation/): how a source
-change becomes a running container by digest ([GitOps Delivery](docs/implementation/gitops-delivery.md))
-and how an operator reaches the platform ([operator access](docs/implementation/operator-access.md)).
+change becomes a running container by digest ([GitOps Delivery](docs/implementation/gitops-delivery.md)).
+How an operator reaches the platform is in [operator access](docs/runbooks/operator-access.md).
 Validation results are summarized once, in
 [docs/validation/runtime-validation.md](docs/validation/runtime-validation.md).
 
