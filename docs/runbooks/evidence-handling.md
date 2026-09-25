@@ -192,15 +192,13 @@ records carries its own.
    > ([Not yet exercised](#not-yet-exercised)).
 
 4. Capture by construction where the claim allows: the verdict of the account check rather than
-   the account ID
-   ([Check the account before AWS commands](operator-access.md#check-the-account-before-aws-commands)),
-   and counts, serials and digests rather than raw listings. The account check compares the
-   caller's account with the root's `allowed_account_id` and prints only a verdict.
+   the account ID, and counts, serials and digests rather than raw listings. The account check
+   compares the caller's account with the root's `allowed_account_id` and prints only a verdict.
 5. Keep saved plans, plan JSON, state pulls and any other private-input carrier in a separate
    private run directory, and record only their SHA-256 digests in the set.
 
-   > **Warning:** Never capture debug logs of a root that handles a secret value
-   > ([dev-datastore Debug logging](../../terraform/dev-datastore/README.md#debug-logging)).
+   > **Warning:** Never capture debug logs of a root that handles a secret value (Debug logging in
+   > the dev-datastore README).
 
 6. Write the record last, from the template below, with the raw output files beside it. It is
    written directly, not through the filter; the [sweep](#sweep-the-set-before-sealing) covers it.
@@ -244,7 +242,8 @@ procedure exists for capture.
 **Evidence to keep.** The record, the raw output files, the UTC stamps, and the digests of files
 kept outside the set.
 
-**Next step.** [Sweep the set before sealing](#sweep-the-set-before-sealing).
+**Next step.** If another runbook sent you here, return to the step that sent you.
+[Sweep the set before sealing](#sweep-the-set-before-sealing).
 
 #### Engineering notes
 
@@ -339,8 +338,8 @@ exercised fields say so.
 **Evidence to keep.** The verify result beside the files it covers, and the record of each withheld
 file and why, without the value. A file name that says "redacted" is not evidence of redaction.
 
-**Next step.** When every file of the campaign is written,
-[sweep the set](#sweep-the-set-before-sealing).
+**Next step.** If another runbook sent you here, return to the step that sent you. When every
+file of the campaign is written, [sweep the set](#sweep-the-set-before-sealing).
 
 #### Engineering notes
 
@@ -547,7 +546,7 @@ write the sweep record and check it
 
 ### Handle sweep hits before sealing
 
-**Validation:** OFFLINE-VALIDATED (2026-09-13, 2026-09-22) in part; UNEXERCISED (never) in part ·
+**Validation:** OFFLINE-VALIDATED (2026-09-22) in part; DESIGNED-NOT-EXECUTED (never) in part; UNEXERCISED (never) in part ·
 **Published command form:** not executed as written
 
 **What this does.** Decides, for each sweep hit, whether it is harmless or a prohibited value, and
@@ -621,15 +620,16 @@ carrier, finish the sweep: write the sweep record and check it
 
 | Field | Value |
 |---|---|
-| Validation status | OFFLINE-VALIDATED (2026-09-13, 2026-09-22) for inspecting, classifying and recording each hit. UNEXERCISED (never) for correcting a carrier and sweeping again |
-| Published form | not executed as written (method only, derived from the 2026-09-13 pre-export disposition and the 2026-09-22 sweep record) |
-| Evidence basis | Retained private disposition records of the 2026-09-11 and 2026-09-13 windows, and the 2026-09-22 zero-node window's sweep record |
+| Validation status | OFFLINE-VALIDATED (2026-09-22) for inspecting one pattern hit, classifying it as a documented platform value on the allowlist, and recording that classification in the sweep record before sealing. DESIGNED-NOT-EXECUTED (never) for classifying a name or reference hit or a prohibited value before sealing, and for recording counts per class and per file without the matched text. UNEXERCISED (never) for correcting a carrier and sweeping again |
+| Published form | not executed as written (method only, derived from the 2026-09-22 sweep record and from the 2026-09-11 and 2026-09-13 dispositions, which were written after their sets were exported) |
+| Evidence basis | Retained private sweep record of the 2026-09-22 zero-node window, written before its manifest. The 2026-09-11 and 2026-09-13 disposition records were written after their sets were exported and accepted account-ID hits; they are the precedent this procedure replaces, not validation of it |
 | Authority | None |
 | Cost | None |
 
 **Known limitations.** The retained dispositions of account-ID hits, on 2026-09-11 and
-2026-09-13, accepted them as private raw runtime output. Both predate redaction at capture, and
-this procedure does not allow it.
+2026-09-13, were written after their sets were sealed and exported, and accepted the hits as
+private raw runtime output. Both predate redaction at capture, and this procedure allows neither.
+The 2026-09-22 sweep record names the matched allowlisted value and gives no per-file count.
 
 ### Seal the set and verify the manifest
 
@@ -722,8 +722,8 @@ outside the set.
 ### Export the sealed set before teardown
 
 **Validation:** AWS-VALIDATED (2026-09-11, 2026-09-13) in part; EXECUTED — RECORDED ONLY; RETAINED
-EXECUTION EVIDENCE NOT AVAILABLE (2026-08-24, 2026-08-26) in part; DESIGNED-NOT-EXECUTED (never)
-for the published step set as a whole · **Published command form:** not executed as written
+EXECUTION EVIDENCE NOT AVAILABLE (2026-08-24, 2026-08-26, 2026-09-11, 2026-09-13) in part;
+DESIGNED-NOT-EXECUTED (never) for the published step set as a whole · **Published command form:** not executed as written
 
 **What this does.** Evidence that must survive the environment leaves it before teardown
 ([ADR-0011](../decisions/0011-define-the-backup-and-recovery-model.md)). This procedure copies a
@@ -757,15 +757,30 @@ item follow a teardown and do not. No rule says whether or when such a prefix is
   `account_check <root-tfvars> --profile <profile>`, or the same without
   `--profile` inside an exported shell, printed `ACCOUNT_MATCH=PASS`. Stop on
   `ACCOUNT_MATCH=HOLD`. The tag match below does not establish the account, because any account
-  where the foundation root was applied carries the same tags.
+  where the foundation root was applied carries the same tags. Then return to this list.
 - [ ] Every AWS command names `--profile <profile>` or runs in an exported shell, in `us-east-1`
   ([providers.tf](../../terraform/foundation/providers.tf)). `<profile>` is an operator profile
   able to write to the evidence destination ([Before you start](#before-you-start)). An exported
-  shell is a clean shell that holds one role credential exported once
-  ([Export role credentials once](operator-access.md#export-role-credentials-once)).
+  shell is a clean shell that holds one role credential exported once:
+  [Export role credentials once](operator-access.md#export-role-credentials-once), steps 1 to 4
+  (PASS: `ACCOUNT_MATCH=PASS` with no HOLD line, and the headroom line with exit 0). Then return to
+  this list.
 - [ ] [Check session headroom before long operations](operator-access.md#check-session-headroom-before-long-operations)
-  passed, with a requirement that covers the copy and its checks, steps 6 to 8. A copy that stops
-  part-way leaves a prefix that may never be reused or deleted.
+  passed, steps 1 to 3 (PASS: the headroom line is printed and the exit status is 0), with a
+  requirement that covers the copy and its checks, steps 6 to 8. No measured export duration and
+  no margin rule are published; set the requirement as its step 1 describes. A copy that stops
+  part-way leaves a prefix that may never be reused or deleted. Then return to this list.
+- [ ] The evidence destination exists: `terraform/foundation` is applied. On a build from nothing
+  it does not exist until the certificate-stage plan, which has no reviewed shape
+  ([What these runbooks are](README.md#scope)).
+- [ ] The cost gate for this billable write, in the exported shell:
+  [Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states),
+  steps 1 to 6 (PASS: all five notifications `OK`, or each `ALARM` level allowed by an owner
+  decision recorded this month), then
+  [Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work).
+  The price table has no S3 storage rate, so that re-check stops, and the owner approves a
+  re-estimate before the export; no written re-estimation procedure exists. Then return to this
+  list.
 - [ ] Explicit owner grant for the write.
 
 **Safety and authority.** Mutating, owner-authorized and billable: it writes objects to the
@@ -863,7 +878,9 @@ holds for the final set's prefix.
 - The manifest digest differs.
 
 **If it fails.** `ACCOUNT_MATCH=HOLD` goes to
-[Recover from a wrong account](operator-access.md#recover-from-a-wrong-account), part A. For every
+[Recover from a wrong account](operator-access.md#recover-from-a-wrong-account), part A. Once its
+step 4 passes, return to the first item of this procedure's **Before you start** and repeat every
+item from there, because part A exits any exported shell. For every
 other STOP, no procedure exists yet: the response to a refusal, including ADR-0013's stop condition
 for an unavailable evidence destination, has no written halt, continue or resume rule yet. Where no
 resume procedure is written, work stays stopped until a reviewed decision is taken under explicit
@@ -883,7 +900,7 @@ For a campaign that destroyed no environment, this runbook defines no next step.
 
 | Field | Value |
 |---|---|
-| Validation status | AWS-VALIDATED (2026-09-11, 2026-09-13) for run-time resolution of the destination by a name match that took the first result, an empty-prefix check that passed, recursive copy, a listing check for missing manifest entries only, and the manifest digest round trip. EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-08-24, 2026-08-26) for the staged copy and equal counts, and (2026-08-24) for the exact six-tag match with exactly one result. DESIGNED-NOT-EXECUTED (never) for the published step set as a whole |
+| Validation status | AWS-VALIDATED (2026-09-11, 2026-09-13) for run-time resolution of the destination by a name match that took the first result, recursive copy, a listing check for missing manifest entries only, and the manifest digest round trip. EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-09-11, 2026-09-13) for an empty-prefix check of current objects only, which discarded listing errors, so a zero count cannot tell an empty prefix from a failed listing, with a zero count kept for the pre-teardown exports and none for the post-teardown exports; (2026-08-24, 2026-08-26) for the staged copy and equal counts; and (2026-08-24) for the exact six-tag match with exactly one result. DESIGNED-NOT-EXECUTED (never) for the published step set as a whole |
 | Published form | not executed as written (method only; the six-tag match, the staged copy and the equal-count rule are derived from the 2026-08-24 export tool, and no export has yet shipped a set redacted at capture with saved plans, plan JSON and state pulls excluded) |
 | Evidence basis | Retained private evidence of the 2026-09-11 and 2026-09-13 exports, with their tooling and run output; the retained 2026-08-24 export tool without its run output; recorded results for 2026-08-24 and 2026-08-26 |
 | Authority | Explicit owner grant for the write |
@@ -936,7 +953,7 @@ exported for the window and compares each one with the sealed manifest.
   [Export](#export-the-sealed-set-before-teardown):
   `account_check <root-tfvars> --profile <profile>` prints
   `ACCOUNT_MATCH=PASS`. Every AWS command names `--profile <profile>` or runs in an exported shell,
-  in `us-east-1`.
+  in `us-east-1`. Then return to this list.
 - [ ] Every prefix exported for the window, both the pre-teardown set's and the final set's
   ([Export](#export-the-sealed-set-before-teardown), step 10), with their manifest digests, from
   the private record outside the set.
@@ -1021,7 +1038,7 @@ exported set goes to
 
 ### Remediate a prohibited value in retained or exported evidence
 
-**Validation:** AWS-VALIDATED (2026-09-14) · **Published command form:** not executed as written
+**Validation:** EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-09-13, 2026-09-14) for the authorization, deletions, checks and scan; OFFLINE-VALIDATED (2026-09-14) for the remediation record; DESIGNED-NOT-EXECUTED (never) for the account check and the version and delete-marker counts · **Published command form:** not executed as written
 
 **What this does.** Removes a prohibited value that reached a sealed or exported set without
 destroying the record of what happened. The local carrier and every exported copy are deleted, the
@@ -1040,7 +1057,7 @@ beside the set. The sealed manifest and earlier records stay unchanged.
   `account_check <root-tfvars> --profile <profile>` prints
   `ACCOUNT_MATCH=PASS`. Every AWS command names `--profile <profile>` or runs in an exported shell,
   in `us-east-1`, and the destination is resolved as in
-  [Export](#export-the-sealed-set-before-teardown) step 3.
+  [Export](#export-the-sealed-set-before-teardown) step 3. Then return to this list.
 - [ ] A value-based, archive-aware scan that fails closed on anything it cannot inspect, with
   synthetic controls that include a fail-closed case. No such scan is published in this
   repository. Synthetic controls are known test inputs run before the real scope, including one
@@ -1117,7 +1134,7 @@ missing.
 
 | Field | Value |
 |---|---|
-| Validation status | AWS-VALIDATED (2026-09-14) |
+| Validation status | EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-09-13) for the written authorization, and (2026-09-14) for the object counts before and after, the local deletion, the deletion of each exported copy by version ID, the post-state checks and the whole-tree scan; OFFLINE-VALIDATED (2026-09-14) for the remediation record written beside the set, with the finding recorded without the value and the sealed manifest and earlier records left unchanged; DESIGNED-NOT-EXECUTED (never) for the account check before the deletions, and for recording each prefix's version and delete-marker counts before deletion |
 | Published form | not executed as written (method only, derived from the 2026-09-14 remediation record; neither the deletion commands nor the raw output of the post-state checks were retained) |
 | Evidence basis | Retained private remediation record of 2026-09-14, authorized 2026-09-13, which states the post-state results without their raw output |
 | Authority | Explicit owner grant naming each artifact and the remedy |
@@ -1144,11 +1161,14 @@ missing.
 | One redaction filter applying the list and the patterns together, and withholding a file that fails its re-scan | DESIGNED-NOT-EXECUTED | [Redact at capture](#redact-at-capture) |
 | Sweep after the final file, with a value pass over the whole literal list per class, as one pre-seal step | DESIGNED-NOT-EXECUTED | [Sweep the set before sealing](#sweep-the-set-before-sealing) |
 | Planted positive control for the sweep, with archive, fail-closed and near-miss cases | DESIGNED-NOT-EXECUTED | [Plant a positive control for the sweep](#plant-a-positive-control-for-the-sweep) |
+| Classifying a name or reference hit, or a prohibited value, before sealing, and recording counts per class and per file without the matched text | DESIGNED-NOT-EXECUTED | [Handle sweep hits before sealing](#handle-sweep-hits-before-sealing) |
 | Correcting a carrier found by the sweep and sweeping again | UNEXERCISED | [Handle sweep hits before sealing](#handle-sweep-hits-before-sealing) |
 | Export as published: a set redacted at capture, with saved plans, plan JSON and state pulls excluded | DESIGNED-NOT-EXECUTED | [Export the sealed set before teardown](#export-the-sealed-set-before-teardown) |
+| Empty-prefix check that counts current objects, object versions and delete markers and stops on an errored listing | DESIGNED-NOT-EXECUTED | [Export the sealed set before teardown](#export-the-sealed-set-before-teardown), step 5 |
 | Export of evidence from campaigns that destroyed no environment | UNEXERCISED | No rule says when it is due; [Export the sealed set before teardown](#export-the-sealed-set-before-teardown) |
 | Response to an unavailable destination or a failed read-back | UNEXERCISED | [ADR-0013](../decisions/0013-define-operations-and-cost-guardrails.md) stop conditions; no halt, continue or resume rule is written |
 | Weekly evidence-retention review | UNEXERCISED | [ADR-0013](../decisions/0013-define-operations-and-cost-guardrails.md); not recorded as run |
+| Account check before the remediation deletions, and each prefix's version and delete-marker counts recorded before deletion | DESIGNED-NOT-EXECUTED | [Remediate a prohibited value](#remediate-a-prohibited-value-in-retained-or-exported-evidence) |
 | Verifying a remediated set against its remediation record | UNEXERCISED | [Remediate a prohibited value](#remediate-a-prohibited-value-in-retained-or-exported-evidence) |
 | Scanning exported objects for other copies of a prohibited value | UNEXERCISED | [Remediate a prohibited value](#remediate-a-prohibited-value-in-retained-or-exported-evidence) |
 | Checking temporary directories for identifier-bearing files a run left behind | UNEXERCISED | No reviewed procedure exists |
@@ -1190,7 +1210,8 @@ None is needed to begin.
   [what its protections do and do not do](../../terraform/foundation/README.md#what-the-protections-do-and-what-they-do-not),
   [undecided retention](../../terraform/foundation/README.md#evidence-retention-is-not-decided-yet),
   [recovery from object versions](../../terraform/foundation/README.md#recovery) and
-  [final decommission](../../terraform/foundation/README.md#final-decommission).
+  [final decommission](../../terraform/foundation/README.md#final-decommission), which is an order
+  only, with no command-level procedure.
 - [Runtime Validation](../validation/runtime-validation.md): the per-window results that export
   and read-back support. Runtime windows themselves are outside this runbook.
 - [operator-access.md](operator-access.md): sessions, the account check, and keeping credential

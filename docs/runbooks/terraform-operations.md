@@ -36,8 +36,8 @@ Not every root can run this path to the end today. Check your root before step 1
 
 | Root | Where this path stops | What lets you continue |
 |---|---|---|
-| `terraform/bootstrap` | First build: this path does not build it. [Build the state backend and migrate into it](#build-the-state-backend-and-migrate-into-it) does, and on a fresh clone it stops before the Stage 1 apply. Later change: step 7, because no runbook publishes a read-back for its resources. | Nothing published: a reviewed decision under explicit approval ([When something fails](README.md#when-something-fails)). |
-| `terraform/foundation` | Build from nothing: its first build follows the [Normal path](public-dns-and-certificate.md#normal-path) of public-dns-and-certificate.md, which currently stops at its certificate stage. Applied root: step 4, unless you hold an expected address set; none is published for this root. | Build from nothing: nothing published, a reviewed decision under explicit approval. Applied root: the address list printed by step 2 of [Apply the reviewed saved plan](#apply-the-reviewed-saved-plan) after the root's last apply, kept in that campaign's evidence (rule 3 in [Inspect state without writing it](#inspect-state-without-writing-it), **Expected result**). |
+| `terraform/bootstrap` | First build: this path does not build it. [Build the state backend and migrate into it](#build-the-state-backend-and-migrate-into-it) does, and on a fresh clone it stops before the Stage 1 apply. Later change: step 7, because no runbook publishes a read-back for its resources. | Nothing published: a reviewed decision under explicit approval. |
+| `terraform/foundation` | Build from nothing: its first build follows the [Normal path](public-dns-and-certificate.md#normal-path) of public-dns-and-certificate.md, which currently stops at its first apply's binding check if that read prints nothing, and otherwise at its certificate stage. Applied root: step 4, unless you hold an expected address set; none is published for this root. | Build from nothing: nothing published, a reviewed decision under explicit approval. Applied root: the address list printed by step 2 of [Apply the reviewed saved plan](#apply-the-reviewed-saved-plan) after the root's last apply, kept in that campaign's evidence (rule 3 in [Inspect state without writing it](#inspect-state-without-writing-it), **Expected result**). |
 | `terraform/dev` | Not followed as written: see the first warning below. | Only its targeted first build, [Build only the retained baseline](dev-network.md#build-only-the-retained-baseline), and [Reconcile explained state-only drift](#reconcile-explained-state-only-drift) for its route-table drift. |
 | `terraform/dev-datastore` | Not followed on its own: see the second warning below. After its first build, no gate exists for a later apply. | Its first build, through the [Normal path](dev-datastore.md#normal-path) of dev-datastore.md. |
 
@@ -46,18 +46,24 @@ are the exceptions, as the warnings below say. The state backend must already ex
 built once per project, by
 [Build the state backend and migrate into it](#build-the-state-backend-and-migrate-into-it).
 
-Open the campaign's evidence set before step 1, and capture into it what each procedure's
-**Evidence to keep** names
-([Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set)). A
-*campaign* is one bounded operation whose evidence is kept together, for example an apply with its
-read-back.
+Open the campaign's evidence set before step 1: run steps 1 and 2 of
+[Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set), which set
+`umask 077` and create one directory for the campaign under the evidence root. PASS: that directory
+is 0700. Then start at step 1, and capture into the set, by the rest of that procedure, what each
+procedure's **Evidence to keep** names. A *campaign* is one bounded operation whose evidence is
+kept together, for example an apply with its read-back.
 
-**What goes into the evidence set.** Each command's output goes into the set through redaction
-([Redact at capture](evidence-handling.md#redact-at-capture)), except:
+**What goes into the evidence set.** Each command's output goes into the set through redaction,
+steps 1 to 4 of [Redact at capture](evidence-handling.md#redact-at-capture), as it is captured,
+and its step 5 over every retained file after the campaign's last command, before the record is
+written. PASS: nothing is written into the set before redaction, a file is written only when its
+step 4 re-scan finds nothing, every retained file reports zero remaining candidates in step 5, and
+a withheld file is recorded with the reason and without the value. Then continue the step that
+produced the output. The exceptions:
 
 | Output | Where it goes |
 |---|---|
-| The saved plan, plan JSON and `apply.log` | `<private-dir>` only, and the set records their sha256 digests ([Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set), step 5); exit codes and the apply's summary line go into the set as verdicts. These files can carry input values, bucket names and account identifiers. |
+| The saved plan, plan JSON and `apply.log` | `<private-dir>` only, and the set records their sha256 digests; exit codes and the apply's summary line go into the set as verdicts. These files can carry input values, bucket names and account identifiers. |
 | Plan text: the output of `terraform plan` and `terraform show -no-color` | Never into the set, not even through redaction: it carries the same private values. The published commands print it to the terminal and write no file. A copy you keep goes in `<private-dir>` only, and the set records its sha256. |
 | `terraform state pull` | Nowhere. Only its `jq` projection of serial and lineage is kept; a recovery copy is the one exception ([Handle a held state lock](#handle-a-held-state-lock)). |
 | `env \| grep '^TF_'` | Nowhere: it prints the variables' values. |
@@ -72,8 +78,7 @@ read-back.
 > place of step 12. No procedure in this suite covers any other change to `terraform/dev`, apart
 > from reconciling its route-table drift
 > ([Reconcile explained state-only drift](#reconcile-explained-state-only-drift)). Work stays
-> stopped until a reviewed decision is taken under explicit approval
-> ([When something fails](README.md#when-something-fails)).
+> stopped until a reviewed decision is taken under explicit approval.
 
 > **Warning: `terraform/dev-datastore` does not follow this path on its own either.** Its first
 > build follows the [Normal path](dev-datastore.md#normal-path) of dev-datastore.md, which uses
@@ -81,7 +86,7 @@ read-back.
 > pre-apply gate and the hang-up protection of the Stage 2 apply. That runbook has no procedure
 > for a later apply of the root, and no gate exists for one. After the first build, a change to
 > `terraform/dev-datastore` does not run through this path: a later apply waits for a reviewed
-> decision under explicit approval ([When something fails](README.md#when-something-fails)).
+> decision under explicit approval.
 
 1. **Prepare the root.** Put its filled `backend.hcl` and `terraform.tfvars` in its private
    `<inputs-dir>`, and create a new `<private-dir>` for this plan
@@ -101,43 +106,53 @@ read-back.
    `-lock=false` is safe. On `terraform/dev`, see the warning above.
 7. [Review the saved plan](#review-the-saved-plan). This review is the approval point; the
    approval itself is step 9. Before approval, also check read-back coverage: for every address in
-   the reviewed list, the root's runbook publishes a read-back, or the procedure you are following
-   says how that address is checked instead. If an address has neither, stop here, before
-   approval: its apply would end in the stop in step 3 of
-   [Apply the reviewed saved plan](#apply-the-reviewed-saved-plan). A later change to
+   the reviewed list, the root's runbook publishes a read-back (for `terraform/foundation`, the
+   [Read-back coverage](persistent-foundations.md#read-back-coverage) table, where **None** counts
+   as no read-back), or the procedure you are following says how that address is checked instead.
+   If an address has neither, stop here, before approval: its apply would end in the stop in step 3
+   of [Apply the reviewed saved plan](#apply-the-reviewed-saved-plan). A later change to
    `terraform/bootstrap` always stops here, because no runbook in this suite publishes a read-back
-   for its resources.
+   for its resources. PASS: every address has a read-back or a stated check. Then continue at
+   step 8.
 8. [Bind the saved plan to its hash and to state](#bind-the-saved-plan-to-its-hash-and-to-state):
    record the binding at review, and check it again immediately before apply.
 9. **Obtain approval.** The owner approves this plan in writing, identified by its sha256. There is
    no command for this step.
 10. [Apply the reviewed saved plan](#apply-the-reviewed-saved-plan), once. For a billable change,
-    first [read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states)
-    and [re-check prices](cost-and-residue.md#re-check-prices-before-billable-work), as the
-    [task list](README.md#task-list) requires before each billable change. A change is billable
-    when it bills a rate; identify the rates from the root's README and the reviewed plan, as the
-    price re-check's **Before you start** says. A resource that costs nothing until used bills no
-    rate at apply: a new registry repository, for example, costs nothing while it holds no image
-    ([Add a registry repository and widen the CI push scope](persistent-foundations.md#add-a-registry-repository-and-widen-the-ci-push-scope)).
-    Both cost reads run in the exported shell that
-    [cost-and-residue.md](cost-and-residue.md#before-you-start) requires for every procedure, not
-    with `AWS_PROFILE=<profile>`. Run them before step 3 of the binding check, which runs in the
-    Terraform shell and stays the last check immediately before the apply. In this path the order
-    is: approval (step 9), the cost reads, binding step 3, then the apply.
-11. **Read back** the changed resources through the root's runbook:
-    [persistent-foundations.md](persistent-foundations.md),
-    [public-dns-and-certificate.md](public-dns-and-certificate.md),
-    [dev-network.md](dev-network.md) or [dev-datastore.md](dev-datastore.md). None of them covers
-    `terraform/bootstrap`. Where the root's runbook publishes no read-back for a changed address,
-    see step 3 of [Apply the reviewed saved plan](#apply-the-reviewed-saved-plan).
+    first run
+    [Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states),
+    steps 1 to 6 (PASS: the budget and its five notifications as its **PASS when** lists, all five
+    `OK`, or each `ALARM` level allowed by an owner decision recorded this month), then
+    [Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work),
+    steps 1 to 3 (PASS: every rate the change bills is in its price table, and the value read
+    equals it). A change is billable when it bills a rate; identify the rates from the root's
+    README and the reviewed plan, as the price re-check's **Before you start** says. A resource
+    that costs nothing until used bills no rate at apply: a new registry repository, for example,
+    costs nothing while it holds no image (Add a registry repository and widen the CI push scope,
+    in persistent-foundations.md). Both cost reads run in an exported shell, as
+    cost-and-residue.md requires for every procedure, not with `AWS_PROFILE=<profile>`. Prepare it
+    with [Export role credentials once](operator-access.md#export-role-credentials-once), steps 1
+    to 4 (PASS: `ACCOUNT_MATCH=PASS` with no HOLD line, and the headroom line with exit 0). Run the
+    cost reads before step 3 of the binding check, which runs in the Terraform shell and stays the
+    last check immediately before the apply. In this path the order is: approval (step 9), the cost
+    reads, then back to this step for binding step 3 and the apply.
+11. **Read back** the changed resources through the root's runbook. This is step 3 of
+    [Apply the reviewed saved plan](#apply-the-reviewed-saved-plan): on `terraform/foundation`, run
+    for each changed address the procedure and steps that
+    [Read-back coverage](persistent-foundations.md#read-back-coverage) names. None of the root
+    runbooks covers `terraform/bootstrap`. Where the root's runbook publishes no read-back for a
+    changed address, that step 3 says what to do. PASS: each named read-back's **PASS when**. Then
+    continue at step 12.
 12. [Confirm convergence](#confirm-convergence). Not on `terraform/dev`; see the warning above.
 13. **Close the evidence set.** Sweep it with its planted positive control, handle any hit, and
     seal it: steps 4 to 7 of the [Normal path](evidence-handling.md#normal-path) of
-    evidence-handling.md.
+    evidence-handling.md. PASS: every manifest entry reports `OK`, the set holds no file the
+    manifest does not list, and the manifest's full SHA-256 is in the private record outside the
+    set. Then return here: this path ends with this step.
 
 A clean convergence plan does not prove that every attribute Terraform mirrors in state is
 current. [Detect state drift](#detect-state-drift) is the check for that, run when state may lag
-AWS ([task list](README.md#task-list)). Reconcile drift only through
+AWS. Reconcile drift only through
 [Reconcile explained state-only drift](#reconcile-explained-state-only-drift).
 
 When something goes wrong:
@@ -175,21 +190,27 @@ When something goes wrong:
 
 ## Before you start
 
-- [ ] The identity and account checks in [operator-access.md](operator-access.md) pass for
-  `<profile>` in the current shell. The *account check*
-  ([Check the account before AWS commands](operator-access.md#check-the-account-before-aws-commands))
-  compares the caller's account with the root's `allowed_account_id` and prints only a verdict.
-- [ ] The tools: the toolchain in [operator-access.md](operator-access.md#prepare-the-workstation-toolchain),
-  where Terraform 1.15.5 is the only exercised version. In addition: `git`, `jq`, `unzip`, and
-  `shasum` (or `sha256sum`); bash or zsh, for process substitution; TFLint, run as 0.64.0; Trivy,
-  run as 0.74.0; and network access to the Terraform registry for a provider install, which has
-  no retained evidence here.
+- [ ] The identity and account checks pass for `<profile>` in the current shell: steps 5 to 7 of
+  the operator-access.md Normal path, where [Sign in](operator-access.md#sign-in), step 2, runs
+  [Verify the resolved identity](operator-access.md#verify-the-resolved-identity) (PASS: both
+  values `True`) and the *account check*,
+  [Check the account before AWS commands](operator-access.md#check-the-account-before-aws-commands)
+  (PASS: `ACCOUNT_MATCH=PASS`). The account check compares the caller's account with the root's
+  `allowed_account_id` and prints only a verdict. Then return to this list.
+- [ ] The tools: the toolchain that
+  [Prepare the workstation toolchain](operator-access.md#prepare-the-workstation-toolchain),
+  steps 1 to 5, installs and verifies once per workstation (PASS: the published key fingerprint
+  and a good signature, `OK` for the archive, equal binary hashes and Terraform v1.15.5); then
+  return to this list. Terraform 1.15.5 is the only exercised version. In addition: `git`, `jq`,
+  `unzip`, and `shasum` (or `sha256sum`); bash or zsh, for process substitution; TFLint, run as
+  0.64.0; Trivy, run as 0.74.0; and network access to the Terraform registry for a provider
+  install, which has no retained evidence here.
 - [ ] For each root you work on, a private `<inputs-dir>` holding that root's filled `backend.hcl`,
   which names the state bucket the bootstrap root created, and its filled `terraform.tfvars`,
   which supplies the account ID as `allowed_account_id` and the root's other private inputs. Every
   plan of a root needs all of them, including plans of unrelated changes.
-- [ ] A new `<private-dir>` for each plan, and a private evidence location
-  ([evidence-handling.md](evidence-handling.md)).
+- [ ] A new `<private-dir>` for each plan, and a private evidence location, mode 0700 and outside
+  every Git working tree.
 - [ ] For step 4 of the [Normal path](#normal-path), the expected address set for the root at this
   point, from the rules in [Inspect state without writing it](#inspect-state-without-writing-it)
   (**Expected result**). No address list is published for `terraform/foundation`: on an applied
@@ -199,10 +220,9 @@ When something goes wrong:
   value-based, archive-aware sweep that fails closed. The project's own filter and sweep are not
   published, so you supply your own
   ([evidence-handling.md](evidence-handling.md#before-you-start)).
-- [ ] The owner, the person accountable for the AWS account
-  ([runbook index](README.md#conventions)), who approves each apply, refresh-only apply,
-  force-unlock and recovery action in writing, identifying the plan by its hash, and, on
-  `terraform/dev-datastore`, every plan.
+- [ ] The owner, the person accountable for the AWS account, who approves each apply,
+  refresh-only apply, force-unlock and recovery action in writing, identifying the plan by its
+  hash, and, on `terraform/dev-datastore`, every plan.
 - [ ] For `terraform/dev-datastore`, once its configuration includes `database.tf`, a master secret
   that already holds its value ([dev-datastore.md](dev-datastore.md);
   [What it creates](../../terraform/dev-datastore/README.md#what-it-creates)).
@@ -221,10 +241,9 @@ Every backend uses the same bucket in `us-east-1` with `encrypt = true` and
 
 **Placeholders and conventions.**
 
-- `<profile>` is the AdministratorAccess profile from [operator-access.md](operator-access.md).
-  The recorded plans and applies ran on that permission set; none has run on ReadOnlyAccess. For
-  a long or sensitive operation, [operator-access.md](operator-access.md) runs it on role
-  credentials exported once into a clean shell, an
+- `<profile>` is `cloud-platform-admin`, the AdministratorAccess profile. The recorded plans and
+  applies ran on that permission set; none has run on ReadOnlyAccess. For a long or sensitive
+  operation, operator-access.md runs it on role credentials exported once into a clean shell, an
   [exported shell](operator-access.md#export-role-credentials-once); the commands below are then
   run without `AWS_PROFILE=<profile>` or `--profile <profile>`. This runbook does not define which
   operation counts as long or sensitive, and it requires an exported shell for none of its own
@@ -305,7 +324,9 @@ separate approval.
 **Steps.**
 
 1. With approval for the Stage 1 apply, create the bucket on local state, following
-   [Stage 1](../../terraform/bootstrap/README.md#stage-1-create-the-bucket).
+   [Stage 1](../../terraform/bootstrap/README.md#stage-1-create-the-bucket), its steps 1 to 4
+   (PASS: every bucket-control check of its step 4 holds). Then continue at step 2 here. On a fresh
+   clone you stop before its step 3 instead, as the warning below says.
 
    > **Warning:** From a clone, Stage 1 moves `backend.tf` aside. That fresh-clone variant has
    > never run ([Not yet exercised](#not-yet-exercised)). With `backend.tf` moved aside,
@@ -318,7 +339,8 @@ separate approval.
    > ([When something fails](README.md#when-something-fails)).
 
 2. With separate approval, migrate the state into the bucket, following
-   [Stage 2](../../terraform/bootstrap/README.md#stage-2-migrate-state-into-the-backend).
+   [Stage 2](../../terraform/bootstrap/README.md#stage-2-migrate-state-into-the-backend). Then
+   continue at step 3 here.
 
    > **Warning:** Never pass `-force-copy`; the README says why. Read the migration prompt: if it
    > names a backend or key you did not expect, stop.
@@ -485,7 +507,7 @@ committed lock files do not cover is [not yet exercised](#not-yet-exercised).
 **Evidence to keep.** Nothing specific to this procedure; the campaign's evidence set applies
 ([Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set)).
 
-**Next step.**
+**Next step.** If another runbook sent you here, return to the step that sent you.
 [Initialize a root against the state backend](#initialize-a-root-against-the-state-backend).
 
 #### Engineering notes
@@ -525,13 +547,18 @@ in the S3 backend and installs the provider. It reads the backend and writes not
 
 **Before you start.**
 
-- [ ] The identity and account checks in [operator-access.md](operator-access.md) passed for
-  `<profile>`.
+- [ ] The identity and account checks passed for `<profile>`, as the runbook's
+  [Before you start](#before-you-start) says: both values `True` and `ACCOUNT_MATCH=PASS`. Then
+  return to this list.
 - [ ] The reviewed commit, `<commit>`.
 - [ ] A filled `backend.hcl` naming the state bucket the bootstrap root created, and a filled
   `terraform.tfvars` for the root, both in that root's `<inputs-dir>`. For
   `terraform/foundation`, `backend.hcl` names the state bucket, never the evidence bucket.
 - [ ] A new `<work-dir>` outside every existing Git working tree.
+- [ ] A workstation platform the committed lock files cover. They carry hashes for two platforms
+  (Known limitations below); on another platform `init` may add hashes, the `git status` check
+  stops on that, and no reviewed lock-file change procedure exists
+  ([Not yet exercised](#not-yet-exercised)).
 
 **Safety and authority.** Read-only against AWS; no approval. It writes local files that hold the
 root's private inputs, and no rule for removing that working tree has been defined (see
@@ -596,7 +623,8 @@ bucket or key, and the reviewed lock-file change another platform would need, ar
 **Evidence to keep.** Nothing specific to this procedure; the campaign's evidence set applies
 ([Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set)).
 
-**Next step.** [Inspect state without writing it](#inspect-state-without-writing-it).
+**Next step.** If another runbook sent you here, return to the step that sent you.
+[Inspect state without writing it](#inspect-state-without-writing-it).
 
 #### Engineering notes
 
@@ -646,8 +674,9 @@ and the checks after apply use them. It is read-only and does not take the state
 
 - [ ] The root is initialized
   ([Initialize a root against the state backend](#initialize-a-root-against-the-state-backend)).
-- [ ] The identity and account checks in [operator-access.md](operator-access.md) passed in the
-  current shell.
+- [ ] The identity and account checks passed in the current shell, as the runbook's
+  [Before you start](#before-you-start) says: both values `True` and `ACCOUNT_MATCH=PASS`. Then
+  return to this list.
 
 **Safety and authority.** Read-only; no approval. On `terraform/dev-datastore`, `state list` and
 `state pull` do not read the master secret.
@@ -728,7 +757,8 @@ token goes to [Recover from session expiry](operator-access.md#recover-from-sess
 **Evidence to keep.** The serial, lineage and address digest, privately, for the binding and
 post-apply checks.
 
-**Next step.** [Keep Terraform debug logging off](#keep-terraform-debug-logging-off), then
+**Next step.** If another runbook sent you here, return to the step that sent you.
+[Keep Terraform debug logging off](#keep-terraform-debug-logging-off), then
 [Plan to a saved file](#plan-to-a-saved-file).
 
 #### Engineering notes
@@ -787,8 +817,8 @@ are listed in the [dev-datastore README](../../terraform/dev-datastore/README.md
 **Evidence to keep.** Nothing specific to this procedure; the campaign's evidence set applies
 ([Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set)).
 
-**Next step.** The plan or apply this check guards, first
-[Plan to a saved file](#plan-to-a-saved-file).
+**Next step.** If another runbook sent you here, return to the step that sent you. The plan or
+apply this check guards, first [Plan to a saved file](#plan-to-a-saved-file).
 
 #### Engineering notes
 
@@ -805,7 +835,7 @@ been exercised offline only (2026-09-24).
 
 ### Plan to a saved file
 
-**Validation:** AWS-VALIDATED (2026-09-21 to 2026-09-24) · **Published command form:** executed as written
+**Validation:** AWS-VALIDATED (2026-09-21 to 2026-09-24) · **Published command form:** not executed as written
 
 **What this does.** Produces the *saved plan*: a file, written with `-out`, that records the
 changes Terraform will make. It is the one artifact that is reviewed, bound and applied. A plan
@@ -817,8 +847,9 @@ writes no state.
 - [ ] The root is initialized at the reviewed commit
   ([Initialize a root against the state backend](#initialize-a-root-against-the-state-backend)).
 - [ ] Debug logging is off ([Keep Terraform debug logging off](#keep-terraform-debug-logging-off)).
-- [ ] The caller is confirmed: the identity and account checks in
-  [operator-access.md](operator-access.md) passed.
+- [ ] The caller is confirmed: the identity and account checks passed, as the runbook's
+  [Before you start](#before-you-start) says: both values `True` and `ACCOUNT_MATCH=PASS`. Then
+  return to this list.
 - [ ] A new `<private-dir>` for this plan; `<plan-file>` is inside it.
 - [ ] On `terraform/dev-datastore`: an explicit owner grant, and, when the configuration includes
   `database.tf`, a master container that holds a value
@@ -861,14 +892,15 @@ the master container holds no value; placing it is
 
 **Evidence to keep.** The saved plan, in `<private-dir>` only. Its hash is recorded at review.
 
-**Next step.** [Review the saved plan](#review-the-saved-plan).
+**Next step.** If another runbook sent you here, return to the step that sent you.
+[Review the saved plan](#review-the-saved-plan).
 
 #### Engineering notes
 
 | Field | Value |
 |---|---|
 | Validation status | AWS-VALIDATED (2026-09-21 to 2026-09-24) |
-| Published form | executed as written (2026-09-23) |
+| Published form | not executed as written (the 2026-09-23 plan ran this command line with `-out` naming a relative file inside the working tree, not an absolute path in `<private-dir>`, and its exit code was recorded without the command that printed it; the 2026-09-24 plan wrote to a private directory outside the tree through a reviewed wrapper that is not published, with exported credentials instead of `AWS_PROFILE`, `-chdir`, and its output sent to a log) |
 | Evidence basis | Retained private evidence of the saved plans behind the 2026-09-22 registry and datastore-network applies, the 2026-09-23 zone and certificate applies and the 2026-09-24 datastore-instance apply |
 | Authority | None for the plan itself; it writes no state. On `terraform/dev-datastore`, an explicit owner grant, because every plan there reads the master secret's value. |
 | Cost | None |
@@ -877,15 +909,15 @@ the master container holds no value; placing it is
 
 - On `terraform/dev-datastore` a plan fails if the master container holds no value
   ([README](../../terraform/dev-datastore/README.md#what-it-creates)).
-- The 2026-09-23 plan, run in this form, wrote its saved plan inside the working tree, where
-  `.gitignore` excludes `*.tfplan`; the plan was then kept in private storage and applied from
-  there, and where its JSON was written is not recorded. The 2026-09-24 plan was written
-  directly to a private directory outside the tree, by a reviewed wrapper that is not
-  published.
+- The 2026-09-23 plan ran this command with a relative `-out` file, so it wrote its saved plan
+  inside the working tree, where `.gitignore` excludes `*.tfplan`; the plan was then kept in
+  private storage and applied from there, and where its JSON was written is not recorded. The
+  2026-09-24 plan was written directly to a private directory outside the tree, by a reviewed
+  wrapper that is not published.
 
 ### Plan without taking the state lock
 
-**Validation:** AWS-VALIDATED (2026-09-22, 2026-09-23) · **Published command form:** not executed as written
+**Validation:** AWS-VALIDATED (2026-09-22) for applying `-lock=false` plans after the full binding check; AWS-VALIDATED (2026-09-23) for a serial-only check before one such apply; AWS-VALIDATED (2026-09-22, 2026-09-23) for applying without the flag and for read-only plans with it; EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-09-22) for the no-other-writer condition · **Published command form:** not executed as written
 
 **What this does.** States when a plan may skip the state lock, and what makes that safe. The
 *state lock* is the object `<root>/terraform.tfstate.tflock` beside the state object, present
@@ -950,7 +982,7 @@ records them.
 
 | Field | Value |
 |---|---|
-| Validation status | AWS-VALIDATED (2026-09-22, 2026-09-23) |
+| Validation status | AWS-VALIDATED (2026-09-22) for applying saved plans made with `-lock=false` only after the full binding check passed immediately before apply; AWS-VALIDATED (2026-09-23) for a serial-only comparison before applying one such zone plan (the full binding check did not run that day, and the certificate plan made with `-lock=false` was applied after a hash-only re-check); AWS-VALIDATED (2026-09-22, 2026-09-23) for applies run without the flag (on 2026-09-23, the certificate apply only; the zone apply's command was not retained) and for read-only convergence plans run with it; EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-09-22) for the condition that no other writer could be active during those read-only plans, recorded only as a one-operator statement |
 | Published form | not executed as written (the `-lock=false` flag appears in the 2026-09-23 plan and convergence commands; the 2026-09-23 certificate and 2026-09-24 datastore applies of `-lock=false` plans skipped the serial-and-lineage binding these rules require, and the 2026-09-23 zone apply compared the serial only) |
 | Evidence basis | Retained private evidence of plans made with `-lock=false` from 2026-09-21 to 2026-09-24, and of the pre-apply checks that bound the 2026-09-22 applies to the state serial and lineage and the 2026-09-23 zone apply to the serial |
 | Authority | None |
@@ -968,6 +1000,9 @@ records them.
 - The 2026-09-23 zone apply compared the serial but not the lineage. The 2026-09-23 certificate
   apply and the 2026-09-24 datastore-instance apply re-checked the plan hash but not the serial
   and lineage.
+- No retained check shows that no other writer was active when a read-only plan skipped the
+  lock. On 2026-09-22 this rests only on a one-operator statement, and on 2026-09-23 it is not
+  recorded.
 
 ### Review the saved plan
 
@@ -989,8 +1024,7 @@ between state and AWS while planning.
   step 3 prints: the actions, a tab, then the address. Where the root's runbook gives a plan's
   contents for the procedure you are following, that is the list; otherwise write it from the
   change. Write it before the plan is made, and record it as the **Expected** field of the
-  campaign record, which is fixed before the run
-  ([Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set)).
+  campaign record, which is fixed before the run.
 - [ ] The Terraform version the change was validated with.
 
 **Safety and authority.** Local-only and read-only; running it needs no approval.
@@ -1060,7 +1094,7 @@ between state and AWS while planning.
 **Evidence to keep.** The step 3 to 5 lists, the Terraform version and the plan's sha256,
 privately ([evidence-handling.md](evidence-handling.md)).
 
-**Next step.**
+**Next step.** If another runbook sent you here, return to the step that sent you.
 [Bind the saved plan to its hash and to state](#bind-the-saved-plan-to-its-hash-and-to-state).
 
 #### Engineering notes
@@ -1079,7 +1113,7 @@ confirmed by read-back after apply.
 
 ### Bind the saved plan to its hash and to state
 
-**Validation:** AWS-VALIDATED (2026-09-22, 2026-09-23) · **Published command form:** not executed as written
+**Validation:** AWS-VALIDATED (2026-09-22) for the full binding; AWS-VALIDATED (2026-09-23) for the serial alone before the zone apply and the hash alone before the certificate apply · **Published command form:** not executed as written
 
 **What this does.** Makes the reviewed plan the only thing that can be applied, and only against
 the state it was made from. At review, you record the plan's sha256 and the serial and lineage of
@@ -1091,8 +1125,9 @@ serial that moved means something wrote state after the plan was made, and the p
 
 - [ ] The reviewed saved plan ([Review the saved plan](#review-the-saved-plan)).
 - [ ] The repository at hand for step 2, with the reviewed commit `<commit>`.
-- [ ] For step 3, the root's initialized working tree, and the identity and account checks in
-  [operator-access.md](operator-access.md) passed in the current shell.
+- [ ] For step 3, the root's initialized working tree, and the identity and account checks passed
+  in the current shell, as the runbook's [Before you start](#before-you-start) says: both values
+  `True` and `ACCOUNT_MATCH=PASS`. Then return to this list.
 
 **Safety and authority.** Read-only; no approval. Step 3 reads remote state through `jq` only.
 
@@ -1127,6 +1162,9 @@ serial that moved means something wrote state after the plan was made, and the p
    AWS_PROFILE=<profile> terraform state pull | jq '{serial, lineage}'
    ```
 
+   On a root's first apply, a step 3 that prints nothing is a mismatch that no published
+   procedure resolves (**PASS when**, **If it fails**).
+
 **Expected result.** Step 2 prints `same` for every file and the lock file, and `diff` prints
 nothing. In step 3 the hash equals the one recorded, and the serial and lineage equal the
 plan's. For a root's first apply, step 1 shows serial 0 and an empty lineage; the 2026-09-22
@@ -1158,9 +1196,10 @@ approval ([When something fails](README.md#when-something-fails)).
 **Evidence to keep.** The plan's hash and the serial and lineage recorded at review, and the step 3
 values, privately. They are the "before" values in the apply's evidence.
 
-**Next step.** Steps 1 and 2 run at review. Then obtain the owner's written approval of this plan,
-identified by its sha256. For a billable change, run the budget read-back and the price re-check
-in the exported shell next, before step 3, not after it ([Normal path](#normal-path), step 10).
+**Next step.** If another runbook sent you here, return to the step that sent you. Steps 1 and 2
+run at review. Then obtain the owner's written approval of this plan, identified by its sha256.
+For a billable change, run the budget read-back and the price re-check in the exported shell next,
+before step 3, not after it ([Normal path](#normal-path), step 10).
 Then run step 3 in the Terraform shell, and if it passes,
 [apply the plan](#apply-the-reviewed-saved-plan).
 
@@ -1168,9 +1207,9 @@ Then run step 3 in the Terraform shell, and if it passes,
 
 | Field | Value |
 |---|---|
-| Validation status | AWS-VALIDATED (2026-09-22, 2026-09-23) |
+| Validation status | AWS-VALIDATED (2026-09-22) for the full binding: the plan hash, the embedded configuration and lock file, and the remote serial and lineage against the plan's prior state, checked immediately before apply; AWS-VALIDATED (2026-09-23) for two partial pre-apply checks only: the remote serial alone before the zone apply, and the plan hash alone before the certificate apply |
 | Published form | not executed as written (derived from pre-apply checks that read the same values in-process on 2026-09-22; the plan archive layout used below was measured on Terraform 1.15.5 and is not a documented interface) |
-| Evidence basis | Retained private evidence of the 2026-09-22 foundation apply, refresh-only apply and datastore-network apply, each preceded by checks of the plan hash, its embedded configuration and lock file, and the remote serial and lineage against the plan's prior state (for the datastore network, the root's first apply, against a remote state never yet written); and of the 2026-09-23 zone apply, preceded by a comparison of the remote serial with the plan-time serial (lineage recorded, not compared; no plan-hash re-check retained) |
+| Evidence basis | Retained private evidence of the 2026-09-22 foundation apply, refresh-only apply and datastore-network apply, each preceded by checks of the plan hash, its embedded configuration and lock file, and the remote serial and lineage against the plan's prior state (for the datastore network, the root's first apply, against a remote state never yet written); and of the 2026-09-23 zone apply, preceded by a comparison of the remote serial with the plan-time serial (lineage recorded, not compared; no plan-hash re-check retained); and of the 2026-09-23 certificate apply, preceded by a re-check of the plan hash only |
 | Authority | None |
 | Cost | None |
 
@@ -1203,16 +1242,16 @@ plan applies without a confirmation prompt; the approval happened at review.
 - [ ] The binding check passes immediately before
   ([Bind the saved plan to its hash and to state](#bind-the-saved-plan-to-its-hash-and-to-state),
   step 3).
-- [ ] The session outlives the apply
-  ([Check session headroom before long operations](operator-access.md#check-session-headroom-before-long-operations)).
-  Where the root's runbook states a minimum session time, as
+- [ ] The session outlives the apply:
+  [Check session headroom before long operations](operator-access.md#check-session-headroom-before-long-operations),
+  steps 1 to 3. Where the root's runbook states a minimum session time, as
   [dev-datastore.md](dev-datastore.md#before-you-start) does, that is `<required-minutes>`. This
   runbook states none and publishes no measured apply duration, so otherwise set it as step 1 of
-  that procedure describes; no margin rule has been established.
+  that procedure describes; no margin rule has been established. PASS: the headroom line is
+  printed and the exit status is 0. Then return to this list.
 - [ ] Debug logging is off ([Keep Terraform debug logging off](#keep-terraform-debug-logging-off)).
-- [ ] For a billable change, the budget read-back and the price re-check pass
-  ([Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states),
-  [Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work)).
+- [ ] For a billable change, the budget read-back and the price re-check pass, run before step 3 of
+  the binding check as step 10 of the [Normal path](#normal-path) says. Then return to this list.
 
 **Safety and authority.** Mutating, owner-authorized, billable: it costs whatever the plan
 creates, which each root's runbook states.
@@ -1243,21 +1282,21 @@ creates, which each root's runbook states.
    AWS_PROFILE=<profile> terraform state list | LC_ALL=C sort
    ```
 
-3. Read back the changed resources through the root's runbook:
-   [persistent-foundations.md](persistent-foundations.md),
-   [public-dns-and-certificate.md](public-dns-and-certificate.md),
-   [dev-network.md](dev-network.md) or [dev-datastore.md](dev-datastore.md).
+3. Read back the changed resources through the root's runbook. On `terraform/foundation`, run for
+   each changed address the procedure and steps that
+   [Read-back coverage](persistent-foundations.md#read-back-coverage) names. On `terraform/dev` or
+   `terraform/dev-datastore`, run the read-back that the procedure you are following in
+   [dev-network.md](dev-network.md) or [dev-datastore.md](dev-datastore.md) names. PASS: each
+   read-back's **PASS when**. Then return to this step.
 
    Where the root's runbook publishes no read-back for a changed address, record the gap in the
    campaign record's **Not exercised** field. If the procedure you are following says how that
-   address is checked instead, continue as it says:
-   [Build only the retained baseline](dev-network.md#build-only-the-retained-baseline) covers the
-   Dev Parameter Store entry, the two Pod Identity roles and their inline policies only by the
-   state listing, and lists their AWS read-back under
-   [Not yet exercised](dev-network.md#not-yet-exercised). Otherwise no procedure covers the
-   address: stop, and work resumes only on a reviewed decision under explicit approval
-   ([When something fails](README.md#when-something-fails)). Step 7 of the
-   [Normal path](#normal-path) checks this coverage before approval.
+   address is checked instead, continue as it says: for example, Build only the retained baseline
+   in dev-network.md covers the Dev Parameter Store entry, the two Pod Identity roles and their
+   inline policies only by the state listing, and lists their AWS read-back under Not yet
+   exercised there. Otherwise no procedure covers the address: stop, and work resumes only on a
+   reviewed decision under explicit approval. Step 7 of the [Normal path](#normal-path) checks
+   this coverage before approval.
 
 **Expected result.** Exit 0, and the log contains
 `Apply complete! Resources: <n> added, <n> changed, <n> destroyed.` with counts equal to the
@@ -1298,7 +1337,8 @@ the serial and lineage before (from the binding check) and after, and the step 2
 which the next [Inspect state without writing it](#inspect-state-without-writing-it) of this root
 can compare against.
 
-**Next step.** [Confirm convergence](#confirm-convergence).
+**Next step.** If another runbook sent you here, return to the step that sent you.
+[Confirm convergence](#confirm-convergence).
 
 #### Engineering notes
 
@@ -1361,7 +1401,8 @@ here resolves a convergence difference.
 **Evidence to keep.** Nothing specific to this procedure; the campaign's evidence set applies
 ([Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set)).
 
-**Next step.** Step 13 of the [Normal path](#normal-path): close the campaign's evidence set.
+**Next step.** If another runbook sent you here, return to the step that sent you. Step 13 of the
+[Normal path](#normal-path): close the campaign's evidence set.
 Exit 0 here does not prove that every attribute Terraform mirrors in state is current;
 [Detect state drift](#detect-state-drift) is the check for that, run when state may lag AWS.
 
@@ -1462,7 +1503,15 @@ refreshed values into state only. Drift is accepted by address and attribute, ne
   new class reviewed as such.
 - [ ] Debug logging is off ([Keep Terraform debug logging off](#keep-terraform-debug-logging-off)).
 - [ ] On `terraform/dev-datastore`, an explicit owner grant for the step 2 plan, which reads the
-  master secret's value.
+  master secret's value. The step 5 refresh-only apply there is a later apply of that root, for
+  which no gate exists (root table in the [Normal path](#normal-path)); it waits for a reviewed
+  decision under explicit approval.
+- [ ] Not on `terraform/bootstrap`: no runbook publishes a read-back for its resources, so step 4
+  cannot be done there (root table in the [Normal path](#normal-path)).
+- [ ] On `terraform/foundation`, the address list that step 2 of
+  [Apply the reviewed saved plan](#apply-the-reviewed-saved-plan) printed after the root's last
+  apply, for the state inspection in step 1. None is published; without it step 1 stops (root
+  table in the [Normal path](#normal-path)).
 
 | Root | Address and attribute | Cause | Reconciled | Result |
 |---|---|---|---|---|
@@ -1566,6 +1615,10 @@ maps the old address to the new one. The plan, review, binding and apply are the
 **Before you start.**
 
 - [ ] The refactor that changes the addresses, in the change under review.
+- [ ] The root can take a later change: check the root table at the top of the
+  [Normal path](#normal-path) first. On an applied `terraform/bootstrap`, `terraform/dev` or
+  `terraform/dev-datastore` root no published path reaches the apply, and on `terraform/foundation`
+  state inspection needs the address list from the last apply.
 
 **Safety and authority.** Mutating (state addresses) and owner-authorized: explicit owner approval
 of the plan. The move itself changes no AWS resource and costs nothing.
@@ -1749,7 +1802,7 @@ further write.
 
 ### Stop after a failed or interrupted apply
 
-**Validation:** OFFLINE-VALIDATED (2026-09-24) · **Published command form:** not executed as written
+**Validation:** OFFLINE-VALIDATED (2026-09-24) for the stop rule and steps 1 to 3; DESIGNED-NOT-EXECUTED (never) for steps 4, 5 and 7 · **Published command form:** not executed as written
 
 **What this does.** Keeps a partial apply from turning into a second, unreviewed change. You
 record the state as unknown, inspect read-only, and write down where each planned resource
@@ -1760,9 +1813,14 @@ stands. Nothing is retried. Recovery is a separate, reviewed decision.
 - [ ] One of these happened: a non-zero exit, an interrupt, a lost terminal or session,
   credentials that expired during the apply, a summary that differs from the review, or an
   outcome you cannot tell.
-- [ ] Before any read, the identity and account checks in
-  [operator-access.md](operator-access.md) passed in the current shell; sign in again first if the
-  session expired.
+- [ ] Before any read, the identity and account checks passed in the current shell, for this
+  root's `<root-tfvars>`: [Sign in](operator-access.md#sign-in), step 2, which runs
+  [Verify the resolved identity](operator-access.md#verify-the-resolved-identity) and the
+  [account check](operator-access.md#check-the-account-before-aws-commands); inside an exported
+  shell, run `account_check <root-tfvars>` there, as that check's step 3 shows. PASS: both values
+  `True` and `ACCOUNT_MATCH=PASS`. If the apply failed on an expired or missing token, first follow
+  [Recover from credential expiry mid-run](operator-access.md#recover-from-credential-expiry-mid-run).
+  Then return to this list.
 - [ ] The reviewed step 3 list from [Review the saved plan](#review-the-saved-plan).
 
 **Safety and authority.** Read-only; no approval to inspect, except on `terraform/dev-datastore`,
@@ -1803,8 +1861,16 @@ until removed; each root's runbook gives rates.
    difference from the expected addresses is what step 7 classifies.
 4. Read back from AWS every address in the reviewed step 3 list of
    [Review the saved plan](#review-the-saved-plan), whatever its action: create, update, delete
-   or replace. Use the root's runbook. Count a resource as absent only on a not-found error; any
-   other failure, such as `AccessDenied`, leaves it unknown.
+   or replace. Use the root's runbook: on `terraform/foundation`, the read-back each address has in
+   [Read-back coverage](persistent-foundations.md#read-back-coverage); on `terraform/dev`, the
+   read-backs of [dev-network.md](dev-network.md); on `terraform/dev-datastore`, after a Stage 1
+   apply the read-back in
+   [Stage 1](dev-datastore.md#stage-1-create-the-network-boundary-and-the-empty-secret-containers),
+   **If it fails**, and after a Stage 2 apply the reads of step 6 below; on `terraform/bootstrap`
+   none is published, so every address stays unknown. Run only their read commands: their PASS,
+   STOP, If it fails and Next step do not apply here. Count a resource as absent only on a
+   not-found error; any other failure, such as `AccessDenied`, leaves it unknown. Record each
+   address as present, absent or unknown, then continue at step 5.
    - An address the root's runbook has no read-back for stays unknown;
      [dev-network.md](dev-network.md#not-yet-exercised) lists the Dev Parameter Store entry, the
      two Pod Identity roles and their inline policies.
@@ -1826,7 +1892,10 @@ until removed; each root's runbook gives rates.
    lock error, cannot be released by that procedure: no way to obtain its lock ID is documented.
 6. On `terraform/dev-datastore`, after a Stage 2 apply, also follow that root's inspection,
    [Read the datastore after a failed or interrupted apply](dev-datastore.md#read-the-datastore-after-a-failed-or-interrupted-apply),
-   which adds the secret-absence proof over the apply's artifacts.
+   steps 1 to 3, which adds the secret-absence proof over the apply's artifacts; its step 1 is
+   step 4's read-back for the instance and the endpoint parameter. PASS: the master is unchanged
+   and the proof has a result; a proof that finds the value follows that procedure's
+   **If it fails**. Then continue at step 7 here, which records both addresses with the rest.
 7. Write down each planned resource as: in state and in AWS; in AWS only; in state only; in
    neither, absent from state and absent from AWS by a not-found error; or unknown. For an update
    or a replace, also write down whether the read-back shows the reviewed change and, for a
@@ -1853,13 +1922,15 @@ destroys against its intended targets before approval.
 **Evidence to keep.** `apply.log`, the exit code if one was printed, whether an
 `errored.tfstate` exists, and the step 7 classification, privately.
 
-**Next step.** The owner's reviewed recovery decision.
+**Next step.** The owner's reviewed recovery decision. If a lock error brought you here, releasing
+that lock is part of the decision: go to [Handle a held state lock](#handle-a-held-state-lock),
+step 1, only if the decision says so; its step 7 is then already done.
 
 #### Engineering notes
 
 | Field | Value |
 |---|---|
-| Validation status | OFFLINE-VALIDATED (2026-09-24) |
+| Validation status | OFFLINE-VALIDATED (2026-09-24) for the stop rule (state recorded as unknown, no apply retried) and steps 1 to 3; DESIGNED-NOT-EXECUTED (never) for steps 4, 5 and 7 after a failure: the read-back of every planned address with its not-found rule, the lock listing and the five-class classification. Step 6 keeps the labels of the datastore inspection it runs |
 | Published form | not executed as written (derived from the failure contract of a reviewed apply wrapper, qualified offline on 2026-09-24 and not published; no apply has failed since that contract existed) |
 | Evidence basis | Retained private evidence of the 2026-09-24 offline qualification: a failed apply stops and is not retried, an interrupt is recorded as unknown state and not retried, a hangup does not stop Terraform mid-create, and inspection changes nothing. One earlier recovery from a terminated apply, on 2026-08-10, is EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE. |
 | Authority | None to inspect; every recovery action needs its own reviewed decision and explicit owner approval |
@@ -1890,6 +1961,7 @@ destroys against its intended targets before approval.
 | Terraform state recovery from a prior object version | UNEXERCISED | ADR-0011 makes one Terraform-state recovery exercise mandatory before its implementation is complete. It has not run, and no reviewed procedure exists. The [README outline](../../terraform/bootstrap/README.md#recovery) names no restore mechanism, no specific isolated test key, and no commands. The exercise runs against an isolated test state object, never the active state. Versioning being enabled is not proof that a version can be restored. |
 | `terraform import` as the last resort | UNEXERCISED | It rebuilds the binding, not the state object, its serial or its outputs ([README](../../terraform/bootstrap/README.md#recovery)). |
 | A reviewed recovery procedure after a failed or interrupted apply (targeted cleanup, import, re-plan) | UNEXERCISED | Only the stop-and-inspect contract above exists. The one recovery, on 2026-08-10, ran without a reviewed procedure (EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE). |
+| Inspection after a failed or interrupted apply: the read-back of every planned address with the not-found rule, the lock listing and the five-class classification ([Stop after a failed or interrupted apply](#stop-after-a-failed-or-interrupted-apply), steps 4, 5 and 7) | DESIGNED-NOT-EXECUTED | No apply has failed since the stop rule existed. The not-found rule has run only before an apply, in the datastore's pre-apply reads on 2026-09-24. The offline-qualified inspection has no lock listing or classification. |
 | Migrating a root's state out of the S3 backend, to local state or another key | UNEXERCISED | Backend decommission depends on it. |
 | Final decommission of the state backend | UNEXERCISED | The [README](../../terraform/bootstrap/README.md#final-decommission) gives preconditions and an order, and no commands. Its order empties the bucket and then destroys the backend through Terraform, while the bootstrap root's own state object is in that bucket; the outline does not yet say where that state lives during the destroy. |
 | First build of the backend from a fresh clone, with `backend.tf` moved aside | DESIGNED-NOT-EXECUTED | [Stage 1](../../terraform/bootstrap/README.md#stage-1-create-the-bucket) describes it; the one executed build predates it. Review and binding of a Stage 1 saved plan on local state have never run, and step 2 of the binding check as written reports `backend.tf` missing in that variant. |
@@ -1922,6 +1994,7 @@ procedures above.
 | Migrating a root's state out of the backend, and the backend's final decommission. | The bootstrap README's [Final decommission](../../terraform/bootstrap/README.md#final-decommission): preconditions and an order, no commands. | Yes: commands, and where the bootstrap root's own state lives during the destroy. |
 | Releasing a lock object found by listing, without a lock error. | [Handle a held state lock](#handle-a-held-state-lock), which needs the lock ID from the error. | Yes: a documented way to obtain the lock ID. |
 | A provider install from the registry, and initialization on a platform the lock files do not cover. Which committed hash belongs to which platform is not established. | The committed lock files and [Initialize a root against the state backend](#initialize-a-root-against-the-state-backend). | No new tool: a run of the published init. Another platform needs a reviewed lock-file change. |
+| The binding check on a root's first apply: what step 3's state read prints against a state object never yet written is not recorded, and a read that prints nothing is a mismatch. | [Bind the saved plan to its hash and to state](#bind-the-saved-plan-to-its-hash-and-to-state), whose PASS for a first apply is serial 0 and no lineage. | No new tool: a recorded first-apply read, and an owner decision on the PASS condition. |
 | The binding check on a Terraform version other than 1.15.5. | [Bind the saved plan to its hash and to state](#bind-the-saved-plan-to-its-hash-and-to-state), whose archive layout was measured on 1.15.5 and is not a documented interface. | No new tool: re-check the layout after any Terraform upgrade. |
 | The rationale for the scan findings accepted on 2026-09-21 for the foundation and dev-datastore roots. Not every rationale is published. | The class comparison in [Run the static checks](#run-the-static-checks), which carries existing findings rather than re-deciding them. | No procedure or tool: the gap is the unpublished rationale. |
 | When saved plans, plan JSON, logs and working trees holding filled inputs are removed. | The `<private-dir>` and `<work-dir>` conventions and `.gitignore`. | Yes: no deletion rule is defined. |

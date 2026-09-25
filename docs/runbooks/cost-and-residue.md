@@ -60,14 +60,18 @@ items today's occasion calls for.
 - [ ] **A dedicated AWS account and an operator session** as [operator-access.md](operator-access.md)
   describes. The account number is kept locally and never recorded.
 - [ ] **The exported shell.** Every procedure runs inside a `bash` shell prepared by
-  [Export role credentials once](operator-access.md#export-role-credentials-once): a clean shell
+  [Export role credentials once](operator-access.md#export-role-credentials-once), steps 1 to 4,
+  with the `<root-tfvars>`, `<profile>` and `<required-minutes>` of the items below: a clean shell
   that holds one exported role credential and nothing else, so no command here names a profile. Its
   export ends with the [account check](operator-access.md#check-the-account-before-aws-commands), which
-  prints only a verdict. Continue only on `ACCOUNT_MATCH=PASS`.
+  prints only a verdict. PASS: `ACCOUNT_MATCH=PASS` with no HOLD line, and the headroom line with
+  exit 0. Continue only on that PASS; then return to this list.
 - [ ] **For the account check:** the absolute path of `<root-tfvars>`, a filled, untracked root
-  `terraform.tfvars` that sets `allowed_account_id`, the account pin
-  ([operator-access.md](operator-access.md#before-you-start)). Each root holds the same dedicated
-  account's ID; cost work targets no root.
+  `terraform.tfvars` that sets `allowed_account_id`, the account pin. Each root holds the same
+  dedicated account's ID; cost work targets no root, so it is the bootstrap root's
+  `<inputs-dir>/terraform.tfvars`. If that file does not exist yet, create it as the account-check
+  item of [operator-access.md](operator-access.md#before-you-start) describes, then return to this
+  list.
 - [ ] **The `<profile>` the shell is exported from.** For the reads, the ReadOnly profile, which
   inspection is meant for ([runbook conventions](README.md#conventions)); for a cleanup, a profile
   that may delete that one object's class. Running these reads on the ReadOnly profile has never
@@ -76,9 +80,8 @@ items today's occasion calls for.
   census prints `UNKNOWN` for it.
 - [ ] **A session requirement for the headroom check.** The exported shell's headroom check needs
   `<required-minutes>`. This runbook sets no minimum session time and publishes no measured duration
-  for its reads, so set the requirement as step 1 of
-  [Check session headroom before long operations](operator-access.md#check-session-headroom-before-long-operations)
-  describes. After a destroy, the census's repeat bound alone, 20 attempts 30 seconds apart, spans
+  for its reads, so set it to the reads' expected duration plus a margin; no margin rule has been
+  established. After a destroy, the census's repeat bound alone, 20 attempts 30 seconds apart, spans
   about ten minutes.
 - [ ] **Read access** to Budgets, Cost Explorer, the Price List API, CloudWatch metrics, and the
   EC2, Elastic Load Balancing, Auto Scaling, EKS, RDS, CloudWatch Logs, SNS, IAM, Secrets Manager
@@ -238,8 +241,9 @@ unprojected budget response.
 [Respond to the 100, 150 and 200 USD levels](#respond-to-the-100-150-and-200-usd-levels). For a
 billable change, go on to [Re-check prices before billable work](#re-check-prices-before-billable-work)
 only when all five are `OK`, or when an owner decision recorded this month for each `ALARM` level
-allows the change. This read runs again
-before the next billable change, and in the first weekly review on 2026-10-01.
+allows the change. Otherwise, if another runbook sent you here, return to the step that sent you.
+This read runs again before the next billable change, and in the first weekly review on
+2026-10-01.
 
 #### Engineering notes
 
@@ -278,8 +282,7 @@ A re-check states what AWS charges, not what the account was billed.
 
 **Before you start.**
 
-- [ ] The rates the change will bill, identified from the root's README and its reviewed plan
-  ([Review the saved plan](terraform-operations.md#review-the-saved-plan)).
+- [ ] The rates the change will bill, identified from the root's README and its reviewed plan.
 - [ ] `jq` installed, and the exported shell ([Before you start](#before-you-start)).
 
 **Safety and authority.** Read-only; Price List API reads. No approval is needed to read. A value
@@ -368,8 +371,9 @@ also triggers the ADR-0013 revisit.
 
 **Evidence to keep.** The UTC time, each rate as read, and the comparison verdict.
 
-**Next step.** The reviewed billable change, under its own approval. Run this re-check again before
-the next billable change; a runtime window re-checks the runtime rates.
+**Next step.** If another runbook sent you here, return to the step that sent you. The reviewed
+billable change, under its own approval. Run this re-check again before the next billable change;
+a runtime window re-checks the runtime rates.
 
 #### Engineering notes
 
@@ -436,7 +440,8 @@ stays stopped until the owner decides.
 **Evidence to keep.** The UTC time and the listed keys with their status and type.
 
 **Next step.** When the budget figures cannot explain spend,
-[Break spend down with Cost Explorer](#break-spend-down-with-cost-explorer). Otherwise continue the
+[Break spend down with Cost Explorer](#break-spend-down-with-cost-explorer). Otherwise, if another
+runbook sent you here, return to the step that sent you; if not, continue the
 [normal path](#normal-path).
 
 #### Engineering notes
@@ -455,7 +460,7 @@ cost record carries the tags. Attribution by tag has not been demonstrated end t
 
 ### Break spend down with Cost Explorer
 
-**Validation:** AWS-VALIDATED (2026-09-10) for step 1; AWS-VALIDATED (2026-09-12) for step 2 · **Published command form:** not executed as written
+**Validation:** AWS-VALIDATED (2026-09-10) for step 1; EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-09-12) for step 2 · **Published command form:** not executed as written
 
 **What this does.** It breaks spend down by service when the budget figures cannot answer the
 question, as in a written cost explanation, an unexplained-spend check, or the weekly review's
@@ -530,7 +535,7 @@ Never the account number.
 
 | Field | Value |
 |---|---|
-| Validation status | AWS-VALIDATED (2026-09-10) for step 1; AWS-VALIDATED (2026-09-12) for step 2, one read whose value was retained and whose raw output was not |
+| Validation status | AWS-VALIDATED (2026-09-10) for step 1; EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-09-12) for step 2, a project-tag read whose value was recorded and whose command and raw output were not retained |
 | Published form | not executed as written (the executed read passed the account number literally in its filter; here the number comes from the session, and a projection is added) |
 | Evidence basis | [ADR-0013](../decisions/0013-define-operations-and-cost-guardrails.md#decision) (unexplained spend; estimate against actual); retained private evidence of the 2026-09-10 account-scoped reads by service, with raw output, and a retained private record of the 2026-09-12 project-tag read's value, without raw output |
 | Authority | None (read-only) |
@@ -542,8 +547,8 @@ Never the account number.
   covers every member account.
 - Cost Explorer lags by hours, so a missing line is not evidence of zero cost, and the current
   month's figures are estimates.
-- The project-tag form in step 2 ran once, on 2026-09-12; its value was retained, its raw output was
-  not. Attribution by tag has not been demonstrated end to end.
+- The project-tag form in step 2 ran once, on 2026-09-12; its value was recorded, and its command
+  and raw output were not retained. Attribution by tag has not been demonstrated end to end.
 
 ### Check the datastore CPU credits
 
@@ -636,7 +641,8 @@ runtime window driving it. Stopping or decommissioning the instance are not exer
 period and span, maximum surplus balance, sum charged, minimum credit balance, average and maximum
 CPU, and the verdict.
 
-**Next step.** The next operating session, and at the latest the first weekly review on 2026-10-01.
+**Next step.** If another runbook sent you here, return to the step that sent you. The next
+operating session, and at the latest the first weekly review on 2026-10-01.
 
 #### Engineering notes
 
@@ -674,11 +680,26 @@ procedure, not the first review ADR-0013 required.
 - [ ] This week's results from
   [Read back the budget and its alert states](#read-back-the-budget-and-its-alert-states),
   [Run the orphan census](#run-the-orphan-census) and
-  [Check the datastore CPU credits](#check-the-datastore-cpu-credits).
+  [Check the datastore CPU credits](#check-the-datastore-cpu-credits). With the datastore stopped
+  after its Stage 1, no instance exists: the CPU-credit check does not run, and the entries that
+  need an instance follow the bullet **Checks that still apply** under
+  [Stopping after Stage 1](dev-datastore.md#stopping-after-stage-1) in dev-datastore.md. Read that
+  bullet only: the CPU-credit input and entry 5, the instance status in entry 4, and the first
+  period's start have no published form, and how each is recorded is the owner's decision, stated
+  in entry 7. Its "Stopping here ends the path" ends the datastore build path, not this review.
+  Then return to this list and continue the review.
 - [ ] For any window that week, the environment-hour ledger
   ([Background prerequisites](#background-prerequisites)).
 - [ ] The private records location ([Before you start](#before-you-start)).
+- [ ] A way to redact identifiers before the record is written: the private literal list and the
+  redaction filter that [Redact at capture](evidence-handling.md#redact-at-capture) uses. The
+  project does not publish them ([Known reproducibility gaps](README.md#known-reproducibility-gaps));
+  you supply your own.
 - [ ] The owner, who takes the decision.
+- [ ] ADR-0013's other weekly duties (budget anomaly review, registry and retained-resource review,
+  evidence-retention review, and the evidence that each persistent foundation is still needed)
+  have no published procedure ([Not yet exercised](#not-yet-exercised)); this record does not
+  cover them.
 
 **Safety and authority.** Read-only for the reads. The continue, REVIEW or HOLD decision is the
 owner's. Billable only when step 6 needs a Cost Explorer request: up to USD 0.01 per request.
@@ -689,7 +710,8 @@ is the time since the previous review record; the first review's period starts w
 was created. No published rule makes the review a campaign: its record goes in the private records
 location ([Before you start](#before-you-start)), not into a sealed evidence set. Keep each entry
 to what the linked procedure's Evidence to keep names, and redact any other identifier before it is
-written ([Redact at capture](evidence-handling.md#redact-at-capture)).
+written ([Redact at capture](evidence-handling.md#redact-at-capture), steps 1 to 4; PASS: its step 4
+re-scan finds nothing). Then continue with the entry.
 
 1. Review time (UTC) and reviewer.
 2. From [Read back the budget and its alert states](#read-back-the-budget-and-its-alert-states):
@@ -760,10 +782,13 @@ STOP to [Run the orphan census](#run-the-orphan-census); unexplained spend to
 [Break spend down with Cost Explorer](#break-spend-down-with-cost-explorer); a CPU-credit REVIEW to
 [Check the datastore CPU credits](#check-the-datastore-cpu-credits). Environment-hour reconciliation
 has no published procedure. A persistent-set value other than expected has no procedure either: it
-is taken to the owner's decision in entry 7. A secret scheduled for deletion is also checked with
+is taken to the owner's decision in entry 7. A secret scheduled for deletion is also checked,
+read-only: entry 4 prints only counts, so run the reads of both
 [Verify the secret containers without reading a value](dev-datastore.md#verify-the-secret-containers-without-reading-a-value)
-or [Read back the two Secrets Manager entries](dev-network.md#read-back-the-two-secrets-manager-entries),
-whichever holds it, and a resource nothing owns goes to the investigation in
+and [Read back the two Secrets Manager entries](dev-network.md#read-back-the-two-secrets-manager-entries);
+each prints the deletion date of the secrets it reads, and the one showing a date holds it. Their own
+**Next step** does not apply here: return to entry 4, record which secret it is, and take it to
+the owner's decision in entry 7. A resource nothing owns goes to the investigation in
 [Clean up an orphan](#clean-up-an-orphan).
 
 **Evidence to keep.** The dated private record itself.
@@ -826,7 +851,9 @@ row needs one; none for the budget reads and the census. Destroying what is not 
 
    > **Warning:** Each destructive step needs its own explicit owner authorization. Evidence that
    > must survive a destroy is exported before it and read back after it
-   > ([evidence-handling.md](evidence-handling.md)). Runtime windows and their teardown are
+   > ([Export the sealed set before teardown](evidence-handling.md#export-the-sealed-set-before-teardown),
+   > [Read back exported evidence after destruction](evidence-handling.md#read-back-exported-evidence-after-destruction));
+   > then continue at step 4 here. Runtime windows and their teardown are
    > summarized in [Runtime Validation](../validation/runtime-validation.md#windows).
    > Decommissioning the datastore has not been exercised ([dev-datastore.md](dev-datastore.md)).
 
@@ -1022,10 +1049,12 @@ never absent. A census with any `UNKNOWN` class is incomplete and proves nothing
   `2>/dev/null` and read the error on screen. Never copy the error text into evidence, because it
   can carry the caller's ARN and the account number.
 - A non-zero class right after a Terraform destroy may be an incomplete destroy rather than an
-  orphan. For the dev root, the expected post-teardown state and plan (21 retained addresses, 17 to
-  add) are in
-  [Confirm the retained and runtime split](dev-network.md#confirm-the-retained-and-runtime-split);
-  plan mechanics are in [terraform-operations.md](terraform-operations.md).
+  orphan. For the dev root, run steps 1 to 3 of
+  [Confirm the retained and runtime split](dev-network.md#confirm-the-retained-and-runtime-split),
+  with its **Before you start** met (PASS: the 21 retained addresses in state, 17 to add and no
+  drift). Then return to this list instead of following its **Next step**: on its PASS the destroy
+  is complete and the class is handled under the next bullet; on its STOP, work stays stopped as
+  its **If it fails** says.
 - A confirmed orphan: [Clean up an orphan](#clean-up-an-orphan).
 - An exception class that holds: no review procedure is written. Work stays stopped until the owner
   decides.
@@ -1035,8 +1064,9 @@ after a window, the pre-open census it was compared with. A census after a windo
 enters that window's final evidence set ([evidence-handling.md](evidence-handling.md#normal-path),
 step 9).
 
-**Next step.** For an orphan, [Clean up an orphan](#clean-up-an-orphan). The next gate is the first
-census with the instance present, which records the first live exception values against the table;
+**Next step.** If another runbook sent you here, return to the step that sent you. For an orphan,
+[Clean up an orphan](#clean-up-an-orphan). The next gate is the first census with the instance
+present, which records the first live exception values against the table;
 at the latest in the first weekly review on 2026-10-01.
 
 #### Engineering notes
@@ -1104,15 +1134,22 @@ general cleanup permission. No cost to run; removing a billing orphan ends its c
    still pending confirmation: a pending subscription is a HOLD before step 6.
 2. Confirm it is an orphan and record each answer:
    - no Terraform root in this repository declares it;
-   - no root's state holds it (see
-     [Inspect state without writing it](terraform-operations.md#inspect-state-without-writing-it));
+   - no root's state holds it: on each root, initialized as
+     [Initialize a root against the state backend](terraform-operations.md#initialize-a-root-against-the-state-backend)
+     describes, run step 1 of
+     [Inspect state without writing it](terraform-operations.md#inspect-state-without-writing-it).
+     PASS here: the object is not among the listed addresses; that procedure's other criteria do
+     not apply. Then return to this list;
    - it is neither a persistent foundation nor a datastore exception class;
    - it belongs to no open window;
    - whether its parent still exists (on 2026-09-11 the subscription's topic returned `NotFound`).
 3. Record the disposition: the class, why it is an orphan, and its cost effect.
 4. Obtain explicit owner authorization bounded to that one object and to no other change.
-5. Capture anything the object must still yield, as [evidence-handling.md](evidence-handling.md)
-   describes.
+5. Capture anything the object must still yield, as steps 3 and 4 of
+   [Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set) describe:
+   each output through [Redact at capture](evidence-handling.md#redact-at-capture), steps 1 to 4
+   (PASS: its step 4 re-scan finds nothing). For a subscription, never its endpoint. Then continue
+   at step 6.
 6. Remove it with its own delete call, one object at a time. For the executed case, capture the
    subscription ARN into a variable from a listing projected to the one subscription, without
    printing it, and count what it holds.
@@ -1196,6 +1233,9 @@ and no procedure for it is published.
 - **Activating the six cost-allocation tags.** Executed once, 2026-08-21: EXECUTED — RECORDED ONLY;
   RETAINED EXECUTION EVIDENCE NOT AVAILABLE. No activation command is published; as a reproducible
   procedure it is UNEXERCISED.
+- **The project-tag read in [Break spend down with Cost Explorer](#break-spend-down-with-cost-explorer),
+  step 2.** Executed once, 2026-09-12: EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT
+  AVAILABLE. Its value was recorded; its command and raw output were not retained.
 - **Budget alert delivery** to its subscribers: UNEXERCISED.
 - **The 100 USD target review**: UNEXERCISED. **The 150 and 200 USD responses**:
   DESIGNED-NOT-EXECUTED.

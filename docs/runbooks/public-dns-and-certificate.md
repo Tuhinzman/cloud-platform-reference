@@ -45,9 +45,9 @@ registrar delegating to the zone.
 > published procedure builds those resources first
 > ([persistent-foundations.md](persistent-foundations.md#reproducibility-gaps)). By then the zone
 > exists and bills, and the domain is delegated to it. Work stays stopped there until a reviewed
-> decision is taken under explicit approval ([When to stop](README.md#when-to-stop)). Know this
-> before step 1, which creates the billable zone: on a build from nothing, the owner accepts it in
-> writing before step 1 starts ([Build the zone on its own](#build-the-zone-on-its-own)).
+> decision is taken under explicit approval. Know this before step 1, which creates the billable
+> zone: on a build from nothing, the owner accepts it in writing before step 1 starts
+> ([Build the zone on its own](#build-the-zone-on-its-own)).
 > On a build from nothing, step 1 is also the foundation root's first apply, and it can stop
 > earlier, at its binding check, before any zone exists: what that check's state read prints
 > against a state object never yet written has not been recorded
@@ -78,27 +78,37 @@ Run these only when their trigger occurs:
   export stops resolving once Route 53 answers: this runbook publishes no record migration, and
   a record that must keep resolving is a STOP
   ([Change the name servers at the registrar](#change-the-name-servers-at-the-registrar)).
-- [ ] The dedicated AWS account and an administrative operator session
-  ([operator-access.md](operator-access.md)).
+- [ ] The dedicated AWS account and an administrative operator session:
+  [Sign in](operator-access.md#sign-in), steps 1 and 2, with `<profile>` (PASS: both values
+  `True` and `ACCOUNT_MATCH=PASS`). Then return to this list. Where a procedure below asks for
+  the identity and account checks, run
+  [Verify the resolved identity](operator-access.md#verify-the-resolved-identity), steps 1 and 2,
+  in the shell that will run its AWS commands (PASS: both values `True`, and the step 2 account
+  check prints `ACCOUNT_MATCH=PASS`). Then return to that procedure's checklist.
 - [ ] Two shells. The budget read-back and the price re-check that the zone build requires run in
-  the [exported shell](operator-access.md#export-role-credentials-once) of
-  [cost-and-residue.md](cost-and-residue.md#before-you-start): a clean shell that holds one role
-  credential and no profile. This page's Terraform and AWS CLI commands name `<profile>`, which
-  that shell does not have, so run them, the applies included, in a shell where `<profile>` is
-  signed in. No published rule requires an exported shell for this page's own steps. If you run
-  one of them in an exported shell, as [terraform-operations.md](terraform-operations.md) does
-  for a long or sensitive operation, drop `AWS_PROFILE=<profile>` and `--profile <profile>` from
-  it.
+  the exported shell of [cost-and-residue.md](cost-and-residue.md#before-you-start): a clean shell
+  that holds one role credential and no profile. Prepare it with
+  [Export role credentials once](operator-access.md#export-role-credentials-once), steps 1 to 4
+  (PASS: step 3 prints `ACCOUNT_MATCH=PASS` and no HOLD line, and step 4 prints the headroom line
+  and exits 0). This page's Terraform and AWS CLI commands name `<profile>`, which that shell does
+  not have, so run them, the applies included, in a shell where `<profile>` is signed in. No
+  published rule requires an exported shell for this page's own steps. If you run one of them in
+  an exported shell, as [terraform-operations.md](terraform-operations.md) does for a long or
+  sensitive operation, drop `AWS_PROFILE=<profile>` and `--profile <profile>` from it. Then return
+  to this list, or to the checklist that sent you here.
 - [ ] The four foundation inputs in an untracked `terraform.tfvars` and the state bucket in an
   untracked `backend.hcl` ([Input](../../terraform/foundation/README.md#input)).
-- [ ] Tools: the workstation toolchain in [operator-access.md](operator-access.md) (Terraform, the
-  AWS provider and the AWS CLI); `jq`, `unzip` and `shasum` (or `sha256sum`) for the plan review
-  and binding in [terraform-operations.md](terraform-operations.md); `dig`; and `curl` for the
-  RDAP read, which is optional in [Verify delegation](#verify-delegation) and is the source this
-  page names for the lock status the [Registrar lock check](#registrar-lock-check) needs. RDAP is
-  the registry's public registration-data service.
-- [ ] A private directory outside every Git working tree for saved plans
-  ([terraform-operations.md](terraform-operations.md)).
+- [ ] Tools: the workstation toolchain (Terraform, the AWS provider and the AWS CLI), prepared with
+  [Prepare the workstation toolchain](operator-access.md#prepare-the-workstation-toolchain),
+  steps 1 to 5 (PASS: the published fingerprint and a good signature, `OK` for the archive, equal
+  hashes for the extracted and the installed binary, and Terraform v1.15.5); `jq`, `unzip` and
+  `shasum` (or `sha256sum`) for the plan review and binding in
+  [terraform-operations.md](terraform-operations.md); `dig`; and `curl` for the RDAP read, which
+  is optional in [Verify delegation](#verify-delegation) and is the source this page names for the
+  lock status the [Registrar lock check](#registrar-lock-check) needs. RDAP is the registry's
+  public registration-data service. Then return to this list.
+- [ ] A new private directory for each plan, outside every Git working tree and created under
+  `umask 077`, for saved plans.
 - [ ] The evidence tooling for this page's three campaigns
   ([evidence-handling.md](evidence-handling.md#before-you-start)): a private evidence root and a
   private run directory, a private literal list that holds the domain, the zone ID and the name
@@ -164,9 +174,17 @@ Run these only when their trigger occurs:
   build, from its plan to its read-back; the cutover, from the
   [Pre-cutover checks](#pre-cutover-checks) through the registrar change to the
   [Verify delegation](#verify-delegation) round that passes; and the certificate, from its plan,
-  through the delegation check before its apply, to its read-backs and convergence plan. Sweep and
-  seal each set when its campaign ends (steps 4 to 7 of the
-  [evidence-handling.md Normal path](evidence-handling.md#normal-path)).
+  through the delegation check before its apply, to its read-backs and convergence plan. Open each
+  set when its campaign starts: run steps 1 and 2 of
+  [Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set),
+  `umask 077` and then one directory for the campaign under the evidence root, with your redaction
+  filter in place (PASS: the new directory is 0700). Then return to the procedure checklist that
+  sent you here. Sweep and seal each set when its campaign ends: steps 4 to 7 of the
+  [evidence-handling.md Normal path](evidence-handling.md#normal-path) (PASS: every manifest entry
+  reports `OK`, the set holds no file the manifest does not list, and the manifest's full SHA-256
+  is in the private record outside the set). Then return to where the procedure that sent you
+  here says: the **Next step** of the zone build or of the cutover, or the **PASS when** list of
+  the certificate procedure.
 - **Raw DNS output.** Raw `dig` and RDAP output names the domain and the name servers, which are
   on the private literal list, so it is a private-input carrier: keep it outside the set, in the
   private run directory, and record only its sha256 in the set, with the results, classes and
@@ -188,42 +206,49 @@ because a new zone gets new name servers.
 
 Recovering the zone after a deletion outside Terraform is not covered: no reviewed sequence
 exists, and re-delegation is urgent (see [Not yet exercised](#not-yet-exercised)). Stop and take
-it to the owner ([When to stop](README.md#when-to-stop)).
+it to the owner: work stays stopped until a reviewed decision is taken under explicit approval.
 
 **Before you start.**
 
 - [ ] On a build from nothing: before step 1, the owner has accepted in writing that the normal
   path then ends at step 2 of [Plan and apply the certificate](#plan-and-apply-the-certificate),
-  before any certificate exists, with this zone billing and the domain delegated to it (see the
-  warning under [Normal path](#normal-path)). Without that acceptance, do not start.
-- [ ] An administrative session, with the caller verified and enough session headroom
-  ([Verify the resolved identity](operator-access.md#verify-the-resolved-identity),
-  [Check session headroom before long operations](operator-access.md#check-session-headroom-before-long-operations)).
+  before any certificate exists, with this zone billing and the domain delegated to it, or
+  earlier, at this procedure's binding check, the root's first apply, before the zone exists (see
+  the warning under [Normal path](#normal-path)). Without that acceptance, do not start.
+- [ ] An administrative session with the caller verified: the identity and account checks in
+  [Before you start](#before-you-start). Then return to this list.
+- [ ] Enough session headroom:
+  [Check session headroom before long operations](operator-access.md#check-session-headroom-before-long-operations),
+  steps 1 to 3, with `<required-minutes>` set as its step 1 says (PASS: the headroom line is
+  printed and the exit status is 0). Then return to this list.
 - [ ] Steps 1 to 5 of the [terraform-operations.md Normal path](terraform-operations.md#normal-path)
-  done for `terraform/foundation` at the commit under review: the root's inputs and a new
-  `<private-dir>` prepared, the [static checks](terraform-operations.md#run-the-static-checks) run,
-  the root [initialized against its backend](terraform-operations.md#initialize-a-root-against-the-state-backend),
-  [state inspected](terraform-operations.md#inspect-state-without-writing-it) with its serial,
-  lineage and address digest recorded, and
-  [debug logging kept off](terraform-operations.md#keep-terraform-debug-logging-off). Every plan
-  of this root needs all four [inputs](../../terraform/foundation/README.md#input), DNS-only work
-  included.
-- [ ] The campaign's evidence set opened
-  ([Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set)).
-- [ ] The budget read back before this billable change
-  ([Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states)),
-  in the exported shell, not the shell that runs this procedure's commands
-  ([Before you start](#before-you-start)).
-- [ ] Route 53 pricing re-checked immediately before the apply
-  ([Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work)),
-  also in the exported shell. For a zone build that re-check always stops: its price table has the
-  zone rate but not the Route 53 query rate the zone also bills. So the owner approves a
-  re-estimate before the apply. No written re-estimation procedure exists.
+  done for `terraform/foundation` at the commit under review, each with its **PASS when** met: the
+  root's inputs and a new `<private-dir>` prepared; the
+  [static checks](terraform-operations.md#run-the-static-checks) run (`fmt`, `validate`, `tflint`
+  and every `trivy config` exit 0, `git status` prints nothing, and `diff` prints no line
+  beginning `>`); the root
+  [initialized against its backend](terraform-operations.md#initialize-a-root-against-the-state-backend)
+  (`git check-ignore` lists `backend.hcl` and `terraform.tfvars`, `init` reports the backend
+  configured and Terraform initialized, and `git status` prints nothing);
+  [state inspected](terraform-operations.md#inspect-state-without-writing-it), its listed
+  addresses equal to the expected set, with its serial, lineage and address digest recorded (the
+  expected set: none on a root never applied; otherwise the address list printed by step 2 of
+  Apply the reviewed saved plan after this root's last apply, kept in that campaign's evidence.
+  No address list is published for this root, so without that list PASS cannot be reached:
+  STOP); and
+  [debug logging kept off](terraform-operations.md#keep-terraform-debug-logging-off) (its check
+  prints nothing). Stop after step 5 and return to the checklist you came from: the procedure's
+  own steps replace that path's steps 6 onward. Every plan of this root needs all four
+  [inputs](../../terraform/foundation/README.md#input), DNS-only work included.
+- [ ] The campaign's evidence set opened ([Conventions](#conventions)). Then return to this list.
+- [ ] The exported shell for the budget read-back and the price re-check in step 3, prepared as
+  [Before you start](#before-you-start) says. Then return to this list.
 - [ ] No hosted zone for `<apex>` exists: step 1 of
   [Read back the hosted zone](#read-back-the-hosted-zone) returns `0`.
 - [ ] The owner available to approve this apply: explicit written approval of the reviewed saved
-  plan, identified by its sha256, given after step 2 and before step 3 (see the Next step of
-  [Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state)).
+  plan, identified by its sha256, given after step 2 and before step 3. The order is: binding
+  steps 1 and 2 at review, the owner's approval, the budget read-back and the price re-check in
+  the exported shell, binding step 3, then the apply.
 
 **Safety and authority.** Mutating, billable, owner-authorized. The zone costs 0.50 USD a month
 from creation, not prorated, plus query charges. It is persistent; retiring it is
@@ -232,8 +257,9 @@ from creation, not prorated, plus query charges. It is persistent; retiring it i
 **Steps.**
 
 1. Plan the zone alone into a saved plan. Terraform warns that resource targeting is in effect;
-   that is expected for this step only. `-lock=false` is used only under the conditions in
-   [Plan without taking the state lock](terraform-operations.md#plan-without-taking-the-state-lock).
+   that is expected for this step only. `-lock=false` is used because step 3 runs the binding
+   check immediately before the apply: a saved plan made with `-lock=false` is applied only after
+   that check passes.
 
    ```
    AWS_PROFILE=<profile> terraform plan -lock=false -input=false -no-color -detailed-exitcode -target=aws_route53_zone.public -out=<plan-file>
@@ -244,8 +270,8 @@ from creation, not prorated, plus query charges. It is persistent; retiring it i
    plan output also contains the summary line `Plan: 1 to add, 0 to change, 0 to destroy.` and
    Terraform's warning that resource targeting is in effect.
 
-2. Review the saved plan with [Review the saved plan](terraform-operations.md#review-the-saved-plan)
-   against this shape:
+2. Review the saved plan with [Review the saved plan](terraform-operations.md#review-the-saved-plan),
+   steps 1 to 5, against this shape:
    - exactly one resource to add, `aws_route53_zone.public`, and 0 to change, destroy or replace;
    - the zone is public (no VPC association), named `<apex>`, with `force_destroy` false;
    - the six mandatory tags in `tags_all`, with `Component` set to `dns`;
@@ -256,34 +282,51 @@ from creation, not prorated, plus query charges. It is persistent; retiring it i
      it: that is a STOP.
 
    Terraform marks a targeted plan incomplete, as the retained targeted plans of `terraform/dev`
-   show on Terraform 1.15.5
-   ([Build only the retained baseline](dev-network.md#build-only-the-retained-baseline)); this
-   root's targeted form has never run. So this plan is expected to show `complete` as `false`.
-   That is the one exception to the review's criteria: `applyable` must still be `true` and
-   `errored` `false`, and every other criterion applies.
+   show on Terraform 1.15.5 (Build only the retained baseline, in dev-network.md); this root's
+   targeted form has never run. So this plan is expected to show `complete` as `false`. That is
+   the one exception to the review's criteria: `applyable` must still be `true` and `errored`
+   `false`, and every other criterion applies.
 
-   Read the zone's attributes and tags in the plan text that step 1 of
-   [Review the saved plan](terraform-operations.md#review-the-saved-plan) prints
-   (`terraform show -no-color <plan-file>`).
+   Read the zone's attributes and tags in the plan text that step 1 of Review the saved plan
+   prints (`terraform show -no-color <plan-file>`).
 
    > **Warning:** Any `aws_acm_*` address in this plan is a STOP. Design-review reasoning, not
    > measurement: a certificate requested before delegation waits out Terraform's validation step
    > and is left in `PENDING_VALIDATION`, a class ADR-0018 names for the orphan scan, the check
-   > for leftover resources that nothing owns
-   > ([Run the orphan census](cost-and-residue.md#run-the-orphan-census), which has no ACM class
-   > yet).
+   > for leftover resources that nothing owns (the orphan census in cost-and-residue.md, which
+   > has no ACM class yet).
 
-3. Bind the saved plan to its hash and to state, then apply exactly that plan, without
-   re-planning ([Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state),
-   [Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan)).
+   Then run steps 1 and 2 of
+   [Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state)
+   to record the plan's sha256 and the serial and lineage it was made from. PASS: its step 2
+   prints `same` for every file and for the lock file, and its `diff` prints nothing. Obtain the
+   owner's written approval of this plan, identified by its sha256, then continue at step 3.
+
+3. In the exported shell, not the shell that runs this procedure's commands
+   ([Before you start](#before-you-start)), read the budget back before this billable change:
+   [Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states),
+   steps 1 to 6. PASS: one budget row with `cloud-platform-reference`, `COST`, `MONTHLY`, `200.0`
+   and `USD`, exactly the five notifications, each `OK`, and at least 1 subscriber for each; on
+   an `ALARM`, follow that procedure's **Next step**. Then, also in the exported shell and
+   immediately before the apply, re-check Route 53 pricing:
+   [Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work),
+   steps 1 to 3. For a zone build that re-check always stops: its price table has the zone rate
+   but not the Route 53 query rate the zone also bills. So the owner approves a re-estimate before
+   the apply. No written re-estimation procedure exists.
+
+   Then, in the shell that runs this procedure's commands, run step 3 of
+   [Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state)
+   (its steps 1 and 2 ran in step 2 here). Go on only if the hash equals the recorded one and the
+   serial and lineage equal the plan's. Then apply exactly that plan, without re-planning: steps 1
+   and 2 of [Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan)
+   (PASS: exit 0 and 1 added, 0 changed, 0 destroyed). Step 4 here is its read-back.
 
    > **Warning:** This apply creates the billable zone. Run it only with explicit approval of this
    > plan, after the Route 53 price re-check, and with the owner's approval of its re-estimate.
 
-   After this apply, go to step 4, not to the apply procedure's next step,
-   [Confirm convergence](terraform-operations.md#confirm-convergence). Until
-   [Plan and apply the certificate](#plan-and-apply-the-certificate) completes, a plain plan of
-   this root is expected to show the certificate's three addresses as pending, and on a build
+   After this apply, go to step 4, not to the apply procedure's next step, Confirm convergence.
+   Until [Plan and apply the certificate](#plan-and-apply-the-certificate) completes, a plain plan
+   of this root is expected to show the certificate's three addresses as pending, and on a build
    from nothing the rest of the foundation as well, so the convergence check applies only after
    the certificate apply.
 
@@ -337,7 +380,7 @@ its set then ([Conventions](#conventions)).
 | Field | Value |
 |---|---|
 | Validation status | DESIGNED-NOT-EXECUTED (never) |
-| Published form | not executed as written (derived from the zone-first order in [Public DNS](../../terraform/foundation/README.md#public-dns), whose `terraform apply -target` sentence gives the order only; this saved-plan form is the procedure. The plan command is the plan form of [terraform-operations.md](terraform-operations.md) with `-target` added. The one validated zone build, executed 2026-09-23, applied a reviewed saved plan made from commit `69c5770`, whose configuration declared the zone and no certificate, so it needed no `-target`. It was applied from that commit before the merge, and the same foundation tree was confirmed on merged main afterwards) |
+| Published form | not executed as written (derived from the zone-first order in [Public DNS](../../terraform/foundation/README.md#public-dns), which gives the order only; this saved-plan form is the procedure. The plan command is the plan form of [terraform-operations.md](terraform-operations.md) with `-target` added. The one validated zone build, executed 2026-09-23, applied a reviewed saved plan made from commit `69c5770`, whose configuration declared the zone and no certificate, so it needed no `-target`. It was applied from that commit before the merge, and the same foundation tree was confirmed on merged main afterwards) |
 | Evidence basis | [Status](../../terraform/foundation/README.md#status), zone paragraph; commit `69c5770`; retained private evidence of the 2026-09-22 saved plan and the 2026-09-23 apply and read-back |
 | Authority | Explicit owner approval of the zone apply |
 | Cost | 0.50 USD a month from creation, not prorated, plus query charges ([Public DNS](../../terraform/foundation/README.md#public-dns)) |
@@ -364,9 +407,8 @@ retirement.
 
 **Before you start.**
 
-- [ ] A session with the identity and account checks passed
-  ([Verify the resolved identity](operator-access.md#verify-the-resolved-identity),
-  [Check the account before AWS commands](operator-access.md#check-the-account-before-aws-commands)).
+- [ ] A session with the identity and account checks passed, as
+  [Before you start](#before-you-start) states them. Then return to step 1 here.
 
 **Safety and authority.** Read-only; no approval needed.
 
@@ -479,9 +521,8 @@ root's own zone deleted outside Terraform, see [Build the zone on its own](#buil
 
 - [ ] [Read back the hosted zone](#read-back-the-hosted-zone) passed, and its step 5 supplied the
   four `<route53-ns>` values.
-- [ ] The cutover campaign's evidence set opened
-  ([Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set)); it
-  runs to the [Verify delegation](#verify-delegation) round that passes ([Conventions](#conventions)).
+- [ ] The cutover campaign's evidence set opened ([Conventions](#conventions)); it runs to the
+  [Verify delegation](#verify-delegation) round that passes. Then return to step 1 here.
 
 **Safety and authority.** Read-only; no approval needed.
 
@@ -830,7 +871,7 @@ this procedure. Its 9.9.9.9 query never ran after the parent returned the new se
 
 ### Plan and apply the certificate
 
-**Validation:** AWS-VALIDATED (2026-09-23) · **Published command form:** not executed as written
+**Validation:** AWS-VALIDATED (2026-09-23) for the plan, shape check, Verify delegation, sha256 re-check, apply, read-backs and convergence plan; DESIGNED-NOT-EXECUTED (never) for the serial-and-lineage binding and the headroom check · **Published command form:** not executed as written
 
 **What this does.** It requests the certificate for the apex and one wildcard beneath it, and
 completes its DNS validation once the zone is delegated. The plan covers the whole root, without
@@ -848,25 +889,18 @@ step.
 - [ ] The rest of the foundation root is already applied, as it was in the validated run; the
   step 2 shape assumes it. On a build from nothing no reviewed shape exists for the combined
   plan, and step 2 stops (see [Reproducibility gaps](#reproducibility-gaps)).
-- [ ] Steps 1 to 5 of the [terraform-operations.md Normal path](terraform-operations.md#normal-path)
-  done for `terraform/foundation` at the reviewed commit: the root's inputs and a new
-  `<private-dir>` prepared, the [static checks](terraform-operations.md#run-the-static-checks) run,
-  the root [initialized against its backend](terraform-operations.md#initialize-a-root-against-the-state-backend),
-  [state inspected](terraform-operations.md#inspect-state-without-writing-it) with its serial,
-  lineage and address digest recorded, and
-  [debug logging kept off](terraform-operations.md#keep-terraform-debug-logging-off).
-- [ ] The campaign's evidence set opened
-  ([Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set)).
+- [ ] Steps 1 to 5 of the terraform-operations.md Normal path done for `terraform/foundation` at
+  the reviewed commit, each with its **PASS when** met, as the checklist of
+  [Build the zone on its own](#build-the-zone-on-its-own) states them. Then return to this list.
+- [ ] The campaign's evidence set opened ([Conventions](#conventions)). Then return to this list.
 - [ ] The session outlasts Terraform's validation step, which can wait up to the AWS provider's
-  default create timeout of 75 minutes. Set `<required-minutes>` as step 1 of
-  [Check session headroom before long operations](operator-access.md#check-session-headroom-before-long-operations)
-  describes: at least those 75 minutes, plus the step 5 read-backs and convergence plan, plus a
-  margin. This runbook publishes no measured duration for step 5, and no margin rule exists. The
-  check runs at step 4; only a re-read expiry decides, so signing in again is not a substitute.
+  default create timeout of 75 minutes. Set `<required-minutes>` to at least those 75 minutes,
+  plus the step 5 read-backs and convergence plan, plus a margin. This runbook publishes no
+  measured duration for step 5, and no margin rule exists. The check runs at step 4; only a
+  re-read expiry decides, so signing in again is not a substitute.
 - [ ] The owner available to approve the apply: explicit written approval of the reviewed saved
-  plan, identified by its sha256, given after the plan review and before step 4 (see the Next
-  step of
-  [Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state)).
+  plan, identified by its sha256, given after the plan review and the shape check of step 2 and
+  before step 4.
 
 **Safety and authority.** Mutating, owner-authorized. The approval is to apply exactly the reviewed
 saved plan. The certificate is non-exportable and carries no charge; the zone's charge is
@@ -875,20 +909,25 @@ unchanged.
 **Steps.**
 
 1. From the reviewed commit, produce a saved plan of the whole root, without `-target`.
-   `-lock=false` is used only under the conditions in
-   [Plan without taking the state lock](terraform-operations.md#plan-without-taking-the-state-lock).
+   `-lock=false` is used because step 4 runs the binding check immediately before the apply: a
+   saved plan made with `-lock=false` is applied only after that check passes.
 
    ```
    AWS_PROFILE=<profile> terraform plan -lock=false -input=false -no-color -detailed-exitcode -out=<plan-file>
    echo $?
    ```
 
-   Exit 2 means the plan has changes; exit 1, or exit 0 when a change is expected, is a STOP
-   ([Plan to a saved file](terraform-operations.md#plan-to-a-saved-file)). Review the plan with
-   [Review the saved plan](terraform-operations.md#review-the-saved-plan). Record its sha256 and
-   the state serial and lineage it was made from, as the binding step in
-   [Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state)
-   does.
+   Exit 2 means the plan has changes; exit 1, or exit 0 when a change is expected, is a STOP, as
+   in Plan to a saved file. Review the plan with
+   [Review the saved plan](terraform-operations.md#review-the-saved-plan), steps 1 to 5, against
+   the shape in step 2 below (PASS: its step 2 shows `applyable` and `complete` `true`, `errored`
+   `false` and the validated version; its step 3 lists exactly the three creates; every step 4
+   line has a written cause on a `no-op` address; its step 5 shows only `public_certificate_arn`
+   created), then return here and run steps 1 and 2 of
+   [Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state):
+   they record the plan's sha256 and the state serial and lineage it was made from, and confirm
+   the plan carries the reviewed configuration and lock file. PASS: its step 2 prints `same` for
+   every file and for the lock file, and its `diff` prints nothing. Then continue at step 2.
 
 2. Check the plan against this shape, which assumes the rest of the foundation is already
    applied, as it was in the validated run:
@@ -904,8 +943,7 @@ unchanged.
      after apply;
    - the output `public_certificate_arn` is created.
 
-   Read these attributes and tags in the plan text that step 1 of
-   [Review the saved plan](terraform-operations.md#review-the-saved-plan) prints
+   Read these attributes and tags in the plan text that step 1 of Review the saved plan prints
    (`terraform show -no-color <plan-file>`). The validated run checked the shape with a private
    checker, which is not published (see the Engineering notes).
 
@@ -922,10 +960,13 @@ unchanged.
 
 4. Run [Check session headroom before long operations](operator-access.md#check-session-headroom-before-long-operations)
    with `<required-minutes>`, in the shell that will run the apply. Go on only if it exits 0; if
-   not, follow its failure handling. Then run the binding check in
+   not, follow its failure handling. Then run step 3 of
    [Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state)
-   (hash, serial and lineage), then apply exactly that plan, without re-planning
-   ([Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan)).
+   (its steps 1 and 2 ran in step 1 here). Go on only if the hash equals the recorded one and the
+   serial and lineage equal the plan's. Then apply exactly that plan, without re-planning: steps 1
+   and 2 of [Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan)
+   (PASS: exit 0 and 3 added, 0 changed, 0 destroyed). Step 5 here is its read-back, so skip its
+   step 3. After the apply, continue at step 5 here, not at the apply procedure's Next step.
 
    > **Warning:** Apply only with the owner's explicit written approval of this saved plan,
    > identified by its sha256.
@@ -935,7 +976,10 @@ unchanged.
 
 5. Run [Read back the certificate](#read-back-the-certificate) and
    [Read back the hosted zone](#read-back-the-hosted-zone), then the convergence plan in
-   [Confirm convergence](terraform-operations.md#confirm-convergence), which must exit 0.
+   [Confirm convergence](terraform-operations.md#confirm-convergence), step 1, which must exit 0
+   with `No changes. Your infrastructure matches the configuration.` Then return here, sweep and
+   seal the certificate campaign's set ([Conventions](#conventions)), and check the **PASS when**
+   list below.
 
 **Expected result.** 3 added, 0 changed, 0 destroyed. In the validated run the certificate was
 issued during the apply, less than a minute after it started, and the convergence plan then
@@ -993,7 +1037,7 @@ is outside this suite ([runtime validation](../validation/runtime-validation.md)
 
 | Field | Value |
 |---|---|
-| Validation status | AWS-VALIDATED (2026-09-23) |
+| Validation status | AWS-VALIDATED (2026-09-23) for the saved plan, the shape check, Verify delegation before the apply, the sha256 re-check, the apply, the read-backs and the convergence plan; DESIGNED-NOT-EXECUTED (never) in this procedure for the serial-and-lineage binding of steps 1 and 4 and for the step 4 headroom check |
 | Published form | not executed as written (the plan and apply commands are those of [terraform-operations.md](terraform-operations.md), and the validated run used them from a detached working tree at commit `ac87cb7`. It differed in three ways: its init added `-plugin-dir`, a private checker checked the plan shape instead of the checklist below, and before the apply it re-checked the plan's hash but not the state serial and lineage that step 4 binds) |
 | Evidence basis | [Status](../../terraform/foundation/README.md#status), certificate paragraph; commit `ac87cb7`; retained private evidence of the 2026-09-23 plan, its sha256 binding, the delegation check immediately before the apply, the apply and the convergence plan |
 | Authority | Explicit owner approval to apply exactly the reviewed saved plan |
@@ -1025,13 +1069,17 @@ Headroom was not recorded for the validated certificate apply.
 
 **Before you start.**
 
-- [ ] A session with the identity and account checks passed
-  ([Verify the resolved identity](operator-access.md#verify-the-resolved-identity),
-  [Check the account before AWS commands](operator-access.md#check-the-account-before-aws-commands)).
-  `terraform output` reads only state and the AWS CLI calls are outside Terraform, so nothing else
-  checks the account.
-- [ ] `terraform/foundation` initialized against its backend
-  ([Initialize a root against the state backend](terraform-operations.md#initialize-a-root-against-the-state-backend)).
+- [ ] A session with the identity and account checks passed, as
+  [Before you start](#before-you-start) states them. `terraform output` reads only state and the
+  AWS CLI calls are outside Terraform, so nothing else checks the account. Then return to this
+  list.
+- [ ] `terraform/foundation` initialized against its backend. When
+  [Plan and apply the certificate](#plan-and-apply-the-certificate) sent you here, this is already
+  done. Otherwise run
+  [Initialize a root against the state backend](terraform-operations.md#initialize-a-root-against-the-state-backend),
+  steps 1 to 3 (PASS: `git check-ignore` lists `backend.hcl` and `terraform.tfvars`, `init`
+  reports the backend configured and Terraform initialized, and `git status` prints nothing).
+  Then return to step 1 here.
 
 **Safety and authority.** Read-only; no approval needed. The ARN stays in a shell variable and is
 never written down.
@@ -1321,7 +1369,7 @@ retired, and only after the retirement wait: the longer of the parent's NS TTL, 
 
 ### Retire the hosted zone
 
-**Validation:** DESIGNED-NOT-EXECUTED (never) for the order; UNEXERCISED (never) for the destroy step · **Published command form:** not executed as written
+**Validation:** DESIGNED-NOT-EXECUTED (never) for the order, the retirement wait and the three checks; UNEXERCISED (never) for the registrar change, the certificate's retirement, lifting `prevent_destroy` and the destroy step · **Published command form:** not executed as written
 
 **What this does.** It decommissions the zone without leaving a dangling delegation. It runs at
 project end only. The order is designed and has never run; the destroy step itself is not
@@ -1384,7 +1432,7 @@ validation record.
 
 | Field | Value |
 |---|---|
-| Validation status | DESIGNED-NOT-EXECUTED (never) for the order; its destroy step is UNEXERCISED (never) |
+| Validation status | DESIGNED-NOT-EXECUTED (never) for the order as reviewed prose, the retirement wait and the three pre-destroy checks; UNEXERCISED (never) for the registrar change away from the zone, the certificate's retirement, the change that lifts `prevent_destroy` and the destroy step |
 | Published form | not executed as written (the reviewed order is in [Public DNS](../../terraform/foundation/README.md#public-dns); no command sheet exists) |
 | Evidence basis | None; never executed |
 | Authority | Explicit owner approval, at project end only |
@@ -1405,8 +1453,13 @@ validation record.
 - **[Build the zone on its own](#build-the-zone-on-its-own)**, in its `-target` form:
   DESIGNED-NOT-EXECUTED. The validated build used a zone-only commit instead.
 - **[Roll back the delegation](#roll-back-the-delegation)**: DESIGNED-NOT-EXECUTED.
-- **[Retire the hosted zone](#retire-the-hosted-zone)**: DESIGNED-NOT-EXECUTED for the order;
-  the destroy step is UNEXERCISED.
+- **[Retire the hosted zone](#retire-the-hosted-zone)**: DESIGNED-NOT-EXECUTED for the order,
+  the retirement wait and the three pre-destroy checks; UNEXERCISED for the registrar change away
+  from the zone, the certificate's retirement, the change that lifts `prevent_destroy` and the
+  destroy step.
+- **[Plan and apply the certificate](#plan-and-apply-the-certificate)** with the step 4 headroom
+  check and the serial-and-lineage binding of steps 1 and 4: DESIGNED-NOT-EXECUTED. The validated
+  run re-checked the saved plan's hash only and recorded no headroom line.
 - **[Registrar lock check](#registrar-lock-check)**: UNEXERCISED.
 - **[CAA check](#caa-check)**: UNEXERCISED.
 - **Record migration from the previous provider**: UNEXERCISED. The validated deployment

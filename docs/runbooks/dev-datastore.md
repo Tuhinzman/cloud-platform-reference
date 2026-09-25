@@ -11,8 +11,7 @@ restore, maintenance and decommission have no exercised procedure here
 ([Not yet exercised](#not-yet-exercised)).
 
 The root README stays the authority for what the root creates and why
-([What it creates](../../terraform/dev-datastore/README.md#what-it-creates), which also gives the
-build order), what it leaves out
+([What it creates](../../terraform/dev-datastore/README.md#what-it-creates)), what it leaves out
 ([What this root does not create](../../terraform/dev-datastore/README.md#what-this-root-does-not-create)),
 the network [Boundary](../../terraform/dev-datastore/README.md#boundary), the
 [Debug logging](../../terraform/dev-datastore/README.md#debug-logging) rule,
@@ -22,6 +21,7 @@ measured [Status](../../terraform/dev-datastore/README.md#status). The reasoning
 [ADR-0011](../decisions/0011-define-the-backup-and-recovery-model.md) (recovery),
 [ADR-0012](../decisions/0012-formalize-the-reference-workload.md) (workload data) and
 [ADR-0013](../decisions/0013-define-operations-and-cost-guardrails.md) (cost and operations).
+Build this root only through this page's [Normal path](#normal-path).
 
 ## Normal path
 
@@ -63,12 +63,13 @@ evidence ([Place the master value](#place-the-master-value)) before that set ope
 
 **Stopping after Stage 1.** From the public repositories alone, the path does not reach Stage 1:
 the items the index lists under [What these runbooks are](README.md#what-these-runbooks-are) come first, and Stage 1,
-this root's first apply, can still stop at its binding check
-([Bind the saved plan](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state)). Past that, the path ends after step 2. Steps 3
-to 8 need three things this project has not published, which you supply yourself: a placement tool
-qualified offline, without which the master value cannot be placed; a tool that implements the
-secret-absence proof, without which the Stage 2 plan, the apply and the convergence plan do not
-start; and a way to run the Stage 2 apply that closing or losing the terminal cannot end
+this root's first apply, can still stop at its binding check: it stops if the state read in step 3
+of the bind procedure prints nothing, while serial 0 with an empty or `null` lineage is the
+first-apply match. Past that, the path ends after step 2. Steps 3 to 8 need three things this
+project has not published, which you supply yourself: a placement tool qualified offline, without
+which the master value cannot be placed; a tool that implements the secret-absence proof, without
+which the Stage 2 plan, the apply and the convergence plan do not start; and a way to run the
+Stage 2 apply that closing or losing the terminal cannot end
 ([Before you start](#before-you-start), [Reproducibility gaps](#reproducibility-gaps)). If you stop
 here:
 
@@ -78,22 +79,26 @@ here:
 - **Removing it.** No procedure here removes Stage 1: decommission is
   [not yet exercised](#not-yet-exercised) and needs a separate owner grant. Do not delete a
   container as a retry: its name stays reserved through the recovery window.
-- **Checks that still apply.** The [orphan census](cost-and-residue.md#run-the-orphan-census), in
-  which `DATASTORE_SG` reads 1 while this root is applied and no datastore instance or interface is
-  counted, as on 2026-09-22; and the
-  [weekly ADR-0013 review](cost-and-residue.md#record-the-weekly-adr-0013-review).
-- **Checks that do not apply yet.**
-  [Check the datastore CPU credits](cost-and-residue.md#check-the-datastore-cpu-credits) and
-  [Verify the retained side with the datastore present](dev-network.md#verify-the-retained-side-with-the-datastore-present)
-  both need the instance. Step 6 of the index's [Build order](README.md#build-order) runs them after
-  the full path, not after Stage 1.
+- **Checks that still apply.** The
+  [weekly ADR-0013 review](cost-and-residue.md#record-the-weekly-adr-0013-review), weekly, first
+  due 2026-10-01, after that week's budget read-back and orphan census (PASS: one dated private
+  record with all seven entries, identifiers redacted, stating the decision and why). In that
+  census `DATASTORE_SG` reads 1 while this root is applied, and no datastore instance or interface
+  is counted, as on 2026-09-22. With only Stage 1 applied no instance exists, so the review's
+  CPU-credit input and entry 5, the instance status in entry 4, and the first period's start,
+  which the review takes from the instance's creation, have no published form here: how they are
+  recorded is the owner's decision, stated in entry 7. Stopping here ends the path; repeat this
+  review weekly.
+- **Checks that do not apply yet.** Check the datastore CPU credits, in cost-and-residue.md, and
+  Verify the retained side with the datastore present, in dev-network.md, both need the instance.
+  Step 6 of the index's Build order runs them after the full path, after step 8 here, not after
+  Stage 1.
 
 This path is the first build of the root. This page has no procedure for a later apply of this
 root, and no gate exists for one ([Not yet exercised](#not-yet-exercised)). A later apply waits for
-a reviewed decision under explicit approval ([When to stop](README.md#when-to-stop)). Whatever that
-decision adds, the rules this page sets for every plan and apply of this root still hold: debug
-logging stays off, every run that reads the master value needs an owner grant, and each plan uses a
-new `<private-dir>`.
+a reviewed decision under explicit approval. Whatever that decision adds, the rules this page sets
+for every plan and apply of this root still hold: debug logging stays off, every run that reads the
+master value needs an owner grant, and each plan uses a new `<private-dir>`.
 
 When something goes wrong:
 
@@ -111,8 +116,7 @@ When something goes wrong:
 > recorded. It passes through the Terraform provider on every plan and apply of this root, so debug
 > logging stays off for every one of them
 > ([Debug logging](../../terraform/dev-datastore/README.md#debug-logging)). The placement's evidence
-> also never holds the placement token or an ARN
-> ([evidence-handling.md](evidence-handling.md)).
+> also never holds the placement token or an ARN.
 
 > **Warning: the master placement has one write attempt.** It is never retried, and a value is
 > never placed by other means. A wrong value cannot be corrected by placing again
@@ -131,29 +135,43 @@ The runbook as a whole needs the following. Each procedure lists again what it n
 
 - [ ] The suite-wide setup in [Background prerequisites](#background-prerequisites): your own AWS
   account, an operator identity with a CLI profile, and the toolchain.
-- [ ] **Network.** The Dev network baseline applied
-  ([Build only the retained baseline](dev-network.md#build-only-the-retained-baseline)).
+- [ ] **Network.** The Dev network baseline applied:
+  [Build only the retained baseline](dev-network.md#build-only-the-retained-baseline), steps 1 to
+  6 (PASS: every step 6 check passes; Confirm the retained and runtime split shows the 21 retained
+  addresses in state, 17 to add and no drift). Then return to this list.
 - [ ] **Capacity.** PostgreSQL 17.11 orderable on `db.t4g.micro` with gp3 in both zones of your
-  private subnets. Zone names map to different physical zones in each account
-  ([Check the zone mapping before the first build](dev-network.md#check-the-zone-mapping-before-the-first-build);
-  the [pre-apply gate](#run-the-pre-apply-gate) checks it again).
+  private subnets. Zone names map to different physical zones in each account. The zone mapping
+  check in dev-network.md tested this at step 5 of the index's Build order, before the network
+  existed; step 2 of the [pre-apply gate](#run-the-pre-apply-gate) checks it again.
 - [ ] **Root inputs.** The account's 12-digit ID in the untracked `terraform.tfvars`
   ([terraform.tfvars.example](../../terraform/dev-datastore/terraform.tfvars.example)), and the
   state bucket from the bootstrap root in the untracked `backend.hcl`
   ([backend.hcl.example](../../terraform/dev-datastore/backend.hcl.example)).
 - [ ] **Cost controls.** The budget and its alerts, and a price re-check before each billable
-  apply, Stage 1 and Stage 2
-  ([Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states),
-  [Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work)).
+  apply, Stage 1 and Stage 2. Both run in the exported shell after the owner's grant for that
+  apply: for Stage 1 in its step 8, before step 3 of the bind procedure; for Stage 2 in the
+  [pre-apply gate](#run-the-pre-apply-gate). Both must pass:
+  [Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states)
+  (PASS: one budget `cloud-platform-reference` of `200.0` `USD` with exactly its five
+  notifications, each with a subscriber; an `ALARM` is a STOP there), then
+  [Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work)
+  (PASS: every rate the apply bills is in its price table and reads equal to it). Then return to
+  Stage 1 step 8 or to the gate.
 - [ ] **Private directories.** A new `<private-dir>` per plan, outside every Git working tree,
-  created under `umask 077`, and a private evidence location
-  ([evidence-handling.md](evidence-handling.md)).
+  created under `umask 077`, and a private evidence location with everything the
+  [Before you start](evidence-handling.md#before-you-start) of evidence-handling.md lists for every
+  campaign: an evidence root of mode 0700 outside every Git working tree, the literal list, the
+  address allowlist, and your own redaction filter and sweep. Then return to this list.
 - [ ] **Approvals.** A written owner grant for each mutation (the Stage 1 apply, placement, the
   Stage 2 apply, any recovery, decommission) and for every run that reads the master value.
 - [ ] **Session time.** The executed runs required this much session time remaining: 30 minutes
   for placement, 45 for a plan with its proof, 50 for the pre-apply gate and the apply, and 5 for
-  the read-back with its convergence plan and for each secret-absence proof after a plan or apply
-  ([Check session headroom before long operations](operator-access.md#check-session-headroom-before-long-operations)).
+  the read-back with its convergence plan and for each secret-absence proof after a plan or apply.
+  This page states no figure for the Stage 1 plan and apply; set one as step 1 of the headroom
+  check describes. Before each of these operations, run
+  [Check session headroom before long operations](operator-access.md#check-session-headroom-before-long-operations),
+  steps 1 to 3, with that figure as `<required-minutes>` (PASS: the headroom line prints and the
+  exit status is 0). Then return to the operation.
 - [ ] **Placement token.** A fixed client request token (a UUID) chosen before placement and
   recorded privately.
 - [ ] **Placement tool.** A tool that keeps the scope, validation and STOP rules in
@@ -183,11 +201,9 @@ The runbook as a whole needs the following. Each procedure lists again what it n
 - **Stop rule.** [Stop after a failed or interrupted apply](terraform-operations.md#stop-after-a-failed-or-interrupted-apply):
   record the state as unknown, never apply again, read back and classify every planned address.
 - **HOLD.** A check that failed or could not be read. A HOLD applies nothing.
-- **Retained baseline.** What the Dev network root keeps in AWS between runtime windows
-  ([dev-network.md](dev-network.md)).
-- **Reviewed commit.** `<commit>` in the [terraform-operations.md](terraform-operations.md)
-  conventions: the full SHA of the commit whose configuration was reviewed. For Stage 2 it must
-  contain `database.tf`.
+- **Retained baseline.** What the Dev network root keeps in AWS between runtime windows.
+- **Reviewed commit.** `<commit>` in the terraform-operations.md conventions: the full SHA of the
+  commit whose configuration was reviewed. For Stage 2 it must contain `database.tf`.
 - **Preflight.** A check the placement tool makes before the write. A failed one is a refusal
   before the write, and nothing is written
   ([Respond to a failed or uncertain placement](#respond-to-a-failed-or-uncertain-placement)).
@@ -213,16 +229,15 @@ The runbook as a whole needs the following. Each procedure lists again what it n
 
 **Shared workflows this page links rather than repeats.**
 
-- [terraform-operations.md](terraform-operations.md): initializing a working tree, keeping debug
-  logging off, planning to a saved file, reviewing and binding it, applying it, convergence, and the
-  stop rule after a failed or interrupted apply. This runbook adds what this root's plans must
-  contain and how its resources are read back.
-- [operator-access.md](operator-access.md): signing in, confirming the account, and session
-  lifetime.
-- [dev-network.md](dev-network.md): the Dev network this root depends on.
-- [cost-and-residue.md](cost-and-residue.md): the price re-check, the budget, the CPU-credit
-  check, the weekly ADR-0013 review and the orphan census.
-- [evidence-handling.md](evidence-handling.md): capture, redaction, sealing and remediation.
+- terraform-operations.md: initializing a working tree, keeping debug logging off, planning to a
+  saved file, reviewing and binding it, applying it, convergence, and the stop rule after a failed
+  or interrupted apply. This runbook adds what this root's plans must contain and how its
+  resources are read back.
+- operator-access.md: signing in, confirming the account, and session lifetime.
+- dev-network.md: the Dev network this root depends on.
+- cost-and-residue.md: the price re-check, the budget, the CPU-credit check, the weekly ADR-0013
+  review and the orphan census.
+- evidence-handling.md: capture, redaction, sealing and remediation.
 
 ## Procedures
 
@@ -244,27 +259,34 @@ from the current root only by the absence of `database.tf`; its README is an old
 **Before you start.**
 
 - [ ] The Dev network exists, with the VPC and private subnets `a` and `b` carrying their `Name`
-  tags ([dev-network.md](dev-network.md)).
-- [ ] The budget read-back
-  ([Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states))
-  and the price re-check for the Secrets Manager rate
-  ([Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work))
-  pass.
-- [ ] The [account check](operator-access.md#check-the-account-before-aws-commands) passes for
-  `<profile>`. Nothing else checks the account for the AWS CLI reads in step 2.
+  tags: [Read back the retained network](dev-network.md#read-back-the-retained-network), steps 1
+  to 5 (PASS: every row of its expected-result table matches). Then return to this list.
+- [ ] The budget read-back and the price re-check for the Secrets Manager rate pass in step 8,
+  after the grant and before step 3 of the bind procedure, as **Cost controls** in
+  [Before you start](#before-you-start) describes.
+- [ ] The [account check](operator-access.md#check-the-account-before-aws-commands), steps 1 and
+  2, passes for `<profile>` (PASS: `ACCOUNT_MATCH=PASS`). Nothing else checks the account for the
+  AWS CLI reads in step 2. Then return to this list.
+- [ ] This is the root's first apply: if the binding check's state read in step 8 prints nothing,
+  Stage 1 stops before its apply, and no published procedure resolves that
+  ([Bind the saved plan](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state),
+  **If it fails**).
 
 **Safety and authority.** Mutating, owner-authorized, billable; steps 1, 3, 11 and 12 are
 local-only. The apply in step 8 needs an explicit owner grant naming the saved plan's hash. The
 containers bill from creation. At commit `aeb1622` the configuration does not read the master
 value.
 
-**Steps.** These are the steps of the shared [Normal path](terraform-operations.md#normal-path) of
-terraform-operations.md, in its order, with what differs for Stage 1. `<commit>` is the full SHA of
-commit `aeb1622`.
+**Steps.** These are the steps of the shared Normal path of terraform-operations.md, in its order,
+with what differs for Stage 1. `<commit>` is the full SHA of commit `aeb1622`.
 
-1. Open the campaign's evidence set
-   ([Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set)), put
-   the root's filled inputs in its `<inputs-dir>`, and create a new `<private-dir>` (shared step 1).
+1. Open the campaign's evidence set:
+   [Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set), steps 1
+   and 2 (PASS: one campaign directory under the evidence root, mode 0700); capture needs your own
+   redaction filter and sweep. Then continue with this step. Write the reviewed list, the addresses
+   and actions the change intends, before the plan is made, and record it as the **Expected** field
+   of the campaign record: the six creates in the expected result below. Put the root's filled
+   inputs in its `<inputs-dir>`, and create a new `<private-dir>` (shared step 1).
 2. Confirm that no resource with these names exists, and that no secret with either container name
    is pending deletion. The counts below must print `0`, and
    [Verify the secret containers](#verify-the-secret-containers-without-reading-a-value) step 4
@@ -296,35 +318,46 @@ commit `aeb1622`.
    `<commit>`. In the scan comparison, a line beginning `<` is a class only `main` has, not a new
    class; a line beginning `>` is a new class, and a STOP. Here the check passes when `diff`
    prints no line beginning `>`, in place of the shared condition that `diff` prints nothing.
+   Then continue at step 4.
 4. Initialize the root in its own working tree at `<commit>`
-   ([Initialize a root against the state backend](terraform-operations.md#initialize-a-root-against-the-state-backend);
-   shared step 3).
+   ([Initialize a root against the state backend](terraform-operations.md#initialize-a-root-against-the-state-backend),
+   steps 1 to 3; shared step 3). PASS: `git check-ignore` lists both inputs, `init` reports the
+   backend configured and Terraform initialized, and `git status` prints nothing. Then continue at
+   step 5.
 5. Inspect state
-   ([Inspect state without writing it](terraform-operations.md#inspect-state-without-writing-it);
-   shared step 4). This root has never been applied, so the expected address set is none. Record
-   the serial, lineage and address digest.
+   ([Inspect state without writing it](terraform-operations.md#inspect-state-without-writing-it),
+   steps 1 to 3; shared step 4). This root has never been applied, so the expected address set is
+   none. Record the serial, lineage and address digest. Then continue at step 6.
 6. Keep debug logging off
-   ([Keep Terraform debug logging off](terraform-operations.md#keep-terraform-debug-logging-off)),
-   plan to a saved file ([Plan to a saved file](terraform-operations.md#plan-to-a-saved-file)),
-   review the plan ([Review the saved plan](terraform-operations.md#review-the-saved-plan)) and
+   ([Keep Terraform debug logging off](terraform-operations.md#keep-terraform-debug-logging-off);
+   PASS: the check prints nothing), plan to a saved file
+   ([Plan to a saved file](terraform-operations.md#plan-to-a-saved-file); PASS: exit 2 with the
+   saved plan at `<plan-file>`), review the plan
+   ([Review the saved plan](terraform-operations.md#review-the-saved-plan), steps 1 to 5) and
    bind it
-   ([Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state))
-   (shared steps 5 to 8). The review must match the expected result below.
+   ([Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state),
+   steps 1 and 2 now; step 8 runs its step 3; PASS: `same` for every file and the lock file,
+   `diff` prints nothing, and serial 0 with no lineage, empty or `null`) (shared steps 5 to 8).
+   The review must match the expected result below. Then continue at step 7.
 7. Obtain the owner's written grant for this plan, identified by its sha256 (shared step 9). There
    is no command for this step.
-8. Under the grant, and once step 3 of the bind procedure passes immediately before, apply the
+8. Under the grant, run the budget read-back and the price re-check for the Secrets Manager rate in
+   the exported shell, as **Cost controls** in [Before you start](#before-you-start) describes,
+   then step 3 of the bind procedure immediately before the apply. Once all three pass, apply the
    reviewed saved plan
-   ([Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan); shared
-   step 10).
+   ([Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan), steps
+   1 and 2; shared step 10). PASS: exit 0 with the summary in the expected result below. Then
+   continue at step 9, which is that procedure's step 3 read-back.
    > **Warning:** Never re-apply. A non-zero exit, an interrupt or a summary that differs is a
    > STOP; go to **If it fails**. Deleting a container is not a clean retry: its name stays
    > reserved through the recovery window.
 9. Read back (shared step 11): run [Read back the network boundary](#read-back-the-network-boundary)
    and [Verify the secret containers](#verify-the-secret-containers-without-reading-a-value).
 10. Confirm convergence from the Stage 1 working tree, before step 11 removes it
-    ([Confirm convergence](terraform-operations.md#confirm-convergence); shared step 12). At that
-    commit the configuration does not read the master value. Convergence has not yet been run
-    after Stage 1.
+    ([Confirm convergence](terraform-operations.md#confirm-convergence); shared step 12). PASS:
+    exit 0 with `No changes. Your infrastructure matches the configuration.` At that commit the
+    configuration does not read the master value. Convergence has not yet been run after Stage 1.
+    Then continue at step 11.
 11. Remove the Stage 1 working tree, which holds copies of the untracked inputs. Stage 2 is planned
     from a new working tree at the reviewed commit that contains `database.tf`.
     > **Warning:** `--force` deletes the working tree and every untracked file in it. Confirm that
@@ -334,7 +367,9 @@ commit `aeb1622`.
     git worktree remove --force <work-dir>
     ```
 12. Close the evidence set (shared step 13): steps 4 to 7 of the
-    [Normal path](evidence-handling.md#normal-path) of evidence-handling.md.
+    [Normal path](evidence-handling.md#normal-path) of evidence-handling.md. PASS: the sweep
+    detects every planted instance, with zero value hits and every pattern hit explained, and
+    every manifest entry reports OK. Then return here for the **Next step**.
 
 **Expected result.**
 
@@ -348,7 +383,7 @@ commit `aeb1622`.
 - The apply ends with `Apply complete! Resources: 6 added, 0 changed, 0 destroyed.`
 - Both read-backs pass, and both containers hold zero versions.
 - The convergence plan exits 0 with `No changes. Your infrastructure matches the configuration.`,
-  as [Confirm convergence](terraform-operations.md#confirm-convergence) expects.
+  as step 10 expects.
 
 **PASS when.**
 
@@ -428,8 +463,11 @@ command. The placement runs through a placement tool; the reviewed one used here
   ([Stage 1](#stage-1-create-the-network-boundary-and-the-empty-secret-containers)).
 - [ ] A written owner grant for this placement: the master container only, one write attempt, and
   whether a refusal before the write uses that attempt up.
-- [ ] A signed-in session on the intended account with at least 30 minutes remaining
-  ([operator-access.md](operator-access.md)).
+- [ ] A signed-in session on the intended account with at least 30 minutes remaining:
+  [Sign in](operator-access.md#sign-in), steps 1 and 2 (PASS: the identity check prints `True`
+  twice and the account check prints `ACCOUNT_MATCH=PASS`), then the headroom check with 30 as
+  `<required-minutes>`, as **Session time** in [Before you start](#before-you-start) describes.
+  Then return to this list.
 - [ ] A fixed client request token, a UUID chosen in advance and recorded privately. It becomes
   the version ID. It is never published.
 - [ ] A value with the right interface: one plain `SecretString`, not a key/value JSON document
@@ -456,12 +494,11 @@ command. The placement runs through a placement tool; the reviewed one used here
   - never shows the value in its output or on a command line.
 
 **Safety and authority.** Mutating, owner-authorized. Placement is an owner step, run only by the
-owner in the owner's own signed-in administrator permission-set session
-([operator-access.md](operator-access.md)), never as the account root user. No pipeline, scheduled
-job or other process runs it, and nobody else receives the value. It targets the master container
-only; a placement never targets another container. The application container's value is DEFERRED:
-that container stays empty until the path that consumes it is designed and independently
-reviewed.
+owner in the owner's own signed-in administrator permission-set session, never as the account root
+user. No pipeline, scheduled job or other process runs it, and nobody else receives the value. It
+targets the master container only; a placement never targets another container. The application
+container's value is DEFERRED: that container stays empty until the path that consumes it is
+designed and independently reviewed.
 
 > **Warning: one write attempt, never retried.** The no-retry rule applies to write attempts.
 > There is exactly one write attempt, and it is never retried. The placement token makes it
@@ -473,8 +510,8 @@ reviewed.
 > search terminal scrollback, the clipboard or shell history, so a copy left there is never
 > detected. The tool never takes the value on a command line, which shell history records and other
 > local processes can read, never echoes it, and never sends it through an AWS CLI that records
-> command history (the `cli_history` check in
-> [Export role credentials once](operator-access.md#export-role-credentials-once)).
+> command history: `aws configure get cli_history --profile <profile>` must print nothing or
+> `disabled`, and so must `aws configure get cli_history` for the default profile.
 
 **Steps.**
 
@@ -560,17 +597,22 @@ plan is bound.
   ([Verify the secret containers](#verify-the-secret-containers-without-reading-a-value)).
 - [ ] Stage 1 is applied to the same state
   ([Stage 1](#stage-1-create-the-network-boundary-and-the-empty-secret-containers)).
-- [ ] Prices are re-checked before the instance is created
-  ([Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work)).
+- [ ] Prices will be re-checked before the instance is created, in the Prices row of the
+  [pre-apply gate](#run-the-pre-apply-gate), step 3, as **Cost controls** in
+  [Before you start](#before-you-start) says; nothing to run before this plan.
 - [ ] A session with at least 45 minutes remaining, the margin the executed plan and its proof
   used.
-- [ ] An exported shell ([Export role credentials once](operator-access.md#export-role-credentials-once)).
+- [ ] An exported shell:
+  [Export role credentials once](operator-access.md#export-role-credentials-once), steps 1 to 4,
+  with 45 as `<required-minutes>` (PASS: `ACCOUNT_MATCH=PASS` with no HOLD line, and the headroom
+  line with exit 0). Then return to this list.
 - [ ] An explicit owner grant: the plan reads the master value once, and the proof in step 9 reads
   it once.
 - [ ] A tool that implements the
   [secret-absence proof](#prove-the-master-value-is-absent-from-plans-state-and-logs), for step 9;
   the reviewed tool used here is not published. Without one, do not start: the plan reads the
-  master value before the proof runs.
+  master value before the proof runs. The apply after this plan also needs the
+  **Hangup protection** item of [Before you start](#before-you-start).
 
 **Safety and authority.** Secret-reading, owner-authorized: the plan in step 6 and the proof in
 step 9 read the master value. Steps 1 and 2 are local-only, and steps 3 and 4 are read-only against
@@ -584,32 +626,40 @@ AWS. Nothing writes state.
 what differs for Stage 2. `<commit>` is the full SHA of the reviewed commit whose root holds
 `database.tf`, for example the current `main`.
 
-1. Open the campaign's evidence set
-   ([Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set)) and
-   record the reviewed list, the actions in the expected result below, as its **Expected** field
-   (shared step 1). The set stays open through the apply and the read-back, and
+1. Open the campaign's evidence set:
+   [Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set), steps 1
+   and 2 (PASS: one campaign directory under the evidence root, mode 0700). Then continue with this
+   step: record the reviewed list, the actions in the expected result below, as its **Expected**
+   field (shared step 1). The set stays open through the apply and the read-back, and
    [Confirm convergence](#confirm-convergence) closes it.
 2. Run the static checks on `<commit>`
-   ([Run the static checks](terraform-operations.md#run-the-static-checks); shared step 2), in a
-   clean working tree created and removed as in
+   ([Run the static checks](terraform-operations.md#run-the-static-checks), steps 1 to 3; shared
+   step 2), in a clean working tree created and removed as in
    [Stage 1](#stage-1-create-the-network-boundary-and-the-empty-secret-containers), step 3. As a
-   first build, `<main-commit>` is `<commit>`, as terraform-operations.md sets.
+   first build, `<main-commit>` is `<commit>`, as terraform-operations.md sets. PASS: `fmt`,
+   `validate`, `tflint` and every `trivy config` exit 0, `git status` prints nothing, and `diff`
+   prints nothing. Then continue at step 3.
 3. Initialize the root in a new working tree at `<commit>`
-   ([Initialize a root against the state backend](terraform-operations.md#initialize-a-root-against-the-state-backend);
-   shared step 3).
+   ([Initialize a root against the state backend](terraform-operations.md#initialize-a-root-against-the-state-backend),
+   steps 1 to 3; shared step 3). PASS: `git check-ignore` lists both inputs, `init` reports the
+   backend configured and Terraform initialized, and `git status` prints nothing. Then continue at
+   step 4.
 4. Inspect state
-   ([Inspect state without writing it](terraform-operations.md#inspect-state-without-writing-it);
-   shared step 4). Expect the six Stage 1 addresses and the root's data sources, as that
-   procedure sets for the datastore before Stage 2. Record the serial, lineage and address digest.
+   ([Inspect state without writing it](terraform-operations.md#inspect-state-without-writing-it),
+   steps 1 to 3; shared step 4). Expect the six Stage 1 addresses and the root's data sources, as
+   that procedure sets for the datastore before Stage 2. Record the serial, lineage and address
+   digest. Then continue at step 5.
 5. Keep debug logging off
    ([Keep Terraform debug logging off](terraform-operations.md#keep-terraform-debug-logging-off);
-   shared step 5).
+   shared step 5). PASS: the check prints nothing. Then continue at step 6.
 6. Record the UTC time, then plan to a saved file in a new `<private-dir>`
-   ([Plan to a saved file](terraform-operations.md#plan-to-a-saved-file); shared step 6),
-   redirecting the plan's output to `<private-dir>/plan.log` so that the proof covers it.
+   ([Plan to a saved file](terraform-operations.md#plan-to-a-saved-file), step 1; shared step 6),
+   redirecting the plan's output to `<private-dir>/plan.log` so that the proof covers it. PASS:
+   exit 2 with the saved plan at `<plan-file>`, and the master opened and closed once in
+   `plan.log`. Then continue at step 7.
 7. Review the saved plan
-   ([Review the saved plan](terraform-operations.md#review-the-saved-plan); shared step 7) against
-   the expected result below.
+   ([Review the saved plan](terraform-operations.md#review-the-saved-plan), steps 1 to 5; shared
+   step 7) against the expected result below. Then continue at step 8.
 8. Check the planned values of the instance and the parameter, as part of that review:
    ```
    jq '.resource_changes[] | select(.address == "aws_db_instance.datastore") | .change.after
@@ -623,8 +673,10 @@ what differs for Stage 2. `<commit>` is the full SHA of the reviewed commit whos
    ```
 9. Run the [secret-absence proof](#prove-the-master-value-is-absent-from-plans-state-and-logs).
 10. Only after the proof finds no occurrence, bind the saved plan
-    ([Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state);
-    shared step 8). The apply grant, shared step 9, names its hash.
+    ([Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state),
+    steps 1 and 2 now; its step 3 runs in the [pre-apply gate](#run-the-pre-apply-gate); shared
+    step 8). PASS: step 2 prints `same` for every file and the lock file, and `diff` prints
+    nothing. The apply grant, shared step 9, names its hash. Then go to the **Next step**.
 
 **Expected result.**
 
@@ -748,7 +800,7 @@ a HOLD, and a HOLD applies nothing.
    |---|---|
    | Plan age | No more than 72 hours after the recorded plan start, the maximum the executed gate allowed, with at least 30 minutes of that left |
    | Saved plan | Bound as in [Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state); its hash equals the hash in the grant; it has never been applied (the bind procedure's step 3: the serial and lineage still equal the plan's) |
-   | Terraform and provider | `terraform version -json \| jq -r .terraform_version` prints the `terraform_version` in `<plan-json>`, and the bind step printed `same` for the lock file ([Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state), step 2) |
+   | Terraform and provider | `terraform version -json \| jq -r .terraform_version` prints the `terraform_version` in `<plan-json>`, and the lock-file line of the bind procedure's step 2, recorded at step 10 of the Stage 2 plan, printed `same` |
    | Session | On the intended account, with at least 50 minutes remaining |
    | Master container | Exactly the placed version, `AWSCURRENT` only, rotation off ([Verify the secret containers](#verify-the-secret-containers-without-reading-a-value)) |
    | Application container | Empty |
@@ -758,7 +810,7 @@ a HOLD, and a HOLD applies nothing.
    | Network boundary | Unchanged ([Read back the network boundary](#read-back-the-network-boundary)) |
    | Engine | Step 2 lists both subnet zones |
    | Prices | Every rate the instance bills equal to the price table in [Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work) |
-   | Budget | The budget and its alerts intact, each alert with a subscriber ([Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states)) |
+   | Budget | The budget and its alerts intact, each alert with a subscriber, and no alert in `ALARM` unless an owner decision recorded this month allows that level, as the read-back's **Next step** and **Cost controls** in [Before you start](#before-you-start) state ([Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states)) |
    | Runtime | Every runtime class of the census is zero ([Run the orphan census](cost-and-residue.md#run-the-orphan-census)) |
 
 4. Start the apply straight after a full pass.
@@ -832,9 +884,10 @@ notes.
 - [ ] An owner grant naming the plan hash.
 - [ ] A session with at least 50 minutes remaining. The executed create took 6 minutes 10
   seconds.
-- [ ] An exported shell ([Export role credentials once](operator-access.md#export-role-credentials-once)).
-- [ ] Debug logging is off
-  ([Keep Terraform debug logging off](terraform-operations.md#keep-terraform-debug-logging-off)).
+- [ ] The exported shell the pre-apply gate ran in.
+- [ ] Debug logging is off:
+  [Keep Terraform debug logging off](terraform-operations.md#keep-terraform-debug-logging-off),
+  step 1 (PASS: the check prints nothing). Then return to this list.
 - [ ] A tool that implements the
   [secret-absence proof](#prove-the-master-value-is-absent-from-plans-state-and-logs), for step 2;
   the reviewed tool used here is not published. Without one, do not start: the apply reads the
@@ -853,21 +906,27 @@ the master value through the provider, and the proof in step 2 reads it once.
 **Steps.**
 
 1. Apply the reviewed saved plan
-   ([Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan); shared
-   step 10), redirecting its output to `<private-dir>/apply.log`.
+   ([Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan), steps
+   1 and 2; shared step 10), redirecting its output to `<private-dir>/apply.log`. Its step 3
+   read-back is step 7 of this page's [Normal path](#normal-path). PASS: exit 0 with
+   `Apply complete! Resources: 2 added, 0 changed, 0 destroyed.`, the serial advanced, the lineage
+   unchanged, and both creates in the address list. Then continue at step 2.
    > **Warning:** Never re-apply. A non-zero exit, an interrupt, a terminal hangup or a summary
    > that differs is a STOP; go to **If it fails**. The linked command is not shielded from a
    > terminal hangup. Run it only under the hangup protection in **Before you start**; without
    > it, do not apply.
 2. Run the [secret-absence proof](#prove-the-master-value-is-absent-from-plans-state-and-logs).
-3. Take the first CPU-credit reading
-   ([Check the datastore CPU credits](cost-and-residue.md#check-the-datastore-cpu-credits)).
+3. Take the first CPU-credit reading:
+   [Check the datastore CPU credits](cost-and-residue.md#check-the-datastore-cpu-credits), steps 1
+   and 2 (PASS: every metric prints lines, `CPUSurplusCreditsCharged` is 0 in every period and
+   `CPUSurplusCreditBalance` is 0 in the latest periods; a surplus balance with a documented cause,
+   such as the start-up burst after a create, and nothing charged, is recorded as an explained
+   review trigger, not a STOP). Then continue at step 4.
 4. After the event-history delay, account for the apply's Secrets Manager events with
    [Account for secret reads and writes in CloudTrail](#account-for-secret-reads-and-writes-in-cloudtrail).
-   Use as `<utc-start>` the UTC time printed before the apply in step 1 of
-   [Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan); an
-   earlier time also counts the plan's reads. Before the delay has passed, a missing read is not
-   yet a finding: repeat the read-only lookup, never the apply.
+   Use as `<utc-start>` the UTC time printed before the apply in step 1 above; an earlier time also
+   counts the plan's reads. Before the delay has passed, a missing read is not yet a finding:
+   repeat the read-only lookup, never the apply.
 
 **Expected result.** Exit 0. `apply.log` shows the master opened and closed once,
 `aws_db_instance.datastore: Creation complete`, `aws_ssm_parameter.endpoint: Creation complete` and
@@ -915,7 +974,9 @@ and [Confirm convergence](#confirm-convergence).
   KMS grants and the instance's network interface. A reproducer has no published command for that
   check.
 - **Teardown / decommission.** Not exercised; see
-  [Decommission](../../terraform/dev-datastore/README.md#decommission).
+  [Decommission](../../terraform/dev-datastore/README.md#decommission), which gives an order only:
+  no command-level procedure exists, and each of its state changes runs only as a reviewed saved
+  plan under a separate explicit owner grant.
 
 ### Read back the instance and its endpoint parameter
 
@@ -1015,9 +1076,7 @@ stopped until a reviewed decision is taken under explicit approval
 
 **Evidence to keep.** The output of every step, projected as above.
 
-**Next step.** [Confirm convergence](#confirm-convergence). While the instance exists, the weekly
-ADR-0013 review follows
-([Record the weekly ADR-0013 review](cost-and-residue.md#record-the-weekly-adr-0013-review)).
+**Next step.** [Confirm convergence](#confirm-convergence).
 
 #### Engineering notes
 
@@ -1058,21 +1117,25 @@ the check itself left no copy of the value.
 local-only.
 
 > **Warning:** Like the Stage 1 tree, the Stage 2 working tree holds copies of the untracked
-> inputs. No rule for removing it has been defined or exercised
-> ([terraform-operations.md](terraform-operations.md)); it stays private, and nothing from it is
-> shared before a proof over it has found no occurrence.
+> inputs. No rule for removing it has been defined or exercised; it stays private, and nothing
+> from it is shared before a proof over it has found no occurrence.
 
 **Steps.**
 
 1. Keep debug logging off and confirm convergence
-   ([Confirm convergence](terraform-operations.md#confirm-convergence); shared step 12),
+   ([Confirm convergence](terraform-operations.md#confirm-convergence), step 1; shared step 12),
    redirecting the plan's output to `converge.log` in a new `<private-dir>`, as for every plan.
+   PASS: exit 0 with `No changes. Your infrastructure matches the configuration.`, eight
+   `Refreshing state...` lines in `converge.log`, and the master opened and closed once. Then
+   continue at step 2.
 2. Run the [secret-absence proof](#prove-the-master-value-is-absent-from-plans-state-and-logs),
    which covers `converge.log`.
 3. Close the campaign's evidence set, opened in step 1 of
    [Stage 2: plan the instance and its endpoint parameter](#stage-2-plan-the-instance-and-its-endpoint-parameter)
    (shared step 13): steps 4 to 7 of the [Normal path](evidence-handling.md#normal-path) of
-   evidence-handling.md.
+   evidence-handling.md. PASS: the sweep detects every planted instance, with zero value hits and
+   every pattern hit explained, and every manifest entry reports OK. Then return here for the
+   **Next step**.
 
 **Expected result.** Exit 0 and `No changes. Your infrastructure matches the configuration.`, with
 all eight managed resources refreshed and the master opened and closed once. The eight are eight
@@ -1103,7 +1166,10 @@ plan text never goes into the set ([Normal path](terraform-operations.md#normal-
 terraform-operations.md).
 
 **Next step.** The normal path ends here. While the instance exists, the weekly ADR-0013 review
-follows ([Record the weekly ADR-0013 review](cost-and-residue.md#record-the-weekly-adr-0013-review)).
+follows: [Record the weekly ADR-0013 review](cost-and-residue.md#record-the-weekly-adr-0013-review),
+weekly, first due 2026-10-01, after that week's budget read-back, CPU-credit check and orphan
+census (PASS: one dated private record with all seven entries, identifiers redacted, stating the
+decision and why).
 
 #### Engineering notes
 
@@ -1129,7 +1195,9 @@ reuses.
 
 - [ ] Stage 1 is applied
   ([Stage 1](#stage-1-create-the-network-boundary-and-the-empty-secret-containers)).
-- [ ] A signed-in session ([operator-access.md](operator-access.md)).
+- [ ] A signed-in session: [Sign in](operator-access.md#sign-in), steps 1 and 2 (PASS: the
+  identity check prints `True` twice and the account check prints `ACCOUNT_MATCH=PASS`). Then
+  return to this list.
 
 **Safety and authority.** Read-only.
 
@@ -1216,7 +1284,9 @@ root, the master unchanged and the application container still empty.
 
 **Before you start.**
 
-- [ ] A signed-in session ([operator-access.md](operator-access.md)).
+- [ ] A signed-in session: [Sign in](operator-access.md#sign-in), steps 1 and 2 (PASS: the
+  identity check prints `True` twice and the account check prints `ACCOUNT_MATCH=PASS`). Then
+  return to this list.
 - [ ] After placement, the placement token, kept privately, for step 3.
 
 **Safety and authority.** Read-only; never calls `GetSecretValue`.
@@ -1322,7 +1392,9 @@ ID.
 - [ ] `<utc-start>`, the time from which to account, for example the start of a placement or a
   plan.
 - [ ] `<placement-token>`, kept privately.
-- [ ] A signed-in session ([operator-access.md](operator-access.md)).
+- [ ] A signed-in session: [Sign in](operator-access.md#sign-in), steps 1 and 2 (PASS: the
+  identity check prints `True` twice and the account check prints `ACCOUNT_MATCH=PASS`). Then
+  return to this list.
 
 **Safety and authority.** Read-only.
 
@@ -1403,7 +1475,7 @@ the placement keeps the CloudTrail outputs, and the apply keeps the Secrets Mana
 
 ### Prove the master value is absent from plans, state and logs
 
-**Validation:** AWS-VALIDATED (2026-09-24) · **Published command form:** not executed as written
+**Validation:** AWS-VALIDATED (2026-09-24) for the three runs of the reviewed tool; OFFLINE-VALIDATED (2026-09-24) after a failed apply; DESIGNED-NOT-EXECUTED (never) with an equivalent tool · **Published command form:** not executed as written
 
 **What this does.** Shows that no artifact of a run holds the master value, although every plan
 and apply of this root passes it through the provider. Write-only handling keeps it out of state
@@ -1439,8 +1511,7 @@ displayed or stored, and the search prints counts only.
 3. What is prevented rather than searched: Terraform debug logs and protocol dumps. The executed
    runs recorded the names of the environment variables each Terraform run received, and the proof
    required every name to be on an allowlist with no `TF_LOG*`, `TF_CLI_ARGS*`, `TF_VAR_*`,
-   `TF_REATTACH_PROVIDERS` or `TF_DATA_DIR`
-   ([Debug logging](../../terraform/dev-datastore/README.md#debug-logging)).
+   `TF_REATTACH_PROVIDERS` or `TF_DATA_DIR`.
 4. How: the value is read once through the AWS CLI, by the placement token's version ID, straight
    into the search on standard input. It is never displayed or stored. The search looks for the
    value in its literal form and in common encodings, including base64 at every alignment and inside
@@ -1478,7 +1549,7 @@ Stage 2 plan, the apply and the convergence plan all keep them.
 
 | Field | Value |
 |---|---|
-| Validation status | AWS-VALIDATED (2026-09-24) |
+| Validation status | AWS-VALIDATED (2026-09-24) for the three runs of the reviewed proof tool, after the Stage 2 plan, after the apply and after the read-back and convergence plan, and their cross-checks; OFFLINE-VALIDATED (2026-09-24) for the reviewed tool after a failed apply; DESIGNED-NOT-EXECUTED (never) for this method with an equivalent tool, in the `<work-dir>` and `<private-dir>` layout |
 | Published form | not executed as written (method only; the executed proof is a reviewed tool that is not published, because every runnable form reads the value) |
 | Evidence basis | [Status](../../terraform/dev-datastore/README.md#status) records the result; retained private evidence of the plan, post-apply and read-back proofs and of an independent check that never read the value, 2026-09-24 |
 | Authority | Explicit owner grant: each run reads the master value once |
@@ -1487,6 +1558,8 @@ Stage 2 plan, the apply and the convergence plan all keep them.
 - The executed runs kept Terraform's working directory inside the searched directory; the layout
   of `<work-dir>` and `<private-dir>` used here has not run.
 - Each proof run adds one `GetSecretValue` to CloudTrail.
+- The rule behind step 3 is the root README's
+  [Debug logging](../../terraform/dev-datastore/README.md#debug-logging).
 
 ### Respond to a failed or uncertain placement
 
@@ -1567,7 +1640,7 @@ stray version or placing again needs its own reviewed decision and grant
 
 ### Read the datastore after a failed or interrupted apply
 
-**Validation:** OFFLINE-VALIDATED (2026-09-24) · **Published command form:** not executed as written
+**Validation:** OFFLINE-VALIDATED (2026-09-24) for steps 2 and 3; DESIGNED-NOT-EXECUTED (never) for step 1's not-found reads and step 4's classification · **Published command form:** not executed as written
 
 **What this does.** Supplies the read-back step of the stop rule in
 [terraform-operations.md](terraform-operations.md) for this root, without changing anything.
@@ -1618,17 +1691,21 @@ protection; whether the parameter exists; the master unchanged; the proof's resu
 [Contain an exposed or unproven master value](#contain-an-exposed-or-unproven-master-value). No
 recovery after a failed apply has been reviewed or exercised. An instance that exists bills until
 it is deleted and carries deletion protection, so removing it needs the reviewed change in
-[Decommission](../../terraform/dev-datastore/README.md#decommission).
+[Decommission](../../terraform/dev-datastore/README.md#decommission). That section gives an order
+only: no command-level procedure exists, and each of its state changes runs only as a reviewed
+saved plan under a separate explicit owner grant.
 
 **Evidence to keep.** The recorded state from step 4, with the records the stop rule keeps.
 
-**Next step.** A separately reviewed decision on any recovery (step 4).
+**Next step.** Return to step 7 of
+[Stop after a failed or interrupted apply](terraform-operations.md#stop-after-a-failed-or-interrupted-apply);
+after it, a separately reviewed decision on any recovery (step 4).
 
 #### Engineering notes
 
 | Field | Value |
 |---|---|
-| Validation status | OFFLINE-VALIDATED (2026-09-24) |
+| Validation status | OFFLINE-VALIDATED (2026-09-24) for steps 2 and 3 after a failed apply; DESIGNED-NOT-EXECUTED (never) for step 1's reads with the not-found rule after a failed apply, and for step 4's classification |
 | Published form | not executed as written (derived from the qualified read-only inspection, exercised only in offline qualification; confirming absences by error code has run before an apply, never after a failed one) |
 | Evidence basis | Retained private evidence of the offline qualification of the apply's failure classes and inspection |
 | Authority | None for steps 1, 2 and 4; step 3 reads the master value once and needs an explicit owner grant; any recovery, import or deletion needs a separate explicit owner grant |
@@ -1699,6 +1776,8 @@ For a found value, rotation, which needs its own reviewed procedure and grant.
 | [Run the pre-apply gate](#run-the-pre-apply-gate) as a reusable checklist | DESIGNED-NOT-EXECUTED | Only its single-use form ran, once. No gate exists for a later apply of this root. |
 | [Contain an exposed or unproven master value](#contain-an-exposed-or-unproven-master-value) | DESIGNED-NOT-EXECUTED | Never needed. |
 | [Place the master value](#place-the-master-value) as a step-level procedure with an equivalent tool | DESIGNED-NOT-EXECUTED | Only the reviewed placement tool ran, once. |
+| [Prove the master value is absent from plans, state and logs](#prove-the-master-value-is-absent-from-plans-state-and-logs) with an equivalent tool | DESIGNED-NOT-EXECUTED | Only the reviewed proof tool ran, three times on 2026-09-24, with Terraform's working directory inside the searched directory. The `<work-dir>` and `<private-dir>` layout has not run. |
+| [Read the datastore after a failed or interrupted apply](#read-the-datastore-after-a-failed-or-interrupted-apply): the not-found reads and the classification | DESIGNED-NOT-EXECUTED | Only its offline qualification ran, and that inspection reported a failed read as not found or absent and classified nothing. No apply has failed. |
 | Recovery after a failed or uncertain placement | UNEXERCISED | No reviewed procedure. Removing a stray version or placing again needs its own reviewed decision and grant. |
 | Stage 2 apply protected from a terminal hangup, in a published form | UNEXERCISED | The executed apply was shielded by private tooling that is not published. |
 | Stage 1 from the current checkout with `-target` | UNEXERCISED | The README's alternative to planning commit `aeb1622`; never run. |
@@ -1781,12 +1860,15 @@ notes say what the published form is derived from.
 
 ## Background prerequisites
 
-The suite-wide dependencies this runbook assumes. The [runbook index](README.md#before-you-start)
-lists them for the whole suite.
+The suite-wide dependencies this runbook assumes. The runbook index lists them for the whole suite
+under Before you start, which you gathered before step 1 of its Build order.
 
 - **Account.** An AWS account of your own.
 - **Identity.** An IAM Identity Center operator with an administrator permission set and a CLI
-  profile ([operator-access.md](operator-access.md)).
+  profile, set up at step 1 of the index's Build order:
+  [Configure the local CLI profiles](operator-access.md#configure-the-local-cli-profiles) (PASS:
+  for each profile, the identity check prints `True` twice and the account check prints
+  `ACCOUNT_MATCH=PASS`). Then return to this list.
 - **Toolchain.** Terraform 1.11 or later and below 2.0 (1.15.5 was used) with the `hashicorp/aws`
   provider the committed lock file selects (6.58.0 was used); AWS CLI v2; `jq`; `git`; `unzip`;
   `shasum`.

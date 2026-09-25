@@ -6,6 +6,8 @@ artifact registry, and the CI push identity. The CI push identity is the GitLab 
 IAM role that main-branch pipelines assume to publish images (the push role), and that role's
 inline push policy. What each foundation is, why it exists, its inputs, its protections, its
 recovery path and its final decommission order are in that README and are not repeated here. The
+decommission order is an order only: no command-level procedure exists, it has never run, and it
+needs the owner's explicit approval ([Not yet exercised](#not-yet-exercised)). The
 persistent-foundation register is in the
 [architecture baseline](../architecture-baseline.md#persistent-foundations).
 
@@ -129,8 +131,15 @@ certificate are read back in [public-dns-and-certificate.md](public-dns-and-cert
 | `aws_iam_openid_connect_provider.gitlab` | [Read back the CI trust](#read-back-the-ci-trust), step 1 |
 | `aws_iam_role.ci_checkout` | [Read back the CI trust](#read-back-the-ci-trust), steps 2 and 3 |
 | `aws_iam_role_policy.ci_checkout_ecr_push` | [Read back the CI push scope](#read-back-the-ci-push-scope) |
-| `aws_route53_zone.public` | [Read back the hosted zone](public-dns-and-certificate.md#read-back-the-hosted-zone) |
-| `aws_acm_certificate.public`, `aws_route53_record.certificate_validation` and `aws_acm_certificate_validation.public` | [Read back the certificate](public-dns-and-certificate.md#read-back-the-certificate) and [Read back the hosted zone](public-dns-and-certificate.md#read-back-the-hosted-zone), as step 5 of [Plan and apply the certificate](public-dns-and-certificate.md#plan-and-apply-the-certificate) runs them |
+| `aws_route53_zone.public` | [Read back the hosted zone](public-dns-and-certificate.md#read-back-the-hosted-zone), steps 1 to 4 |
+| `aws_acm_certificate.public`, `aws_route53_record.certificate_validation` and `aws_acm_certificate_validation.public` | [Read back the certificate](public-dns-and-certificate.md#read-back-the-certificate), steps 1 to 3, and [Read back the hosted zone](public-dns-and-certificate.md#read-back-the-hosted-zone), steps 1 to 4 |
+
+For the last two rows, PASS: one public zone for `<apex>` with four name servers, the six
+mandatory tags with `Component` set to `dns`, and only `NS` and `SOA` records, plus, after the
+certificate, exactly one `CNAME`, its validation record, with TTL 300; and a certificate `ISSUED`
+and `AMAZON_ISSUED` for `<apex>` with SANs exactly `<apex>` and `*.<apex>`, both names `DNS` and
+`SUCCESS` with one shared validation record, `Export` `DISABLED`, and the same six tags. Then
+return to the step that sent you here.
 
 Count an address as **None** also when:
 
@@ -142,8 +151,7 @@ Count an address as **None** also when:
 
 No procedure on this page or in public-dns-and-certificate.md checks a foundation address another
 way, so an address counted as **None** stops the plan at step 7, before approval. Work resumes
-only on a reviewed decision under explicit approval
-([When something fails](README.md#when-something-fails)).
+only on a reviewed decision under explicit approval.
 
 ## Procedures
 
@@ -159,8 +167,9 @@ environment it documents ([evidence-handling.md](evidence-handling.md)).
 
 **Before you start.**
 
-- [ ] A signed-in profile for the project account, confirmed as described in
-      [operator-access.md](operator-access.md#check-the-account-before-aws-commands).
+- [ ] A signed-in profile for the project account, confirmed by steps 1 and 2 of
+      [Check the account before AWS commands](operator-access.md#check-the-account-before-aws-commands)
+      (PASS: `ACCOUNT_MATCH=PASS`). Then return to this list.
 - [ ] `<evidence-bucket>` and `<profile>`.
 
 **Safety and authority.** Read-only. No approval is needed, and it costs nothing. Step 4 prints the
@@ -297,6 +306,10 @@ stored copy of the push policy is stale (see the Engineering notes).
       new `<private-dir>` for the saved plan and the logs
       ([placeholders](terraform-operations.md#before-you-start)). Step 3 initializes the root
       against its backend, after the change is committed.
+- [ ] The expected address set for state inspection in step 3: the address list that step 2 of
+      [Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan) printed
+      after this root's last apply, kept in that campaign's evidence. None is published; without
+      it this procedure stops at state inspection ([root table](terraform-operations.md#normal-path)).
 - [ ] The campaign's evidence set opened for this change, as the shared Normal path requires before
       its step 1 ([Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set)).
       A *campaign* is one bounded operation whose evidence is kept together, here the apply with its
@@ -473,6 +486,13 @@ prints the evidence bucket name and account identifiers (observed), so none of i
 
 **Next step.** Wiring the service's publish job and its first publication, both outside this
 runbook ([GitOps Delivery](../implementation/gitops-delivery.md#1-build-once-gitlab-ci-to-an-immutable-digest)).
+Publication is billable, because ECR bills stored image data from the first image, and it needs
+its own explicit owner authorization. The cost gate runs first: read the budget back
+([Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states))
+and [re-check the prices](cost-and-residue.md#re-check-prices-before-billable-work). The price
+table has no registry-storage rate, so that re-check stops and gives no complete storage
+estimate; the owner approves a re-estimate before the publication. Once a repository holds more
+than 10 tagged images, its lifecycle policy can expire the oldest.
 
 #### Engineering notes
 
@@ -514,7 +534,7 @@ provenance.
       ([GitOps Delivery](../implementation/gitops-delivery.md#3-pinning-by-digest)).
 - [ ] `<tag>`: for an image CI published, the publishing commit's short SHA
       (`CI_COMMIT_SHORT_SHA` in the publish template); for a mirrored image, the upstream version
-      tag.
+      tag. Mirroring itself has no published procedure (see the warning at the top of this page).
 
 **Safety and authority.** Read-only. No approval is needed, and it costs nothing. Redact any error
 text before you keep it: ECR's not-found errors can name the registry ID, which is the account ID.
@@ -588,7 +608,7 @@ images file ([GitOps Delivery](../implementation/gitops-delivery.md#3-pinning-by
 
 ### Read back the CI trust
 
-**Validation:** EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-08-15) · **Published command form:** not executed as written
+**Validation:** EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-08-15) in part; DESIGNED-NOT-EXECUTED (never) for step 1's detail read and step 2's principal count · **Published command form:** not executed as written
 
 **What this does.** Confirms that only main-branch jobs of the one pinned GitLab project, presenting
 the pinned audience, can assume the push role. The trust is the role's trust policy: it decides
@@ -646,7 +666,8 @@ OIDC provider, the role's trust statement and its principal, and the role's poli
    expected values come from `ci-identity.tf` and the AWS CLI reference, not from a run.
 2. Exactly one statement: `Allow`, `sts:AssumeRoleWithWebIdentity`, a `StringEquals` condition with
    `gitlab.com:aud` = `sts.amazonaws.com` and `gitlab.com:sub` =
-   `project_id:<project-id>:ref_type:branch:ref:main`; the principal count is `1`.
+   `project_id:<project-id>:ref_type:branch:ref:main`; the principal count is `1`. The principal
+   count has no recorded execution; its expected value comes from `ci-identity.tf`.
 3. `[]`; `["cloud-platform-reference-shared-ci-checkout-ecr-push"]`; the six tags with `Component`
    `identity`.
 
@@ -674,8 +695,8 @@ is not exercised; see [Not yet exercised](#not-yet-exercised).
 
 | Field | Value |
 |---|---|
-| Validation status | EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-08-15) |
-| Published form | not executed as written (derived from the check list in [Status](../../terraform/foundation/README.md#status); step 1's provider URL, client-ID and tag read is derived from [`ci-identity.tf`](../../terraform/foundation/ci-identity.tf) and has no recorded execution; no command was retained) |
+| Validation status | EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-08-15) for step 1's provider count, step 2's trust-statement read and step 3; DESIGNED-NOT-EXECUTED (never) for step 1's provider URL, client-ID and tag read and for step 2's federated-principal count |
+| Published form | not executed as written (derived from the check list in [Status](../../terraform/foundation/README.md#status); step 1's provider URL, client-ID and tag read and step 2's principal count are derived from [`ci-identity.tf`](../../terraform/foundation/ci-identity.tf) and have no recorded execution; no command was retained) |
 | Evidence basis | [Status](../../terraform/foundation/README.md#status). The check list (trust statement, audience, subject, absence of managed policies, single inline policy, six tags) was recorded when the identity was created, against the earlier project-path subject. The 2026-08-15 change to the project ID is recorded as an outcome: the new subject, the unchanged audience and `StringEquals` operator, and no wildcard. Which of the other items were read again after that change is not recorded. No later retained capture verifies the trust: the 2026-09-10 reads listed the provider and the role's name and creation date, and later Terraform refreshes of the role are not trust read-backs. |
 | Authority | None (read-only) |
 | Cost | None |
@@ -685,6 +706,8 @@ is not exercised; see [Not yet exercised](#not-yet-exercised).
 - No trust read-back has ever been retained; the last recorded one is 2026-08-15.
 - Step 1's provider URL, client-ID and tag read has no recorded execution. Its expected values come
   from `ci-identity.tf` and the AWS CLI reference, not from a run.
+- Step 2's federated-principal count has no recorded execution. Its expected value comes from
+  `ci-identity.tf`, not from a run.
 
 **Validation gate.** The first run of this form with its output retained.
 
@@ -782,7 +805,7 @@ continue with its step 5.
 
 ### Connect a GitLab project to the CI push identity
 
-**Validation:** EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-08-15) · **Published command form:** not executed as written
+**Validation:** EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-08-15) for the recorded connection by a trust change on the root of that date; DESIGNED-NOT-EXECUTED (never) for a trust change against the current root and for the first-build branch; UNEXERCISED (never) for the first build that branch presumes · **Published command form:** not executed as written
 
 **What this does.** Lets main-branch pipelines of exactly one GitLab project exchange their ID token
 for short-lived credentials on the push role
@@ -802,6 +825,11 @@ change from project path to project ID, which re-pinned the same project.
       ([Background prerequisites](#background-prerequisites)).
 - [ ] A written owner grant.
 - [ ] `<project-id>`, read from the project's Settings, General page, and `<allowed-account-id>`.
+- [ ] For a trust change on an existing root (step 3): the expected address set for state
+      inspection, the address list that step 2 of
+      [Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan) printed
+      after this root's last apply. None is published; without it step 3 stops at state inspection
+      ([root table](terraform-operations.md#normal-path)).
 
 **Safety and authority.** Mutating and owner-authorized: an explicit owner grant covers the IAM
 trust change and the GitLab project settings. The apply in step 3 also needs the owner's written
@@ -908,12 +936,19 @@ privately. The saved plan and the plan and apply logs from step 3 stay private
 
 **Next step.** The first publication from the connected project, outside this runbook
 ([GitOps Delivery](../implementation/gitops-delivery.md#1-build-once-gitlab-ci-to-an-immutable-digest)).
+Publication is billable, because ECR bills stored image data from the first image, and it needs
+its own explicit owner authorization. The cost gate runs first: read the budget back
+([Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states))
+and [re-check the prices](cost-and-residue.md#re-check-prices-before-billable-work). The price
+table has no registry-storage rate, so that re-check stops and gives no complete storage
+estimate; the owner approves a re-estimate before the publication. Once a repository holds more
+than 10 tagged images, its lifecycle policy can expire the oldest.
 
 #### Engineering notes
 
 | Field | Value |
 |---|---|
-| Validation status | EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-08-15) |
+| Validation status | EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-08-15) for the recorded connection of the reference project by a trust change on the root as it was on that date, which re-pinned the same project: steps 1, 2, 3, 5 and 6; DESIGNED-NOT-EXECUTED (never) for a step 3 trust change against the current root, with the hosted zone, the certificate and `public_domain` present, and for the first-build branch of step 2, which skips step 3; UNEXERCISED (never) for the first build of the root on the current configuration that this branch presumes, for which no plan shape is published. Step 4 runs [Read back the CI trust](#read-back-the-ci-trust) and [Read back the CI push scope](#read-back-the-ci-push-scope), which keep their own labels; no push-scope read-back is recorded for 2026-08-15 |
 | Published form | not executed as written (derived from [`ci-identity.tf`](../../terraform/foundation/ci-identity.tf), the public publish template and the outcomes recorded 2026-08-15; the GitLab-side change was made through the GitLab API and that call was not retained) |
 | Evidence basis | [CI push identity](../../terraform/foundation/README.md#ci-push-identity) and [Status](../../terraform/foundation/README.md#status). The provider, role and policy creation, and the trust change from project path to project ID, are recorded as outcomes on 2026-08-15 without retained output. That trust change re-pinned the same project. Later publications through the identity, including retained private evidence of one on 2026-09-17, show indirectly that the trust admits a main-branch job. The GitLab setting is not AWS evidence. |
 | Authority | Explicit owner grant (IAM trust change and GitLab project settings) |
@@ -985,6 +1020,13 @@ the trust or GitLab settings is mutating and needs an explicit owner grant.
 
 **Next step.** The next publication from the project, outside this runbook
 ([GitOps Delivery](../implementation/gitops-delivery.md#1-build-once-gitlab-ci-to-an-immutable-digest)).
+Publication is billable, because ECR bills stored image data from the first image, and it needs
+its own explicit owner authorization. The cost gate runs first: read the budget back
+([Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states))
+and [re-check the prices](cost-and-residue.md#re-check-prices-before-billable-work). The price
+table has no registry-storage rate, so that re-check stops and gives no complete storage
+estimate; the owner approves a re-estimate before the publication. Once a repository holds more
+than 10 tagged images, its lifecycle policy can expire the oldest.
 
 #### Engineering notes
 
@@ -1006,12 +1048,14 @@ the STS call, are not listed.
 | First build of the evidence store, the registry repositories and the CI identity on the current root. The historical creations ran on older root shapes (the evidence store on 2026-08-08; the checkout repository and the CI identity on 2026-08-15) and are EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE. On a build from nothing the full plan adds them together with the certificate; that combined plan has never run, and no plan shape for it is published. | UNEXERCISED | [Public DNS](../../terraform/foundation/README.md#public-dns) for the order; [public-dns-and-certificate.md](public-dns-and-certificate.md) |
 | Adding a registry repository against the current root, with the hosted zone and certificate present and `public_domain` supplied | DESIGNED-NOT-EXECUTED | [Add a registry repository](#add-a-registry-repository-and-widen-the-ci-push-scope) |
 | A trust change against the current root, with the hosted zone, the certificate and `public_domain` present | DESIGNED-NOT-EXECUTED | Step 3 of [Connect a GitLab project](#connect-a-gitlab-project-to-the-ci-push-identity) |
+| Connecting a GitLab project to a root first built with that project's ID: the step 2 branch that skips step 3 and relies on step 4 to read the pinned subject back. The recorded connection used a trust change, because the historical first build pinned the project path. | DESIGNED-NOT-EXECUTED | Step 2 of [Connect a GitLab project](#connect-a-gitlab-project-to-the-ci-push-identity); the first build it presumes is the first row of this table |
+| Step 1's provider URL, client-ID and tag read, and step 2's federated-principal count | DESIGNED-NOT-EXECUTED | Steps 1 and 2 of [Read back the CI trust](#read-back-the-ci-trust); no record shows either read |
 | A request over plain HTTP to confirm the evidence bucket denies it | UNEXERCISED | [Read back the evidence-store controls](#read-back-the-evidence-store-controls) |
 | Registry retention review before an eleventh tagged image in `astroshop/checkout` | UNEXERCISED | [Artifact registry](../../terraform/foundation/README.md#artifact-registry) |
 | Recovering a lost repository or image by rebuilding from source. A rebuilt image carries a new digest, because build reproducibility is not measured, so every pin to the old digest would need a reviewed change. | UNEXERCISED | [ADR-0009](../decisions/0009-define-the-software-delivery-model.md), [Artifact registry](../../terraform/foundation/README.md#artifact-registry) |
 | Decommissioning a registry repository | UNEXERCISED | [Artifact registry](../../terraform/foundation/README.md#artifact-registry) |
 | Revoking or rotating the CI push trust, including pointing an existing root at a different GitLab project, which replaces the only trusted subject and disconnects the previous project | UNEXERCISED | None |
-| Final decommission of the evidence store | UNEXERCISED | [Final decommission](../../terraform/foundation/README.md#final-decommission) |
+| Final decommission of the evidence store | UNEXERCISED | [Final decommission](../../terraform/foundation/README.md#final-decommission), an order only: no command-level procedure and no reviewed saved-plan form exist |
 
 ## Reproducibility gaps
 

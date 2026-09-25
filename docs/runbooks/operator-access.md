@@ -289,6 +289,8 @@ organization instance with its built-in identity store. No output is published f
 - [ ] The Identity Center organization instance is enabled, and its start URL and Region are only
   in local CLI configuration.
 - [ ] The identity for the operator setup is decided, and any root session is recorded for review.
+  No format, location or review procedure for that record is published
+  ([Not yet exercised](#not-yet-exercised), access review).
 
 **STOP if.**
 
@@ -526,7 +528,7 @@ resolved an administrative role there
 
 ### Sign in
 
-**Validation:** AWS-VALIDATED (Administrator profile); EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (ReadOnly profile) · **Published command form:** not executed as written
+**Validation:** EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (step 1, both profiles; step 2, ReadOnly profile); AWS-VALIDATED (step 2 role check and account match, Administrator profile) · **Published command form:** not executed as written
 
 **What this does.** Starts the SSO session both profiles share, through the profile the work needs,
 approved in the browser.
@@ -596,19 +598,20 @@ token and the authorization code are never recorded.
 
 | Field | Value |
 |---|---|
-| Validation status | AWS-VALIDATED (2026-09-23) for the Administrator profile; the ReadOnly profile: EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-08-08) |
+| Validation status | EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-09-23) for step 1 on the Administrator profile; AWS-VALIDATED (2026-09-23) for step 2's role check and account match on the Administrator profile; EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-08-08) for step 1 and step 2's role check and account match on the ReadOnly profile. Step 2's `UserId` check keeps the labels of [Verify the resolved identity](#verify-the-resolved-identity) |
 | Published form | not executed as written (sign-in completes in the browser, and no retained output captures the command) |
-| Evidence basis | Retained private evidence from 2026-09-23 of an expired SSO session and, minutes later, an `AWSReservedSSO_AdministratorAccess` role session in the pinned account; the sign-in between them is inferred, not captured. The 2026-09-24 records show only an account match on credentials exported from the Administrator profile, and capture no sign-in. The ReadOnly sign-in is recorded for 2026-08-08 without retained output |
+| Evidence basis | The owner's 2026-09-23 Administrator sign-in is recorded without retained output. Retained private evidence from 2026-09-23 shows an expired SSO token and cached role credential, read from the local cache without an AWS call, and minutes later an `AWSReservedSSO_AdministratorAccess` role session in the pinned account (step 2), without its `UserId`; no retained output captures the sign-in. The 2026-09-24 records show only an account match on credentials exported from the Administrator profile, and capture no sign-in. The ReadOnly sign-in is recorded for 2026-08-08 without retained output |
 | Authority | None |
 | Cost | None |
 
-**Known limitations.** The retained evidence covers the Administrator profile only. The retained
-read-only checks since 2026-08-08 also ran on the Administrator profile rather than on ReadOnly,
-whose sessions last one hour.
+**Known limitations.** The retained evidence covers step 2's role check and account match on
+the Administrator profile only; no retained output captures a sign-in on either profile. The
+retained read-only checks since 2026-08-08 also ran on the Administrator profile rather than on
+ReadOnly, whose sessions last one hour.
 
 ### Verify the resolved identity
 
-**Validation:** AWS-VALIDATED · **Published command form:** not executed as written
+**Validation:** AWS-VALIDATED (AdministratorAccess); EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (ReadOnlyAccess role check); DESIGNED-NOT-EXECUTED (ReadOnlyAccess `UserId` check) · **Published command form:** not executed as written
 
 **What this does.** Confirms which identity the CLI actually resolved before running anything
 against AWS. A profile can be pointed at the wrong account or resolve a wider role than intended,
@@ -664,22 +667,24 @@ of the permission set deliberately selected.
 
 **Evidence to keep.** The two values and the account verdict.
 
-**Next step.** Step 2 ran the account check, so continue from the Next step of
+**Next step.** If another runbook sent you here, return to the step that sent you. Step 2 ran
+the account check, so continue from the Next step of
 [Check the account before AWS commands](#check-the-account-before-aws-commands).
 
 #### Engineering notes
 
 | Field | Value |
 |---|---|
-| Validation status | AWS-VALIDATED (2026-09-23) |
-| Published form | not executed as written (the executed command was `aws sts get-caller-identity --profile cloud-platform-admin` without a projection, and its output was reduced before recording; the boolean projection is derived) |
-| Evidence basis | Retained private evidence of the 2026-09-23 certificate plan and apply: the caller was an `AWSReservedSSO_AdministratorAccess` role session in the pinned account. The `UserId` prefix and the `ReadOnlyAccess` form are recorded for 2026-08-08 without retained output |
+| Validation status | AWS-VALIDATED (2026-09-10, 2026-09-23) for the AdministratorAccess form, its `UserId` check on 2026-09-10 only; EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-08-08) for the role check on the ReadOnlyAccess form; DESIGNED-NOT-EXECUTED (never) for the `UserId` check on the ReadOnlyAccess form |
+| Published form | not executed as written (the executed command was `aws sts get-caller-identity` on the `cloud-platform-admin` profile without a projection; the 2026-09-10 output was retained in full with the account redacted, and the 2026-09-23 output was reduced before recording; the boolean projection is derived) |
+| Evidence basis | Retained private evidence of 2026-09-10: the full caller-identity response on the Administrator profile, with the account redacted, showing a `UserId` beginning `AROA` and an `AWSReservedSSO_AdministratorAccess` role session. Retained private evidence of the 2026-09-23 certificate plan and apply: the same role in the pinned account, without `UserId`. The `ReadOnlyAccess` role is recorded for 2026-08-08 without retained output, and no record gives its `UserId` |
 | Authority | None (read-only) |
 | Cost | None |
 
 **Known limitations.** The retained 2026-09-23 records carry the role name only, for
-`AdministratorAccess`, and do not record `UserId`. The `UserId` prefix and the `ReadOnlyAccess`
-variant are recorded only for 2026-08-08, without retained output.
+`AdministratorAccess`, and do not record `UserId`; the `UserId` check rests on the 2026-09-10
+record. No retained output covers the `ReadOnlyAccess` form: its role is recorded for 2026-08-08
+only, and no record gives its `UserId`.
 
 <a id="account-check-before-aws-commands"></a>
 
@@ -759,11 +764,12 @@ account_check <root-tfvars>
 
 **Evidence to keep.** The verdict line only.
 
-**Next step.** Before a long operation,
+**Next step.** If another runbook sent you here, return to the step that sent you.
+Before a long operation,
 [Check session headroom before long operations](#check-session-headroom-before-long-operations),
 then, for a long or sensitive operation,
-[Export role credentials once](#export-role-credentials-once). Otherwise continue with the work;
-Terraform commands follow [terraform-operations.md](terraform-operations.md).
+[Export role credentials once](#export-role-credentials-once). Otherwise return to the step that
+sent you here.
 
 #### Engineering notes
 
@@ -858,8 +864,9 @@ new sign-in, STOP and do not start the operation. This failure handling has neve
 
 **Evidence to keep.** The headroom line.
 
-**Next step.** For a long or sensitive operation,
-[Export role credentials once](#export-role-credentials-once); otherwise start the operation.
+**Next step.** If another runbook sent you here, return to the step that sent you. For a long or
+sensitive operation, [Export role credentials once](#export-role-credentials-once); otherwise start
+the operation.
 
 #### Engineering notes
 
@@ -952,8 +959,7 @@ umask 077
 4. In this shell, run
    [Check session headroom before long operations](#check-session-headroom-before-long-operations)
    step 3 with `expiry=$AWS_CREDENTIAL_EXPIRATION`. If it does not exit 0, `exit` this shell.
-5. Run the work in this shell; Terraform commands follow
-   [terraform-operations.md](terraform-operations.md).
+5. Run the work in this shell; Terraform commands follow terraform-operations.md.
 
 > **Warning:** Never run `set -x`, print the environment unfiltered or write these variables to a
 > file.
@@ -990,7 +996,8 @@ never their values:
 env | sed -n 's/^\([A-Za-z_][A-Za-z0-9_]*\)=.*/\1/p' | sort
 ```
 
-**Next step.** The operation this shell was prepared for, under that operation's own grant.
+**Next step.** If another runbook sent you here, return to the step that sent you. The operation
+this shell was prepared for, under that operation's own grant.
 
 #### Engineering notes
 
@@ -1151,7 +1158,7 @@ which needs its own evidence. In the reference account the key is deactivated, n
 
 ### Recover from session expiry
 
-**Validation:** AWS-VALIDATED (steps 1 and 3); DESIGNED-NOT-EXECUTED (step 2) · **Published command form:** not executed as written
+**Validation:** EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (step 1, Administrator profile); AWS-VALIDATED (step 3 role check and account match, Administrator profile); DESIGNED-NOT-EXECUTED (step 2, step 3 `UserId` check, ReadOnly profile) · **Published command form:** not executed as written
 
 **What this does.** Restores access when a command fails because the SSO session has expired or is
 missing: sign in again, replace any exported shell, and repeat the identity and account checks.
@@ -1203,16 +1210,17 @@ the credential expired while a command was running, follow
 
 | Field | Value |
 |---|---|
-| Validation status | AWS-VALIDATED (2026-09-23) for steps 1 and 3; DESIGNED-NOT-EXECUTED (never) for step 2 |
+| Validation status | EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-09-07, 2026-09-23) for step 1 on the Administrator profile; DESIGNED-NOT-EXECUTED (never) for step 2; AWS-VALIDATED (2026-09-23) for step 3's role check and account match on the Administrator profile; DESIGNED-NOT-EXECUTED (never) for step 3's `UserId` check and for steps 1 and 3 on the ReadOnly profile |
 | Published form | not executed as written (the sign-in is not captured in retained output; the retained record shows the expired session before it and a working session after it) |
-| Evidence basis | Retained private evidence from 2026-09-23 of an expired SSO token and an expired cached role credential, read from the local credential cache without an AWS call, followed minutes later by an Administrator session in the pinned account. A command failing on an expired token is recorded for 2026-09-07 without retained output |
+| Evidence basis | Retained private evidence from 2026-09-23 of an expired SSO token and an expired cached role credential, read from the local credential cache without an AWS call, followed minutes later by an Administrator session in the pinned account, without its `UserId`; the sign-in between them is recorded without retained output. A command failing on an expired token, and the sign-in after it, are recorded for 2026-09-07 without retained output |
 | Authority | None |
 | Cost | None |
 
 **Known limitations.** The retained 2026-09-23 record detected the expiry from the credential
 cache, not from a failed command. No recorded run has replaced exported credentials after a new
-sign-in (step 2, [Not yet exercised](#not-yet-exercised)). Step 3 rests on the separately
-validated checks.
+sign-in (step 2, [Not yet exercised](#not-yet-exercised)). Step 3's retained record is the
+Administrator caller identity, reduced to the role name and an account match; it does not record
+`UserId`, and no recovery has used the ReadOnly profile.
 
 <a id="credential-expiry-mid-run"></a>
 
@@ -1431,6 +1439,8 @@ run; the refusal it depends on has fired only in offline qualification of the pr
 | [Recover from a wrong account](#recover-from-a-wrong-account), part A; the account refusal it depends on was qualified only offline, in a private helper | DESIGNED-NOT-EXECUTED |
 | Finding what an arbitrary command changed in another account ([Recover from a wrong account](#recover-from-a-wrong-account), part B, step 2) | UNEXERCISED |
 | Replacing an exported shell after a new sign-in ([Recover from session expiry](#recover-from-session-expiry), step 2) | DESIGNED-NOT-EXECUTED |
+| The `UserId` check on the ReadOnly profile ([Verify the resolved identity](#verify-the-resolved-identity)); no record covers it | DESIGNED-NOT-EXECUTED |
+| Recovering with the ReadOnly profile, and the `UserId` check after a new sign-in ([Recover from session expiry](#recover-from-session-expiry), steps 1 and 3) | DESIGNED-NOT-EXECUTED |
 | Recovering from a headroom shortfall: sign in again, export again, re-measure ([Check session headroom before long operations](#check-session-headroom-before-long-operations), failure handling) | DESIGNED-NOT-EXECUTED |
 | Obtaining a new role credential while a cached one is still valid | UNEXERCISED |
 | [Recover from credential expiry mid-run](#recover-from-credential-expiry-mid-run) | DESIGNED-NOT-EXECUTED |

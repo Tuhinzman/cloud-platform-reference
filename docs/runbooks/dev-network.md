@@ -73,42 +73,52 @@ Covered elsewhere, and linked from the steps that need it:
 4. [Read back the retained network](#read-back-the-retained-network), with
    [Read back the two Secrets Manager entries](#read-back-the-two-secrets-manager-entries).
    Read-only. AWS itself, not state, matches the README.
-5. Once the datastore root is built ([dev-datastore.md](dev-datastore.md)):
+5. Once the datastore root is built (dev-datastore.md):
    [Verify the retained side with the datastore present](#verify-the-retained-side-with-the-datastore-present).
    Read-only. Tells the datastore's footprint in this VPC apart from runtime residue, and repeats
    the network read-back as its last step.
 
 Steps 3 and 4 are the last step of the build, so a first build runs them from inside step 2.
 
-To find where to start, list state with
-[Inspect state without writing it](terraform-operations.md#inspect-state-without-writing-it). If
-it lists nothing, start at step 1. If it lists addresses, skip steps 1 and 2 and start at step 3,
-which checks the listing against the 21 retained addresses. A build that stopped between its two
-stages leaves the 14 network addresses alone; no procedure resumes it, and step 3 stops on it. So
-run both stages of step 2 in one sitting.
+To find where to start, initialize the root: steps 1 to 3 of
+[Initialize a root against the state backend](terraform-operations.md#initialize-a-root-against-the-state-backend),
+with `<root>` set to `dev` (PASS: `git check-ignore` lists `backend.hcl` and `terraform.tfvars`,
+`init` reports the backend configured and Terraform initialized, and `git status` prints
+nothing). Then list state with step 1 of
+[Inspect state without writing it](terraform-operations.md#inspect-state-without-writing-it) and
+return here. If it lists nothing, start at step 1. If it lists addresses, skip steps 1 and 2 and
+start at step 3, which checks the listing against the 21 retained addresses. A build that stopped
+between its two stages leaves the 14 network addresses alone; no procedure resumes it, and step 3
+stops on it. So run both stages of step 2 in one sitting.
 
 ## Before you start
 
 - [ ] **Account and access.** A dedicated AWS account, its 12-digit ID for `allowed_account_id`,
-  and an Identity Center administrator profile for it ([operator-access.md](operator-access.md)).
+  and an Identity Center profile for it on the `AdministratorAccess` permission set, set up at
+  step 1 of the runbook index's Build order.
 - [ ] **Shell.** This page's steps run in a **profile shell**, from the directories in the table
   **Where each step runs** below: a shell with `AWS_PROFILE=<profile>` and `AWS_REGION=us-east-1`
-  exported, where `<profile>` is the administrator profile from
-  [operator-access.md](operator-access.md). The
-  [account check](operator-access.md#check-the-account-before-aws-commands) has confirmed that the
-  shell is on the project account. Its AWS CLI commands therefore name no profile: this page is an
-  exception to the rule in [operator-access.md](operator-access.md#before-you-start) that no
-  command relies on an inherited `AWS_PROFILE`. Commands taken from
-  [dev-datastore.md](dev-datastore.md), such as step 4 of the zone check, keep their
-  `--profile <profile>`, which names the same profile.
+  exported, where `<profile>` is the `AdministratorAccess` profile. The account check confirms
+  that the shell is on the project account: run steps 1 and 2 of
+  [Check the account before AWS commands](operator-access.md#check-the-account-before-aws-commands)
+  in it, with `<root-tfvars>` set to the dev root's `<inputs-dir>/terraform.tfvars`, and continue
+  only on `ACCOUNT_MATCH=PASS`; then return to this list. Its AWS CLI commands therefore name no
+  profile: this page is an exception to the rule in
+  [operator-access.md](operator-access.md#before-you-start) that no command relies on an
+  inherited `AWS_PROFILE`. Commands taken from [dev-datastore.md](dev-datastore.md), such as
+  step 4 of the zone check, keep their `--profile <profile>`, which names the same profile.
 - [ ] **Exported shell.** The budget read and the price re-check that the build requires run in
-  the [exported shell](operator-access.md#export-role-credentials-once) of
-  [cost-and-residue.md](cost-and-residue.md): a clean shell that holds one role credential and no
-  profile. No published rule requires one for this page's own steps. If you run one of them in an
-  exported shell, as [terraform-operations.md](terraform-operations.md) does for a long or
-  sensitive operation, leave `AWS_PROFILE` unset there, drop `AWS_PROFILE=<profile>` from the
-  Terraform commands and `--profile <profile>` from any command that carries it, and define the
-  target arrays and `VPC_ID` inside it.
+  an exported shell: a clean shell that holds one role credential and no profile. When
+  [Build only the retained baseline](#build-only-the-retained-baseline) calls for them, prepare it
+  with steps 1 to 4 of [Export role credentials once](operator-access.md#export-role-credentials-once)
+  (PASS: `ACCOUNT_MATCH=PASS` with no HOLD line, and the headroom line with exit 0). Then return
+  to that procedure's **Before you start** and run the two reads in the shell, as step 5 of the
+  export procedure; exit the shell afterwards, as its step 6. No published rule requires one for
+  this page's own steps. If you run one of them in an exported shell, as
+  [terraform-operations.md](terraform-operations.md) does for a long or sensitive operation, leave
+  `AWS_PROFILE` unset there, drop `AWS_PROFILE=<profile>` from the Terraform commands and
+  `--profile <profile>` from any command that carries it, and define the target arrays and
+  `VPC_ID` inside it.
 - [ ] **State backend.** The name of the state bucket the bootstrap root created, in an untracked
   `backend.hcl`.
 - [ ] **Root inputs.** An untracked `terraform.tfvars` with `allowed_account_id` and
@@ -124,20 +134,21 @@ run both stages of step 2 in one sitting.
   provider the committed lock file pins (6.58.0); the AWS CLI v2; and `jq`, `git`, `unzip` and
   `shasum` for the saved-plan review and binding in
   [terraform-operations.md](terraform-operations.md).
-- [ ] **Private working location.** A new `<private-dir>` for each plan, as defined in
-  [terraform-operations.md](terraform-operations.md), for saved plans, plan JSON, plan text and
-  read-back output. They carry account and resource identifiers, and saved plans hold
-  `operator_cidr` in clear text.
+- [ ] **Private working location.** A new `<private-dir>` for each plan, outside every Git
+  working tree and created under `umask 077`, for saved plans, plan JSON, plan text and read-back
+  output. They carry account and resource identifiers, and saved plans hold `operator_cidr` in
+  clear text.
 - [ ] **Approver.** Someone with authority over the account who reviews and approves each saved
   plan before it is applied.
 - [ ] **Cost controls.** The budget and its alerts in place before the first billable resource,
-  and a current Secrets Manager price ([cost-and-residue.md](cost-and-residue.md)).
+  and a current Secrets Manager price, both read as the **Before you start** of
+  [Build only the retained baseline](#build-only-the-retained-baseline) lists.
 
 **Where each step runs.**
 
 | Work | Shell | Directory |
 |---|---|---|
-| The budget read-back and the price re-check before the build | The exported shell of [cost-and-residue.md](cost-and-residue.md): no profile, and no command names one | As [cost-and-residue.md](cost-and-residue.md) describes |
+| The budget read-back and the price re-check before the build | The exported shell (**Exported shell** above): no profile, and no command names one | Any; give `<root-tfvars>` as an absolute path |
 | Terraform: initialize, list state, plan, review, bind and apply, as in [terraform-operations.md](terraform-operations.md) | Profile shell. The commands keep their `AWS_PROFILE=<profile>` prefix, which names the same profile. The build's target arrays are defined in this same shell | `<work-dir>/terraform/dev`, the working tree that [Initialize a root against the state backend](terraform-operations.md#initialize-a-root-against-the-state-backend) creates, except where a step there names another directory |
 | AWS CLI: the zone check, the read-backs and the check with the datastore present | Profile shell. `VPC_ID` stays set only in the shell that resolved it | Any: these commands read no local file |
 
@@ -161,8 +172,9 @@ datastore reuses the two private subnets, so the zones chosen here are its zones
 
 **Before you start.**
 
-- [ ] A session on the project account, confirmed with the
-  [account check](operator-access.md#check-the-account-before-aws-commands).
+- [ ] A session on the project account, confirmed with the account check as the **Shell** item of
+  [Before you start](#before-you-start) describes; continue only on `ACCOUNT_MATCH=PASS`, then
+  return to this list.
 - [ ] The network has not been built yet. After the first apply, a zone change replaces subnets
   (see [Not yet exercised](#not-yet-exercised)).
 
@@ -188,12 +200,8 @@ datastore reuses the two private subnets, so the zones chosen here are its zones
      --query 'sort(InstanceTypeOfferings[].Location)' --output text
    ```
 
-4. Check that the datastore engine can be ordered in both zone names, with the engine check of
-   [Run the pre-apply gate](dev-datastore.md#run-the-pre-apply-gate) in
-   [dev-datastore.md](dev-datastore.md). Run only this command here; the gate's other
-   prerequisites, such as a bound saved plan, belong to the datastore apply. It is the gate's
-   command as written, so it names the profile this shell already exports; inside an exported
-   shell, drop `--profile <profile>`:
+4. Check that the datastore engine can be ordered in both zone names. The command names the
+   profile this shell already exports; inside an exported shell, drop `--profile <profile>`:
 
    ```
    aws rds describe-orderable-db-instance-options --profile <profile> --region us-east-1 \
@@ -228,7 +236,8 @@ your build. This path has never been exercised.
 **Evidence to keep.** The name-to-ID mapping. Later read-backs compare the subnets' zone IDs
 against it.
 
-**Next step.** [Build only the retained baseline](#build-only-the-retained-baseline).
+**Next step.** If another runbook sent you here, return to the step that sent you.
+[Build only the retained baseline](#build-only-the-retained-baseline).
 
 #### Engineering notes
 
@@ -240,9 +249,13 @@ against it.
 | Authority | none (read-only) |
 | Cost | none |
 
+Step 4 is the engine check of [Run the pre-apply gate](dev-datastore.md#run-the-pre-apply-gate),
+step 2, run on its own and as written. The gate's other prerequisites, such as a bound saved plan,
+belong to the datastore apply.
+
 ### Build only the retained baseline
 
-**Validation:** COMPOSED FROM AWS-VALIDATED STEPS; END-TO-END COMMAND FORM NOT YET EXERCISED; targeted plans and applies DESIGNED-NOT-EXECUTED; part of step 6 EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (Engineering notes) · **Published command form:** not executed as written
+**Validation:** COMPOSED FROM AWS-VALIDATED STEPS; END-TO-END COMMAND FORM NOT YET EXERCISED; targeted plans and applies and the alerting check DESIGNED-NOT-EXECUTED; part of step 6 EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (Engineering notes) · **Published command form:** not executed as written
 
 **What this does.** Creates the 21 retained addresses and nothing else. The root has no switch
 that builds only them, so the build is two reviewed, targeted stages: the network (14
@@ -258,24 +271,48 @@ empty.
 
 **Before you start.**
 
-- [ ] The bootstrap root has created the state bucket
-  ([Build the state backend and migrate into it](terraform-operations.md#build-the-state-backend-and-migrate-into-it)).
-- [ ] The root passes the [static checks](terraform-operations.md#run-the-static-checks) and is
-  [initialized against the backend](terraform-operations.md#initialize-a-root-against-the-state-backend)
-  at the reviewed commit.
-- [ ] No state exists yet under `dev/terraform.tfstate`:
+- [ ] The bootstrap root has created the state bucket. Nothing runs here:
+  [Build the state backend and migrate into it](terraform-operations.md#build-the-state-backend-and-migrate-into-it)
+  runs once per project, at step 3 of the runbook index's Build order (PASS: state lists exactly
+  the five bootstrap resources, and Confirm convergence returns 0). If it has not passed, run it
+  first, then return to this list.
+- [ ] The root passes [Run the static checks](terraform-operations.md#run-the-static-checks),
+  steps 1 to 3, on `terraform/dev` at `<commit>`; for a first build, `<main-commit>` is that same
+  commit. PASS: `fmt`, `validate`, `tflint` and every `trivy config` exit 0, `git status` prints
+  nothing, and `diff` prints no line beginning `>`. Then return to this list.
+- [ ] The root is
+  [initialized against the backend](terraform-operations.md#initialize-a-root-against-the-state-backend),
+  steps 1 to 3 with `<root>` set to `dev`, at the reviewed commit. PASS: `git check-ignore` lists
+  `backend.hcl` and `terraform.tfvars`, `init` reports the backend configured and Terraform
+  initialized, and `git status` prints nothing. Then return to this list.
+- [ ] No state exists yet under `dev/terraform.tfstate`: run step 1 of
   [Inspect state without writing it](terraform-operations.md#inspect-state-without-writing-it)
-  lists nothing. For an existing state, use
+  (PASS: it lists nothing, the expected set for a root never applied), then return to this list.
+  This build is therefore the root's first apply: if the binding check's state read in step 4
+  prints nothing, the network stage stops before its apply, and no published procedure resolves
+  that ([Bind the saved plan](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state),
+  **If it fails**). For an existing state, use
   [Confirm the retained and runtime split](#confirm-the-retained-and-runtime-split) instead.
 - [ ] [Check the zone mapping before the first build](#check-the-zone-mapping-before-the-first-build)
   has passed.
 - [ ] The budget and its alerts are in place, which
   [ADR-0013](../decisions/0013-define-operations-and-cost-guardrails.md) requires before the
-  first billable resource, and Secrets Manager pricing has been re-checked:
-  [Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states)
-  and [Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work).
-  Both run in the exported shell of [cost-and-residue.md](cost-and-residue.md), not in this page's
-  profile shell.
+  first billable resource, and Secrets Manager pricing has been re-checked. Run both reads in the
+  exported shell that **Exported shell** in this page's [Before you start](#before-you-start)
+  prepares, not in this page's profile shell:
+  [Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states),
+  steps 1 to 6 (PASS: one `cloud-platform-reference` row with `COST`, `MONTHLY`, `200.0` and
+  `USD`, and the five notifications all `OK`, each with at least one subscriber; on an `ALARM`,
+  follow its **Next step**); then
+  [Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work),
+  steps 1 to 3, with only the `price AWSSecretsManager` line of step 2 (PASS: its values equal
+  the price table, 0.40 USD per secret-month for the secret). Then exit that shell and return to
+  this list.
+- [ ] The campaign's evidence set opened before step 2: steps 1 and 2 of
+  [Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set) (PASS: one
+  campaign directory under the evidence root, mode 0700), with your own redaction filter. The whole
+  build, both stages and the step 6 checks, is one campaign, closed after step 6. Then return to
+  this list.
 - [ ] Inputs: `backend.hcl`; `terraform.tfvars` with `allowed_account_id` and `operator_cidr` and
   the alerting inputs unset; a new `<private-dir>` for each stage's plan.
 - [ ] Time to run both stages in one sitting: the approver available for both saved plans, and a
@@ -287,6 +324,8 @@ empty.
   A build that stops after the network stage leaves state with the 14 network addresses alone; no
   procedure resumes it, and
   [Confirm the retained and runtime split](#confirm-the-retained-and-runtime-split) stops on it.
+  Run steps 1 to 3 of the headroom check (PASS: the headroom line, exit 0), then return to this
+  list.
 
 **Safety and authority.** Mutating, billable, owner-authorized. The account owner explicitly
 approves each reviewed saved plan before it is applied. The two Secrets Manager entries cost about
@@ -299,8 +338,7 @@ approves each reviewed saved plan before it is applied. The two Secrets Manager 
 **Steps.**
 
 1. Define the two target lists. An array keeps every target in the command; a broken line
-   continuation once dropped the targets from a plan of this root
-   ([terraform-operations.md](terraform-operations.md)).
+   continuation once dropped the targets from a plan of this root (Engineering notes).
 
    ```
    network_targets=(
@@ -327,9 +365,11 @@ approves each reviewed saved plan before it is applied. The two Secrets Manager 
    exported shell included: an undefined array expands to nothing, and the plan then covers the
    whole root.
 
-2. Plan the network stage with the plan command of
-   [Plan to a saved file](terraform-operations.md#plan-to-a-saved-file), with
-   `"${network_targets[@]}"` appended on the same line:
+2. Record the reviewed list first, as the campaign record's **Expected** field: one `create` line
+   for each network target. Then plan the network stage with step 1 of
+   [Plan to a saved file](terraform-operations.md#plan-to-a-saved-file), once every item of its
+   **Before you start** holds, debug logging off included, with `"${network_targets[@]}"`
+   appended on the same line:
 
    ```
    AWS_PROFILE=<profile> terraform plan -lock=false -input=false -no-color -detailed-exitcode -out=<plan-file> "${network_targets[@]}"
@@ -340,24 +380,34 @@ approves each reviewed saved plan before it is applied. The two Secrets Manager 
    > `Plan: 14 to add, 0 to change, 0 to destroy.` and Terraform's warning that resource
    > targeting is in effect.
 
-3. Review the saved plan as [Review the saved plan](terraform-operations.md#review-the-saved-plan)
-   describes, and confirm that the alerting inputs are off. This prints two booleans and no input
-   value:
+   PASS: exit 2 and the saved plan at `<plan-file>`. Then continue at step 3.
+
+3. Run steps 1 to 5 of [Review the saved plan](terraform-operations.md#review-the-saved-plan)
+   against the reviewed list from step 2. Then confirm that the alerting inputs are off. This
+   prints two booleans and no input value:
 
    ```
    jq -r '.variables | "alerting_campaign_enabled=\(.alerting_campaign_enabled.value) alerting_email_subscription_enabled=\(.alerting_email_subscription_enabled.value)"' <plan-json>
    ```
 
    This targeted plan shows `complete` as `false`. That is expected here, and it is the one
-   exception to the review's criteria; every other criterion applies.
+   exception to the review's criteria; every other criterion applies. PASS: `applyable` `true`
+   and `errored` `false` on the validated Terraform version, exactly the 14 network `create`
+   lines, no drift line and no output change, and both alerting variables `false`. Then continue
+   at step 4.
 
-4. [Bind the plan](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state), have it
-   approved, and apply exactly that plan as
-   [Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan) describes.
+4. Run steps 1 and 2 of
+   [Bind the plan](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state) now, have
+   the plan approved, and run its step 3 immediately before the apply. PASS: `same` for every
+   file and the lock file with no `diff` output, and in step 3 the recorded hash and the plan's
+   serial and lineage; on the network stage, the root's first apply, steps 1 and 3 both show
+   serial 0 and no lineage. Then apply exactly that plan with steps 1 and 2 of
+   [Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan). Its
+   **Before you start** is already met by this procedure's **Before you start** and steps 2 to 4,
+   and its step 3, the read-back, is step 6 here.
 
    After this apply, the check is the state listing in step 2 of that procedure: exactly the 14
-   network addresses. Do not go on to its next step,
-   [Confirm convergence](terraform-operations.md#confirm-convergence): while no runtime exists,
+   network addresses. Do not go on to its next step, Confirm convergence: while no runtime exists,
    an untargeted plan here shows the runtime still to add and exits 2. Do not run
    [Confirm the retained and runtime split](#confirm-the-retained-and-runtime-split) yet either:
    it expects all 21 addresses and stops on the 14. Step 6 runs it and the read-backs after both
@@ -379,7 +429,12 @@ approves each reviewed saved plan before it is applied. The two Secrets Manager 
    Confirm the retained and runtime split is the check for the whole build.
 6. Run [Confirm the retained and runtime split](#confirm-the-retained-and-runtime-split),
    [Read back the retained network](#read-back-the-retained-network) and
-   [Read back the two Secrets Manager entries](#read-back-the-two-secrets-manager-entries).
+   [Read back the two Secrets Manager entries](#read-back-the-two-secrets-manager-entries). Then
+   close the campaign: steps 4 to 7 of the [Normal path](evidence-handling.md#normal-path) of
+   evidence-handling.md (PASS: every manifest entry reports `OK`, the set holds no file the
+   manifest does not list, and the manifest's full SHA-256 is in the private record outside the
+   set). Then return here for **Expected result** and the **Next step**; the export steps that
+   follow in that path run only around a teardown.
 
 **Expected result.**
 
@@ -395,9 +450,8 @@ approves each reviewed saved plan before it is applied. The two Secrets Manager 
 - Step 5: `Plan: 7 to add, 0 to change, 0 to destroy.`, with seven `create` lines and the same
   checks.
 - Each apply reports the same counts as its plan.
-- After the network apply, the state listing in step 2 of
-  [Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan) holds
-  exactly the 14 network addresses. After the second apply, state holds the 21 that
+- After the network apply, the state listing taken in step 4 holds exactly the 14 network
+  addresses. After the second apply, state holds the 21 that
   [Confirm the retained and runtime split](#confirm-the-retained-and-runtime-split) lists.
 
 **PASS when.**
@@ -414,8 +468,10 @@ approves each reviewed saved plan before it is applied. The two Secrets Manager 
 - A listing with any address that stage did not target, or any action other than `create`.
 - Any runtime or alerting-campaign address in either plan, or either alerting variable `true`.
 - A plan that fails the provider's account check, or a session on another account.
-- A state lock error. Follow
-  [Handle a held state lock](terraform-operations.md#handle-a-held-state-lock).
+- A state lock error. The plans on this page run with `-lock=false`, so the error comes from an
+  apply, and that apply has failed: handle it as **Failed or interrupted apply** under
+  **If it fails**, not by going to
+  [Handle a held state lock](terraform-operations.md#handle-a-held-state-lock) first.
 - An apply that errors or is interrupted.
 - The binding check's state read prints nothing before the first stage's apply. On a root never
   applied, what that read prints has not been recorded, so an empty result is a mismatch no
@@ -426,10 +482,20 @@ approves each reviewed saved plan before it is applied. The two Secrets Manager 
 - **Wrong account.** Follow
   [Recover from a wrong account](operator-access.md#recover-from-a-wrong-account): part A when no
   mutating command has run, part B when a mutating command already ran against another account.
+  PASS: its part A, step 4, both identity values `True` and `ACCOUNT_MATCH=PASS`; if that fails,
+  work stays stopped as that procedure says. Then return to step 1 of this procedure, never to
+  the plan command that stopped, even in the same shell: the recovery exits any exported shell,
+  and a plan in a shell without the target lists covers the whole root. In the profile shell that
+  **Shell** in this page's [Before you start](#before-you-start) prepares, account check included,
+  and from `<work-dir>/terraform/dev`, define both target lists again with step 1. Then continue
+  at step 2 if the network stage has not been applied, or at step 5 if its apply completed and the
+  step 4 state listing showed exactly the 14 network addresses, with a new `<private-dir>` for the
+  new plan. Any other state is handled as **Failed or interrupted apply** below.
 - **Failed or interrupted apply.** Stop and inspect read-only as
   [Stop after a failed or interrupted apply](terraform-operations.md#stop-after-a-failed-or-interrupted-apply)
-  describes, before any further apply or destroy. Recovering a partial apply of this root has not
-  been exercised.
+  describes, before any further apply or destroy. This page's path ends at that procedure's
+  **Next step**, the owner's reviewed recovery decision, which also decides any lock release.
+  Recovering a partial apply of this root has not been exercised.
 - **A secret name is already in use.** Either a secret of that name exists outside this state or
   one is scheduled for deletion. Both are a STOP: read its metadata with
   [Read back the two Secrets Manager entries](#read-back-the-two-secrets-manager-entries), where a
@@ -456,11 +522,14 @@ values are needed before a runtime window uses them.
 
 | Field | Value |
 |---|---|
-| Validation status | COMPOSED FROM AWS-VALIDATED STEPS; END-TO-END COMMAND FORM NOT YET EXERCISED (end to end: never), except these parts: DESIGNED-NOT-EXECUTED (never) for the plans and applies with the two target lists and for the zone-mapping precondition; for step 6's network read-back, EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-08-10) for the checks that procedure lists and DESIGNED-NOT-EXECUTED (never) for the rest |
+| Validation status | COMPOSED FROM AWS-VALIDATED STEPS; END-TO-END COMMAND FORM NOT YET EXERCISED (end to end: never), except these parts: DESIGNED-NOT-EXECUTED (never) for the plans and applies with the two target lists, for the alerting check's `jq` form and for the zone-mapping precondition; for step 6's network read-back, EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-08-10) for the checks that procedure lists and DESIGNED-NOT-EXECUTED (never) for the rest |
 | Published form | not executed as written (the two target lists are derived from how the retained set was first created and from the recorded 21-address set; the plan, review, binding and apply forms are those of [terraform-operations.md](terraform-operations.md); this sequence has never run) |
-| Evidence basis | AWS-validated steps it composes, as recorded where they are published: initializing a root, planning to a saved file, reviewing the saved plan, binding it to its hash and to state, and applying it ([terraform-operations.md](terraform-operations.md)); [Confirm the retained and runtime split](#confirm-the-retained-and-runtime-split) and [Read back the two Secrets Manager entries](#read-back-the-two-secrets-manager-entries). Not AWS-validated: [Read back the retained network](#read-back-the-retained-network) (recorded only), [Check the zone mapping before the first build](#check-the-zone-mapping-before-the-first-build) (never run) and saved plans with these target lists (never run). History of the set, from commits `bf8dfd5` and `df05255` (network) and `5cf12a7`, `3485b34` and `d5effce` (identity, secret and configuration resources) on public main: the network was created by one apply of 14 resources on 2026-08-09 or 2026-08-10 (the apply's time was not recorded; its S3 endpoint was created at 00:00 on 2026-08-10), before the root declared any runtime, and then received its `Name` tags in place; the identity, secret and configuration resources were created by three targeted applies between 2026-08-12 and 2026-08-17, against a root that already declared the runtime. Those executions are EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-08-09 to 2026-08-17). The resulting state, 21 addresses with an ordinary plan of 17 to add, is covered by retained private evidence of 2026-09-22 |
+| Evidence basis | AWS-validated steps it composes, as recorded where they are published: initializing a root, planning to a saved file, reviewing the saved plan, binding it to its hash and to state, and applying it ([terraform-operations.md](terraform-operations.md)); [Confirm the retained and runtime split](#confirm-the-retained-and-runtime-split) and [Read back the two Secrets Manager entries](#read-back-the-two-secrets-manager-entries). Not AWS-validated: [Read back the retained network](#read-back-the-retained-network) (recorded only), [Check the zone mapping before the first build](#check-the-zone-mapping-before-the-first-build) (never run), saved plans with these target lists (never run) and the alerting check's `jq` form (never run). History of the set, from commits `bf8dfd5` and `df05255` (network) and `5cf12a7`, `3485b34` and `d5effce` (identity, secret and configuration resources) on public main: the network was created by one apply of 14 resources on 2026-08-09 or 2026-08-10 (the apply's time was not recorded; its S3 endpoint was created at 00:00 on 2026-08-10), before the root declared any runtime, and then received its `Name` tags in place; the identity, secret and configuration resources were created by three targeted applies between 2026-08-12 and 2026-08-17, against a root that already declared the runtime. Those executions are EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-08-09 to 2026-08-17). The resulting state, 21 addresses with an ordinary plan of 17 to add, is covered by retained private evidence of 2026-09-22 |
 | Authority | Explicit approval of each reviewed saved plan by the account owner before it is applied |
 | Cost | About 0.80 USD a month for the two Secrets Manager entries (0.40 USD per secret-month, the us-east-1 list price last read from the AWS Price List on 2026-09-24), prorated from creation. The network, the parameter and the IAM resources carry no charge |
+
+The broken line continuation that step 1 guards against is recorded under **Known limitations**
+in [Stop after a failed or interrupted apply](terraform-operations.md#stop-after-a-failed-or-interrupted-apply).
 
 **Known limitations.**
 
@@ -496,12 +565,14 @@ The **runtime set** is 17 addresses: 10 created only when `worker_capacity_enabl
 
 - [ ] The root is
   [initialized against the backend](terraform-operations.md#initialize-a-root-against-the-state-backend),
-  with the same inputs as the build, the alerting inputs unset and `worker_capacity_enabled` unset
-  or `true`, its default.
-- [ ] The account is confirmed first with the
-  [account check](operator-access.md#check-the-account-before-aws-commands).
-  `terraform state list` reads only the backend, so the provider's account check does not guard
-  it.
+  steps 1 to 3, with the same inputs as the build, the alerting inputs unset and
+  `worker_capacity_enabled` unset or `true`, its default. Arriving from step 6 of
+  [Build only the retained baseline](#build-only-the-retained-baseline), it already is. Then
+  return to this list.
+- [ ] The account is confirmed first with the account check, as the **Shell** item of
+  [Before you start](#before-you-start) describes; continue only on `ACCOUNT_MATCH=PASS`, then
+  return to this list. `terraform state list` reads only the backend, so the provider's account
+  check does not guard it.
 
 **Safety and authority.** Read-only. The plan writes no state and is never applied. No approval
 and no cost.
@@ -518,21 +589,24 @@ and no cost.
    terraform state list
    ```
 
-2. Plan to a saved file as in [Plan to a saved file](terraform-operations.md#plan-to-a-saved-file),
-   in a new `<private-dir>`, without targets, following its rule for plans that are only read
-   ([Plan without taking the state lock](terraform-operations.md#plan-without-taking-the-state-lock)):
-   leave out `-lock=false` unless no other writer can be active on the root. This plan is never
-   applied. Name `<plan-file>` so that it cannot be mistaken for a plan to apply, for example
-   `<private-dir>/never-apply.tfplan`.
+2. Plan with step 1 of
+   [Plan to a saved file](terraform-operations.md#plan-to-a-saved-file), in a new `<private-dir>`,
+   without targets, following the rule of Plan without taking the state lock for plans that are
+   only read: leave out `-lock=false` unless no other writer can be active on the root. This plan
+   is never applied. Name `<plan-file>` so that it cannot be mistaken for a plan to apply, for
+   example `<private-dir>/never-apply.tfplan`.
 
    ```
    AWS_PROFILE=<profile> terraform plan -lock=false -input=false -no-color -detailed-exitcode -out=<plan-file>
    echo $?
    ```
 
-3. Review it with the plan text, completeness, action and drift steps of
-   [Review the saved plan](terraform-operations.md#review-the-saved-plan), and run the alerting
-   check:
+   PASS: exit 2 and the saved plan at `<plan-file>`. Then continue at step 3.
+
+3. Run steps 1 to 4 of [Review the saved plan](terraform-operations.md#review-the-saved-plan);
+   the runtime table under **Expected result** is the reviewed list, each address a `create`.
+   PASS: `applyable` and `complete` `true`, `errored` `false`, exactly the 17 `create` lines, and
+   an empty drift list. Then run the alerting check here:
 
    ```
    jq -r '.variables | "alerting_campaign_enabled=\(.alerting_campaign_enabled.value) alerting_email_subscription_enabled=\(.alerting_email_subscription_enabled.value)"' <plan-json>
@@ -635,8 +709,9 @@ gateway, the route tables and the S3 gateway endpoint.
 
 **Before you start.**
 
-- [ ] A session on the project account, confirmed with the
-  [account check](operator-access.md#check-the-account-before-aws-commands).
+- [ ] A session on the project account, confirmed with the account check as the **Shell** item of
+  [Before you start](#before-you-start) describes; continue only on `ACCOUNT_MATCH=PASS`, then
+  return to this list.
 - [ ] No runtime window open: during a window the private route table also carries the NAT route.
 
 **Safety and authority.** Read-only. No approval and no cost.
@@ -707,8 +782,12 @@ gateway, the route tables and the S3 gateway endpoint.
 - Any other value that differs from the table.
 
 **If it fails.** A difference from the README is a change made outside Terraform. Record it and
-stop; reconciling it follows [terraform-operations.md](terraform-operations.md) under its own
-approval.
+stop. Only a difference whose cause is an explained class of
+[Reconcile explained state-only drift](terraform-operations.md#reconcile-explained-state-only-drift)
+has a published path, which records it in state under its own approval and changes nothing in AWS;
+on this root that is the route-table drift. For any other difference no procedure exists, and work
+stays stopped until a reviewed decision is taken under explicit approval
+([When to stop](README.md#when-to-stop)).
 
 **Evidence to keep.** The command output, privately; it carries resource identifiers.
 
@@ -898,8 +977,9 @@ with the datastore runbook, and repeats the network read-back.
 the datastore interface, so later runs can assert them. The first run confirms the census
 classification or corrects it in [cost-and-residue.md](cost-and-residue.md).
 
-**Next step.** None in this runbook. The first run of this procedure is due at the next
-retained-side check or at the teardown of the next runtime window.
+**Next step.** If another runbook sent you here, return to the step that sent you. None in this
+runbook. The first run of this procedure is due at the next retained-side check or at the
+teardown of the next runtime window.
 
 #### Engineering notes
 
@@ -924,7 +1004,7 @@ The labels are those defined in the [runbook index](README.md#validation-labels)
 |---|---|---|
 | [Check the zone mapping before the first build](#check-the-zone-mapping-before-the-first-build) | DESIGNED-NOT-EXECUTED | The procedure above. The reference account's zone IDs were read back only after the build, and the node-type check was recorded before the first runtime apply without a command |
 | [Verify the retained side with the datastore present](#verify-the-retained-side-with-the-datastore-present) | DESIGNED-NOT-EXECUTED | The procedure above |
-| [Build only the retained baseline](#build-only-the-retained-baseline): the plans and applies with the two target lists | DESIGNED-NOT-EXECUTED | The procedure above. Neither stage has run with these target lists, and the sequence has never run end to end |
+| [Build only the retained baseline](#build-only-the-retained-baseline): the plans and applies with the two target lists, and the alerting check's `jq` form | DESIGNED-NOT-EXECUTED | The procedure above. Neither stage has run with these target lists, the alerting check has not run in this form, and the sequence has never run end to end |
 | [Read back the retained network](#read-back-the-retained-network): the VPC DNS attributes, the internet gateway's attachment state and the main route table | DESIGNED-NOT-EXECUTED | The queries in that procedure. No record shows them read |
 | AWS read-back of the Parameter Store entry, the two Pod Identity roles and their inline policies | UNEXERCISED | Their trust, policy scope and tags were read back when they were created, between 2026-08-12 and 2026-08-17 (EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE). Retained private evidence of 2026-09-10 holds only a parameter listing and the role names. No read-back procedure is published |
 | Recover from a partial apply of this root | UNEXERCISED | A partial runtime apply was recovered once, on 2026-08-10, for an earlier shape of the root whose retained set was the 14 network addresses, with no secrets or identities (EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE): its commands were not retained and no complete orphan scan was claimed. Recovering today's root while preserving its 21 retained addresses, including both Secrets Manager entries, has not been exercised. Read-only inspection after an interrupted apply is in [terraform-operations.md](terraform-operations.md) |

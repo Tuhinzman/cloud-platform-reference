@@ -21,8 +21,14 @@ The dev root's network must already exist. The master container must hold its va
 root was therefore built in order: the network boundary and the two containers were applied
 before `database.tf` existed, the master value was then placed out of band, and the instance
 was applied last. A build from nothing in one checkout has not been exercised; it needs the
-same order, for example by applying the network and container resources with `-target` before
-the first full plan.
+same order. The published form is the
+[Normal path](../../docs/runbooks/dev-datastore.md#normal-path) of dev-datastore.md, whose
+Stage 1 plans commit `aeb1622` as a reviewed saved plan. Applying the network and container
+resources with `-target` from the current checkout is an alternative that has never run; it too
+would run only as a reviewed saved plan. From public material that path stops after Stage 1,
+because the placement tool, the secret-absence proof tool and the Stage 2 apply's hang-up
+protection are not published
+([Stopping after Stage 1](../../docs/runbooks/dev-datastore.md#stopping-after-stage-1)).
 
 ## What this root does not create
 

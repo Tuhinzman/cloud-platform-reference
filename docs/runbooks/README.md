@@ -45,8 +45,12 @@ These are outside the suite:
   retained baseline is what the Dev network root keeps in AWS between windows. The windows that
   ran, their teardown and their residual checks are summarized in
   [Runtime Validation](../validation/runtime-validation.md).
+- Creating, operating and tearing down a runtime window has no published procedure, so public
+  reproduction stops before README step 5, which needs a running cluster
+  ([Known reproducibility gaps](#known-reproducibility-gaps)).
 - Cluster bootstrap and GitOps reconciliation, README step 5:
-  [GitOps Delivery](../implementation/gitops-delivery.md).
+  [GitOps Delivery](../implementation/gitops-delivery.md). Mirroring the platform images it needs
+  has no published procedure ([Known reproducibility gaps](#known-reproducibility-gaps)).
 - Workload build and publication, README step 6:
   [GitOps Delivery](../implementation/gitops-delivery.md#1-build-once-gitlab-ci-to-an-immutable-digest)
   and the workload repository's pipelines.
@@ -237,22 +241,28 @@ why). The build ends at a built datastore, not a running cluster. Before step 1,
 [What these runbooks are](#scope) of what you supply or decide yourself: without it, the step it
 names stops.
 
-1. **Operator access**, once per workstation and operator:
+1. **Operator access**, once per workstation and operator. First create the file the account
+   check reads: copy the tracked `terraform/bootstrap/terraform.tfvars.example` to
+   `terraform.tfvars` in the bootstrap root's private `<inputs-dir>`
+   ([terraform-operations.md](terraform-operations.md#before-you-start)), set
+   `allowed_account_id` to the project account's ID, and give that file's path as
+   `<root-tfvars>`. The rest of the file is needed from step 3. Every root pins the same account,
+   so this file also serves the account check for work that targets no root, such as sign-in and
+   the step 2 read-backs. Then run, in order,
    [Prepare the workstation toolchain](operator-access.md#prepare-the-workstation-toolchain),
    [Enable Organizations and Identity Center](operator-access.md#enable-organizations-and-identity-center)
    (a manual prerequisite, never exercised in this project),
    [Set up an operator in Identity Center](operator-access.md#set-up-an-operator-in-identity-center)
-   and [Configure the local CLI profiles](operator-access.md#configure-the-local-cli-profiles).
-   Before the first sign-in, create the file the account check reads: copy the tracked
-   `terraform/bootstrap/terraform.tfvars.example` to `terraform.tfvars` in the bootstrap root's
-   private `<inputs-dir>` ([terraform-operations.md](terraform-operations.md#before-you-start)),
-   set `allowed_account_id` to the project account's ID, and give that file's path as
-   `<root-tfvars>`. The rest of the file is needed from step 3. Every root pins the same account,
-   so this file also serves the account check for work that targets no root, such as sign-in and
-   the step 2 read-backs.
+   and [Configure the local CLI profiles](operator-access.md#configure-the-local-cli-profiles),
+   whose step 2 runs the first account check against that file. When each has met its
+   **PASS when**, return here.
    Before AWS work after that: [Sign in](operator-access.md#sign-in),
    [Verify the resolved identity](operator-access.md#verify-the-resolved-identity) and
    [Check the account before AWS commands](operator-access.md#check-the-account-before-aws-commands).
+   PASS: each linked procedure's **PASS when** holds; in particular the toolchain reports Terraform
+   v1.15.5 after its signature and hash checks, and on the profile the next work uses the identity
+   check prints `True` twice and the account check prints `ACCOUNT_MATCH=PASS`. Then continue at
+   step 2.
 2. **Cost controls, before the first billable resource.** Confirm the budget and its alerts
    ([Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states))
    and the six active cost-allocation tags
@@ -260,6 +270,9 @@ names stops.
    Neither the budget nor the tags have a published creation procedure. Before each later billable
    change, read the budget back again and
    [re-check the prices](cost-and-residue.md#re-check-prices-before-billable-work) the change bills.
+   PASS: one budget `cloud-platform-reference` of `200.0` `USD` with its five notifications, each
+   `OK` and each with at least one subscriber, and the `UserDefined` cost-allocation keys exactly
+   the six, each `Active`. Then continue at step 3.
    > **Warning:** On a new account the tag read-back passes only if resources carrying the six keys
    > already exist, because AWS lists a key for activation only after a resource carries it. No
    > order for a new account is published. Until the owner decides one, the read-back's STOP holds,
@@ -267,7 +280,13 @@ names stops.
    > ([Background prerequisites](cost-and-residue.md#background-prerequisites)).
 3. **README step 1, the state backend.**
    [Build the state backend and migrate into it](terraform-operations.md#build-the-state-backend-and-migrate-into-it):
-   Stage 1 on local state, then the migration, each under its own approval.
+   Stage 1 on local state, then the migration, each under its own approval. The bucket is the
+   first billable resource: before the Stage 1 apply, read the budget back and
+   [re-check the prices](cost-and-residue.md#re-check-prices-before-billable-work) in the exported
+   shell. The price table has no S3 storage rate, so that re-check stops, and the owner approves a
+   re-estimate before the apply; no written re-estimation procedure exists. PASS: state lists
+   exactly the five bootstrap resources, and Confirm convergence returns 0. Then continue at step 4,
+   or at step 5 for the Dev roots.
    > **Warning:** From a fresh clone, review and binding of the Stage 1 plan on local state have no
    > published form ([Known reproducibility gaps](#known-reproducibility-gaps)). With `backend.tf`
    > moved aside, step 2 of
@@ -279,69 +298,98 @@ names stops.
    > **Warning:** From this step on, every root change is a campaign: its evidence set is redacted
    > at capture, swept and sealed, with a redaction filter and sweep that you supply yourself
    > ([Private working locations](#private-working-locations)).
-4. **README step 2, the foundation, in two steps around the registrar change.** Follow the
-   [Normal path](public-dns-and-certificate.md#normal-path) of public-dns-and-certificate.md: build
-   the zone on its own and read it back, run the pre-cutover checks and the registrar lock check,
-   change the name servers at the registrar, verify delegation, run the CAA check, then plan and
-   apply the rest of the root with the certificate and read the certificate back. The CAA check
-   comes after delegation because until then the previous provider still answers for `<apex>`.
-   Neither the lock check nor the CAA check has a reviewed procedure. Then follow the
-   [Normal path](persistent-foundations.md#normal-path) of persistent-foundations.md: read back the
-   evidence-store controls, and connect the GitLab project to the CI push identity, with its trust
-   and push-scope read-backs.
+4. **README step 2, the foundation, in two steps around the registrar change.** Follow steps 1 to
+   8 of the [Normal path](public-dns-and-certificate.md#normal-path) of
+   public-dns-and-certificate.md: build the zone on its own and read it back, run the pre-cutover
+   checks and the registrar lock check, change the name servers at the registrar, verify
+   delegation, run the CAA check, then plan and apply the rest of the root with the certificate and
+   read the certificate back. The CAA check comes after delegation because until then the previous
+   provider still answers for `<apex>`. Neither the lock check nor the CAA check has a reviewed
+   procedure. PASS: the certificate apply reports 3 added, 0 changed, 0 destroyed, the certificate
+   and hosted-zone read-backs pass, and the convergence plan exits 0. Then follow steps 1 and 2 of
+   the [Normal path](persistent-foundations.md#normal-path) of persistent-foundations.md: read back
+   the evidence-store controls, and connect the GitLab project to the CI push identity, with its
+   trust and push-scope read-backs. PASS: all five evidence-store outputs equal their expected
+   result, the sub-claim read-back is `["project_id", "ref_type", "ref"]`, the trust and push-scope
+   read-backs pass, both masked variables exist, and no publish job declares `environment:`. Then
+   continue at step 5, if it has not run yet.
    > **Warning:** On a build from nothing, the certificate-stage plan also creates the evidence
    > store, the registry repositories and the CI identity. That combined plan has never run and has
-   > no reviewed shape, so
-   > [Plan and apply the certificate](public-dns-and-certificate.md#plan-and-apply-the-certificate)
-   > stops at its step 2.
+   > no reviewed shape, so Plan and apply the certificate stops at its step 2, and this step with
+   > it. It can stop earlier, at the binding check of the zone build, the root's first apply
+   > ([What these runbooks are](#scope)). Steps 5 and 6 do not need step 4.
    >
-   > **Warning:** The rebuild sentence in the foundation README's
-   > [Public DNS](../../terraform/foundation/README.md#public-dns) section names
-   > `terraform apply -target=aws_route53_zone.public` and then a full apply. It gives the order
-   > only; never run those commands directly. Each stage runs through the saved-plan procedures
-   > above. Its full apply is the certificate stage, which on a build from nothing stops as the
-   > warning above says.
+   > **Warning:** The Public DNS section of the foundation README gives the rebuild order only:
+   > the zone, then the registrar change, then the rest of the root. Each stage runs through the
+   > saved-plan procedures above, never as a direct `terraform apply`. The last stage is the
+   > certificate stage, which on a build from nothing stops as the warning above says.
 5. **README step 3, the Dev retained baseline.** Follow steps 1 to 4 of the
    [Normal path](dev-network.md#normal-path) of dev-network.md: check the zone mapping, build only
    the retained baseline in two targeted applies, confirm the retained and runtime split, and read
-   back the network and the two Secrets Manager entries. Steps 5 and 6 need steps 1 to 3 only:
-   neither Dev root's configuration reads anything from the foundation root, so they may run
-   before step 4, or without it.
+   back the network and the two Secrets Manager entries. PASS: state holds exactly the 21 retained
+   addresses, the plan that is never applied shows exactly the 17 runtime creates with an empty
+   drift list and both alerting variables `false`, and both read-backs pass. Then continue at
+   step 6. Steps 5 and 6 need steps 1 to 3 only: neither Dev root's configuration reads anything
+   from the foundation root, so they may run before step 4, or without it. The network stage is
+   `terraform/dev`'s first apply, so it can stop at its binding check ([What these runbooks are](#scope)).
    > **Warning:** A plain `terraform apply` in `terraform/dev` creates billable runtime, whatever
-   > the reason for it, an `operator_cidr` update included. Build only with the targeted stages in
-   > [Build only the retained baseline](dev-network.md#build-only-the-retained-baseline).
-6. **README step 4, the Dev datastore.** Follow the [Normal path](dev-datastore.md#normal-path) of
-   dev-datastore.md: Stage 1, the owner's one-time master placement, the Stage 2 plan with its
-   secret-absence proof, the pre-apply gate, the Stage 2 apply, read-back and convergence. Then take
-   the first [CPU-credit reading](cost-and-residue.md#check-the-datastore-cpu-credits) and run
-   [Verify the retained side with the datastore present](dev-network.md#verify-the-retained-side-with-the-datastore-present).
+   > the reason for it, an `operator_cidr` update included. Build only with the targeted stages,
+   > steps 1 to 6 of
+   > [Build only the retained baseline](dev-network.md#build-only-the-retained-baseline), whose
+   > step 6 runs steps 3 and 4 of that Normal path (PASS: 14, then 7 `create` actions, each apply
+   > reporting its plan's counts, and the three checks of its step 6 passing). Then continue at
+   > step 6.
+6. **README step 4, the Dev datastore.** Follow steps 1 to 8 of the
+   [Normal path](dev-datastore.md#normal-path) of dev-datastore.md: Stage 1, the owner's one-time
+   master placement, the Stage 2 plan with its secret-absence proof, the pre-apply gate, the Stage
+   2 apply, read-back and convergence. PASS: its step 8, Confirm convergence, exits 0 with
+   `No changes.` and all eight managed resources refreshed, the master opened and closed once, and
+   the proof finds no occurrence. If you stop after Stage 1 and its read-backs, this step ends
+   there, and the two checks below do not run: both need the instance. Otherwise take the first
+   [CPU-credit reading](cost-and-residue.md#check-the-datastore-cpu-credits), steps 1 and 2 (PASS:
+   every metric prints lines, `CPUSurplusCreditsCharged` is 0 in every period and
+   `CPUSurplusCreditBalance` is 0 in the latest periods; a surplus balance with a documented cause,
+   such as the start-up burst after a create, and nothing charged, is recorded as an explained
+   review trigger, not a STOP). Then run
+   [Verify the retained side with the datastore present](dev-network.md#verify-the-retained-side-with-the-datastore-present),
+   steps 1 to 4 (PASS: exactly the security groups `cloud-platform-reference-dev-datastore` and
+   `default`, the boundary and network read-backs pass, and the only network interface is the
+   datastore's). Its PASS ends the Build order.
    > **Warning:** Reaching Stage 1 already needs what steps 2 and 3 and every campaign need from
    > you: the evidence tooling, the cost setup with, on a new account, the owner's decision on the
-   > tag order, and a reviewed decision on binding the bootstrap Stage 1 plan
-   > ([What these runbooks are](#scope)). Even with those, this step stops after Stage 1 and its
-   > read-backs. The rest needs three things this project has not published, which you supply
-   > yourself: a placement tool qualified offline, without which the master value cannot be
-   > placed; a tool that implements the secret-absence proof, without which the Stage 2 plan, the
-   > apply and the convergence plan do not start; and a way to run the Stage 2 apply that closing
-   > or losing the terminal cannot end, without which that apply does not run
-   > ([dev-datastore.md](dev-datastore.md#reproducibility-gaps)).
+   > tag order, and a reviewed decision on binding the bootstrap Stage 1 plan ([What these runbooks
+   > are](#scope)). Even with those, this step stops after Stage 1 and its read-backs, or earlier,
+   > at the binding check of Stage 1, this root's first apply. The rest needs three things this
+   > project has not published, which you supply yourself: a placement tool qualified offline,
+   > without which the master value cannot be placed; a tool that implements the secret-absence
+   > proof, without which the Stage 2 plan, the apply and the convergence plan do not start; and a
+   > way to run the Stage 2 apply that closing or losing the terminal cannot end, without which that
+   > apply does not run (dev-datastore.md, Reproducibility gaps).
 
-Every change to a root in steps 3 to 6 runs through the
-[Normal path](terraform-operations.md#normal-path) of terraform-operations.md: static checks,
-initialization, state inspection, debug logging off, a saved plan with its review and binding, the
-owner's approval, one apply, the root's read-back and convergence. The targeted build of
-`terraform/dev` is the exception to convergence: while no runtime exists, an untargeted plan there
-shows the runtime still to add and exits 2, so
-[Confirm convergence](terraform-operations.md#confirm-convergence) does not apply. After the
-network stage, the check is the state listing in step 2 of
-[Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan), which holds
-exactly the 14 network addresses; after the second stage, it is
-[Confirm the retained and runtime split](dev-network.md#confirm-the-retained-and-runtime-split):
-the 21 retained addresses in state, 17 to add and no drift. Open the campaign's evidence set
-before the change and seal it at the end (steps 1 to 7 of the
-[Normal path](evidence-handling.md#normal-path) of evidence-handling.md). A long or sensitive
-operation first checks session headroom and runs in an exported shell, where the task runbook says
-so.
+The root builds in steps 3 to 6 run the shared Terraform procedures of terraform-operations.md
+through their own runbook procedures, which name the steps to run, the PASS to reach and where to
+return. In step 4 the zone stage skips convergence until the certificate apply. A later change to
+a built root runs steps 1 to 13 of the [Normal path](terraform-operations.md#normal-path) of
+terraform-operations.md: static checks, initialization, state inspection, debug logging off, a
+saved plan with its review and binding, the owner's approval, one apply, the root's read-back,
+convergence and the sealed evidence set. PASS: the step 12 convergence plan exits 0 with
+`No changes.`, and step 13 has sealed the set. Then return to the work that needed the change.
+From public material a later change currently stops before apply on every root; see the Normal
+path's root table and [Known reproducibility gaps](#known-reproducibility-gaps). The targeted build
+of `terraform/dev` is the exception to convergence: while no runtime exists, an untargeted plan
+there shows the runtime still to add and exits 2, so Confirm convergence does not apply. Steps 4
+and 6 of Build only the retained baseline hold the checks that replace it.
+
+Open the campaign's evidence set before the change and seal it at the end: steps 1 to 7 of the
+[Normal path](evidence-handling.md#normal-path) of evidence-handling.md, whose steps 4 to 7 seal
+it. PASS: step 7's manifest check reports every entry OK, the set holds no file the manifest does
+not list, and the manifest's full SHA-256 is in the private record outside the set. Then return to
+the step of this list that sent you. In step 4, public-dns-and-certificate.md runs three
+campaigns, the zone build, the cutover and the certificate, each sealed when it ends; in step 5,
+Build only the retained baseline is one campaign, opened before its step 2 and sealed after its
+step 6; in step 6, dev-datastore.md opens and closes its sets in its own steps. A long or
+sensitive operation first checks session headroom and runs in an exported shell, where the task
+runbook says so.
 
 This path has not been run end to end from a fresh clone of the current configuration. The first
 builds recorded for the bootstrap, foundation and Dev roots ran on earlier shapes of those roots.
@@ -362,11 +410,11 @@ These recur during and after the build. Run only what the occasion calls for.
 
 | When | Run |
 |---|---|
-| Before AWS work | [Sign in](operator-access.md#sign-in), [Verify the resolved identity](operator-access.md#verify-the-resolved-identity), [Check the account before AWS commands](operator-access.md#check-the-account-before-aws-commands) |
+| Before AWS work | [Sign in](operator-access.md#sign-in), [Verify the resolved identity](operator-access.md#verify-the-resolved-identity), [Check the account before AWS commands](operator-access.md#check-the-account-before-aws-commands) (PASS: `True` twice and `ACCOUNT_MATCH=PASS` on the profile the work uses; then return to the work) |
 | Before a long or sensitive operation | [Check session headroom before long operations](operator-access.md#check-session-headroom-before-long-operations), then [Export role credentials once](operator-access.md#export-role-credentials-once) |
-| Every change to a root | The [Normal path](terraform-operations.md#normal-path) of terraform-operations.md, with the root's read-back. From public material a later change currently stops before apply on every root; see its root table and [Known reproducibility gaps](#known-reproducibility-gaps) |
+| Every change to a root | Steps 1 to 13 of the [Normal path](terraform-operations.md#normal-path) of terraform-operations.md, with the root's read-back. PASS: step 12 exits 0 with `No changes.` and step 13 has sealed the evidence set; then return to the work that needed the change. From public material a later change currently stops before apply on every root; see its root table and [Known reproducibility gaps](#known-reproducibility-gaps) |
 | Before each billable change | [Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states), [Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work) |
-| Every campaign | Steps 1 to 7 of the [Normal path](evidence-handling.md#normal-path) of evidence-handling.md: capture with redaction, a sweep with its planted positive control, handling hits, sealing |
+| Every campaign | Steps 1 to 7 of the [Normal path](evidence-handling.md#normal-path) of evidence-handling.md: capture with redaction, a sweep with its planted positive control, handling hits, sealing. Open the set before the operation and seal it when the operation ends. PASS: step 7's manifest check reports every entry OK, the set holds no file the manifest does not list, and the manifest's full SHA-256 is in the private record outside the set; then return to the work that opened the campaign. Steps 8 to 10 run only around a teardown (next row) |
 | Around every teardown | [Export the sealed set before teardown](evidence-handling.md#export-the-sealed-set-before-teardown); after the teardown, [Run the orphan census](cost-and-residue.md#run-the-orphan-census), export the final set and [Read back exported evidence after destruction](evidence-handling.md#read-back-exported-evidence-after-destruction). The teardown itself belongs to runtime windows |
 | Each operating session while the datastore exists | [Check the datastore CPU credits](cost-and-residue.md#check-the-datastore-cpu-credits) |
 | Weekly, first due 2026-10-01 | [Record the weekly ADR-0013 review](cost-and-residue.md#record-the-weekly-adr-0013-review), after that week's budget read-back, CPU-credit check and [orphan census](cost-and-residue.md#run-the-orphan-census); [Break spend down with Cost Explorer](cost-and-residue.md#break-spend-down-with-cost-explorer) only when the budget figures cannot answer a cost question |
@@ -384,9 +432,9 @@ These recur during and after the build. Run only what the occasion calls for.
 | Prepare a shell for a long or sensitive operation | [operator-access.md](operator-access.md) | [Check session headroom before long operations](operator-access.md#check-session-headroom-before-long-operations), [Export role credentials once](operator-access.md#export-role-credentials-once) |
 | Retire a human IAM user's access key or console password | [operator-access.md](operator-access.md) | [Retire legacy IAM user credentials](operator-access.md#retire-legacy-iam-user-credentials) |
 | Build the state backend | [terraform-operations.md](terraform-operations.md) | [Build the state backend and migrate into it](terraform-operations.md#build-the-state-backend-and-migrate-into-it) |
-| Change a Terraform root | [terraform-operations.md](terraform-operations.md) | [Normal path](terraform-operations.md#normal-path), from [Run the static checks](terraform-operations.md#run-the-static-checks) to [Confirm convergence](terraform-operations.md#confirm-convergence) (currently stops before apply on every root; see the path's root table) |
+| Change a Terraform root | [terraform-operations.md](terraform-operations.md) | [Normal path](terraform-operations.md#normal-path), steps 1 to 13, done when step 12 exits 0 with `No changes.` and step 13 has sealed the evidence set; then return to the work that needed the change (currently stops before apply on every root; see the path's root table) |
 | Read state without writing it, or plan without taking the lock | [terraform-operations.md](terraform-operations.md) | [Inspect state without writing it](terraform-operations.md#inspect-state-without-writing-it), [Plan without taking the state lock](terraform-operations.md#plan-without-taking-the-state-lock) |
-| Change resource addresses in a refactor | [terraform-operations.md](terraform-operations.md) | [Move resource addresses with moved blocks](terraform-operations.md#move-resource-addresses-with-moved-blocks) |
+| Change resource addresses in a refactor | [terraform-operations.md](terraform-operations.md) | [Move resource addresses with moved blocks](terraform-operations.md#move-resource-addresses-with-moved-blocks) (stops as the Normal path's root table says; see [Known reproducibility gaps](#known-reproducibility-gaps)) |
 | Find out whether state lags AWS, and reconcile it | [terraform-operations.md](terraform-operations.md) | [Detect state drift](terraform-operations.md#detect-state-drift), [Reconcile explained state-only drift](terraform-operations.md#reconcile-explained-state-only-drift) |
 | Deal with a held state lock or a failed apply | [terraform-operations.md](terraform-operations.md) | [Handle a held state lock](terraform-operations.md#handle-a-held-state-lock), [Stop after a failed or interrupted apply](terraform-operations.md#stop-after-a-failed-or-interrupted-apply) |
 | Build the public zone and delegate the domain to it | [public-dns-and-certificate.md](public-dns-and-certificate.md) | [Build the zone on its own](public-dns-and-certificate.md#build-the-zone-on-its-own), [Read back the hosted zone](public-dns-and-certificate.md#read-back-the-hosted-zone), [Pre-cutover checks](public-dns-and-certificate.md#pre-cutover-checks), [Registrar lock check](public-dns-and-certificate.md#registrar-lock-check), [Change the name servers at the registrar](public-dns-and-certificate.md#change-the-name-servers-at-the-registrar), [Verify delegation](public-dns-and-certificate.md#verify-delegation), [CAA check](public-dns-and-certificate.md#caa-check) |
@@ -394,7 +442,7 @@ These recur during and after the build. Run only what the occasion calls for.
 | Undo the registrar change, or retire the zone at project end | [public-dns-and-certificate.md](public-dns-and-certificate.md) | [Roll back the delegation](public-dns-and-certificate.md#roll-back-the-delegation), [Retire the hosted zone](public-dns-and-certificate.md#retire-the-hosted-zone) |
 | Check the evidence store's protections | [persistent-foundations.md](persistent-foundations.md) | [Read back the evidence-store controls](persistent-foundations.md#read-back-the-evidence-store-controls) |
 | Let a GitLab project's pipelines push images, and check the trust and push scope | [persistent-foundations.md](persistent-foundations.md) | [Connect a GitLab project to the CI push identity](persistent-foundations.md#connect-a-gitlab-project-to-the-ci-push-identity), [Read back the CI trust](persistent-foundations.md#read-back-the-ci-trust), [Read back the CI push scope](persistent-foundations.md#read-back-the-ci-push-scope) |
-| Add a registry repository for a new service | [persistent-foundations.md](persistent-foundations.md) | [Add a registry repository and widen the CI push scope](persistent-foundations.md#add-a-registry-repository-and-widen-the-ci-push-scope) |
+| Add a registry repository for a new service | [persistent-foundations.md](persistent-foundations.md) | [Add a registry repository and widen the CI push scope](persistent-foundations.md#add-a-registry-repository-and-widen-the-ci-push-scope) (stops at state inspection without the last apply's address list; see [Known reproducibility gaps](#known-reproducibility-gaps)) |
 | Confirm an image digest in the registry | [persistent-foundations.md](persistent-foundations.md) | [Verify an image in the registry by digest](persistent-foundations.md#verify-an-image-in-the-registry-by-digest) |
 | Find out why a publish job failed | [persistent-foundations.md](persistent-foundations.md) | [Diagnose a failed publication](persistent-foundations.md#diagnose-a-failed-publication) |
 | Build the Dev network without a runtime | [dev-network.md](dev-network.md) | [Check the zone mapping before the first build](dev-network.md#check-the-zone-mapping-before-the-first-build), [Build only the retained baseline](dev-network.md#build-only-the-retained-baseline) |
@@ -427,6 +475,7 @@ derived from.
 |---|---|---|---|
 | Identity Center setup ([operator-access.md](operator-access.md#reproducibility-gaps)) | Enabling Organizations and Identity Center, which this project never did; the operator setup as it ran, in a root-user session with no output kept, or by any other identity; the `AdministratorAccess` contents, never recorded; a measured MFA check | [ADR-0005](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md); the console steps; the permission-set names and session durations | An exercised setup procedure; the deferred ADR-0005 decision on the contents, which is a decision, not a tool; a measured MFA check |
 | Operator access after setup ([operator-access.md](operator-access.md#reproducibility-gaps)) | Revoking access, replacing a lost MFA device, break-glass recovery, verifying the root posture, access review, signing out; finding what an arbitrary command changed in another account | ADR-0005 for break-glass recovery; [Recover from a wrong account](operator-access.md#recover-from-a-wrong-account), part B | New public procedures |
+| Runtime windows (outside the suite) | Creating, operating and tearing down a runtime window: the EKS cluster, its nodes and the NAT gateway on top of the retained baseline, which README step 5 needs | The windows that ran, summarized in [Runtime Validation](../validation/runtime-validation.md); the runtime design in the [Dev root README](../../terraform/dev/README.md) | A published runtime-window procedure |
 | Access tooling ([operator-access.md](operator-access.md#reproducibility-gaps)) | The private export wrapper and account helper behind the recorded runs. The published export block reproduces none of the wrapper's controls, the published account check has never run against AWS, and refusals ran only offline against the private tools | The published export block, `account_check` function and expiry comparison; `allowed_account_ids` in each root's `providers.tf`; the documented HOLD and STOP conditions | A public tool, only if the wrapper's controls are to be reproduced; a recorded run and a public offline qualification of the published forms |
 | Toolchain ([operator-access.md](operator-access.md#reproducibility-gaps), [terraform-operations.md](terraform-operations.md#reproducibility-gaps), [cost-and-residue.md](cost-and-residue.md#reproducibility-gaps)) | The AWS CLI version; the Terraform version of every earlier apply; platforms other than `darwin_arm64`; a direct archive install; a registry provider install; platforms the lock files do not cover; the binding check on any Terraform other than 1.15.5 | Terraform 1.15.5 with its provenance check; each root's `versions.tf`; the committed lock files pinning `hashicorp/aws` 6.58.0 | No new tool: runs of the published forms on other platforms and installs; a reviewed lock-file change for a new platform; a layout re-check after a Terraform upgrade; a run that records the CLI version |
 | Executed forms ([terraform-operations.md](terraform-operations.md#reproducibility-gaps), [persistent-foundations.md](persistent-foundations.md#reproducibility-gaps), [dev-network.md](dev-network.md#reproducibility-gaps), [public-dns-and-certificate.md](public-dns-and-certificate.md#reproducibility-gaps)) | The private checkers, wrappers and tools behind the recorded Terraform, foundation, Dev network and DNS runs, including a push-scope read-back that allowed repeated reads; Dev network forms that have never run as written | The published command forms, labeled not executed as written, with their expected results, STOP conditions and the rules they implement | No new tool is named: each form rests on the private tooling's evidence until it runs as written with its output retained. A published checker only to reproduce the DNS offline qualification |
@@ -435,7 +484,7 @@ derived from.
 | Terraform recovery ([terraform-operations.md](terraform-operations.md#reproducibility-gaps)) | State recovery from a prior object version, mandatory under ADR-0011; recovery after a failed or interrupted apply; migrating state out and decommissioning the backend; releasing a lock found by listing | The bootstrap README's [Recovery](../../terraform/bootstrap/README.md#recovery) and [Final decommission](../../terraform/bootstrap/README.md#final-decommission) outlines; [Stop after a failed or interrupted apply](terraform-operations.md#stop-after-a-failed-or-interrupted-apply); [Handle a held state lock](terraform-operations.md#handle-a-held-state-lock) | Reviewed recovery procedures; decommission commands; a way to obtain a lock ID |
 | Plan artifacts and scan decisions ([terraform-operations.md](terraform-operations.md#reproducibility-gaps)) | When saved plans, plan JSON, logs and working trees with filled inputs are deleted; the unpublished rationale for scan findings accepted after the 2026-09-21 scan | The `<private-dir>` and `<work-dir>` conventions; the class comparison in [Run the static checks](terraform-operations.md#run-the-static-checks) | A deletion rule. For the rationale, no procedure or tool |
 | Budget, tags and Cost Explorer ([cost-and-residue.md](cost-and-residue.md#reproducibility-gaps)) | Creating the budget and its five notifications; activating the six cost-allocation tags, with an order for a new account, where a key can be activated only after a resource carries it; enabling Cost Explorer | ADR-0013; the budget's shape under [Background prerequisites](cost-and-residue.md#background-prerequisites); the budget and tag read-backs | Public creation and activation procedures, the activation with its place in the build order; a written console procedure for Cost Explorer, which the API cannot enable |
-| Cost operations ([cost-and-residue.md](cost-and-residue.md#reproducibility-gaps)) | Ledger reconciliation; resuming after an ADR-0013 stop condition, and investigating unexplained spend; the response to a CPU-credit REVIEW; ADR-0013's other weekly duties; cleanup beyond one SNS subscription | ADR-0013; the detecting procedures; the datastore [Decommission](../../terraform/dev-datastore/README.md#decommission) design; [Clean up an orphan](cost-and-residue.md#clean-up-an-orphan) | Public procedures for each; a cleanup procedure per class when it is first needed |
+| Cost operations ([cost-and-residue.md](cost-and-residue.md#reproducibility-gaps)) | A written re-estimate for a rate the price table lacks, such as S3 storage; ledger reconciliation; resuming after an ADR-0013 stop condition, and investigating unexplained spend; the response to a CPU-credit REVIEW; ADR-0013's other weekly duties; cleanup beyond one SNS subscription | ADR-0013; the detecting procedures; the datastore [Decommission](../../terraform/dev-datastore/README.md#decommission) design; [Clean up an orphan](cost-and-residue.md#clean-up-an-orphan) | Public procedures for each; a cleanup procedure per class when it is first needed |
 | Orphan census ([cost-and-residue.md](cost-and-residue.md#reproducibility-gaps)) | The private census tool behind the retained results, and the offline controls that exercised it | The published census, its fail-closed rule and its expected-class table | A live run and an offline-controlled run of the published helpers; no public harness for the controls exists |
 | Registrar and domain ([public-dns-and-certificate.md](public-dns-and-certificate.md#reproducibility-gaps)) | The registrar change as made by hand; how the RDAP base URL was found; a registrar lock check, which never ran, and a CAA check, whose design-review lookup kept no output; DS handling and record migration; an apex under a multi-label public suffix; registration and renewal, attested only | The registrar-neutral steps, proven by [Verify delegation](public-dns-and-certificate.md#verify-delegation); IANA's RDAP bootstrap file; the lock, CAA and DS requirements; [ADR-0018](../decisions/0018-define-the-public-entry-implementation-dns-and-certificate-model.md), which defers renewal | No tool for the registrar change or RDAP. A reviewed lock check; CAA, DS, migration and multi-label forms for a reproducer who needs them; the deferred renewal procedure |
 | DNS and certificate lifecycle ([public-dns-and-certificate.md](public-dns-and-certificate.md#reproducibility-gaps)) | Certificate renewal, replacement, retirement, a stalled validation and the `PENDING_VALIDATION` scan; the destroy step of zone retirement; zone recovery and re-adoption after state loss; periodic re-verification; the private rollback inputs | The ordering rule in Public DNS; the stop conditions and status check; the checks in [Retire the hosted zone](public-dns-and-certificate.md#retire-the-hosted-zone); ADR-0011's rebuild-first posture; [Roll back the delegation](public-dns-and-certificate.md#roll-back-the-delegation), never executed | Reviewed procedures and an ACM class in the orphan census; a targeted destroy; recovery and import procedures; a cadence. No tool for the rollback inputs: each reproducer takes their own |
@@ -541,7 +590,7 @@ reviewed decision is taken under explicit approval.
 | The saved plan differs from the reviewed list, or its hash, configuration, lock file, serial or lineage no longer matches | [Review the saved plan](terraform-operations.md#review-the-saved-plan), [Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state) |
 | The state backend's Stage 1 apply or its migration fails or is interrupted | [Build the state backend and migrate into it](terraform-operations.md#build-the-state-backend-and-migrate-into-it), **If it fails**: run neither again, never pass `-force-copy`, and leave the local state and its backup where they are |
 | Any other apply fails, is interrupted, loses its terminal or session, or reports a different summary | [Stop after a failed or interrupted apply](terraform-operations.md#stop-after-a-failed-or-interrupted-apply); on the datastore root, with [Read the datastore after a failed or interrupted apply](dev-datastore.md#read-the-datastore-after-a-failed-or-interrupted-apply) |
-| `Error acquiring the state lock` | [Handle a held state lock](terraform-operations.md#handle-a-held-state-lock); if an apply reported it, [Stop after a failed or interrupted apply](terraform-operations.md#stop-after-a-failed-or-interrupted-apply) first |
+| `Error acquiring the state lock` | [Handle a held state lock](terraform-operations.md#handle-a-held-state-lock). If an apply reported it, the apply failed: first follow [Stop after a failed or interrupted apply](terraform-operations.md#stop-after-a-failed-or-interrupted-apply) through its step 7 and stop at its **Next step**, the owner's reviewed recovery decision. Return to Handle a held state lock, step 1, only if that decision says so; its step 7 is then already done |
 | A convergence plan exits 1 or 2, or a refresh-only plan reports drift | [Confirm convergence](terraform-operations.md#confirm-convergence); [Detect state drift](terraform-operations.md#detect-state-drift), then [Reconcile explained state-only drift](terraform-operations.md#reconcile-explained-state-only-drift) |
 | Before the registrar change: a DS record at the parent, a Route 53 server not answering authoritatively, or parent servers that disagree | [Pre-cutover checks](public-dns-and-certificate.md#pre-cutover-checks) |
 | The registrar refuses the change, or asks to change anything besides the name servers | [Change the name servers at the registrar](public-dns-and-certificate.md#change-the-name-servers-at-the-registrar) |
