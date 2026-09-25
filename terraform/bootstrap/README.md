@@ -111,6 +111,15 @@ duration of this stage and restore it at stage 2 step 3, which is the point at
 which this sequence introduced it. Do not comment the block out: the reason is
 in "Why the backend block arrived second" above.
 
+Run this stage only through
+[Build the state backend and migrate into it](../../docs/runbooks/terraform-operations.md#build-the-state-backend-and-migrate-into-it),
+as step 3 of the runbook [Build order](../../docs/runbooks/README.md#build-order). Its apply
+creates the project's first billable resource, so the budget and cost-allocation tag
+read-backs of Build order step 2 must pass first, and the price re-check and the owner's
+re-estimate that Build order step 3 describes come before step 3 below. From a fresh clone, review and
+binding of this stage's plan on local state have no published form, so that procedure stops
+before step 3 until a reviewed decision is taken under explicit approval.
+
 1. Initialize the root on the default local backend with `terraform init`
 2. Validate the configuration, then produce and review the plan
 3. Under separate first-billable-resource authorization, apply the reviewed

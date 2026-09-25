@@ -118,8 +118,16 @@ for another account fails immediately.
 
 `operator_cidr` is the one public IPv4 CIDR allowed to reach the EKS public API
 endpoint. Use your own address as a `/32`. It changes whenever you work from a
-different network, so expect to update it and re-apply, and a validation rule
-rejects a `/0` so the restriction cannot be removed by supplying a wide value.
+different network, so expect to update it. The validation rule rejects only a
+`/0`: every prefix from `/1` to `/32` passes, so a value far broader than your
+own address is accepted. The variable is sensitive, so the plan text does not
+show its value or its width. Treat any value broader than your own address as a
+`/32` as unsafe: stop and correct it before any plan, and do not rely on the
+validation rule to catch it. Only the EKS cluster uses it, so between runtime
+windows a new address needs only the updated `terraform.tfvars`, with nothing
+applied: a plain `terraform apply` here creates the billable runtime, and the
+retained baseline is built only with targeted plans
+([Build only the retained baseline](../../docs/runbooks/dev-network.md#build-only-the-retained-baseline)).
 
 `backend.hcl` is a separate value. It carries the state bucket the bootstrap
 root created, which is where this root's own state object goes. This root
@@ -286,15 +294,27 @@ API server without a bastion or a VPN, which is why it is on at all.
 `public_access_cidrs` is `[var.operator_cidr]`, a single operator address. The
 AWS default is `0.0.0.0/0`, which puts the API server on the internet with
 authentication as the only barrier, and this root refuses to inherit that. The
-variable has no default and no committed value, and its validation rejects a
-`/0` so the restriction cannot be silently undone.
+variable has no default and no committed value. Its validation rejects a `/0`
+but accepts every prefix from `/1` to `/32`, so it does not stop a value that
+opens the endpoint to a large part of the internet, and because the variable is
+sensitive the plan text does not show the width either. The restriction holds
+only while the value is the operator's own address as a `/32`; a broader value
+is unsafe, and the operator stops and corrects it rather than relying on the
+validation rule ([Input](#input)).
 
 The operational cost of that is worth knowing before it bites. The operator's
 public address changes with the network they work from, and a stale
 `operator_cidr` produces a `kubectl` that times out or is refused against a
 cluster that is perfectly healthy. The symptom looks like a broken cluster and
-is not one. The fix is to update the ignored `terraform.tfvars` and re-apply,
-which changes the endpoint's allow list and nothing else.
+is not one. Inside an approved runtime window, while the cluster exists, the fix
+is to update the ignored `terraform.tfvars` and apply the change only as a
+reviewed saved plan, under that window's approval, whose one change is the
+endpoint's allow list; a plan that changes anything else is not applied.
+Runtime-window operation is outside the published runbooks
+([What these runbooks are](../../docs/runbooks/README.md#what-these-runbooks-are)).
+Between windows no endpoint exists, so only the ignored file is updated and nothing
+is applied: a plain apply of this root creates the billable runtime rather than a
+changed allow list ([Build only the retained baseline](../../docs/runbooks/dev-network.md#build-only-the-retained-baseline)).
 
 ### Cluster access, as it currently stands
 

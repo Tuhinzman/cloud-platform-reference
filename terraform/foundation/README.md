@@ -132,7 +132,12 @@ Then, in order: confirm no remaining claim depends on it, export what has to
 survive, lift the Terraform deletion protections through a reviewed code change,
 empty the bucket including every object version and every delete marker, destroy
 it through Terraform, verify it no longer exists, and run the residual and cost
-checks every teardown owes under REQ-004 and ADR-0013.
+checks every teardown owes under REQ-004 and ADR-0013. That is the order only: no
+command-level procedure exists and it has never run
+([persistent-foundations.md](../../docs/runbooks/persistent-foundations.md#not-yet-exercised)).
+Lifting the protections and the destroy each change state, so each runs only as a
+reviewed saved plan under the owner's approval, never as a direct `terraform
+destroy`.
 
 A versioned bucket is not empty when its objects look deleted. Deleting a current
 object writes a delete marker and leaves every earlier version underneath it, so
@@ -274,15 +279,22 @@ ACM renews a DNS-validated certificate automatically only if an AWS service is
 using the certificate when ACM checks it before expiry.
 
 A rebuild from nothing follows the same order, because a recreated zone gets new
-name servers: `terraform apply -target=aws_route53_zone.public`, set the name
-servers at the registrar and confirm the parent answers with them, then run the
-full apply.
+name servers: the zone alone first, then the name servers set at the registrar and
+the parent confirmed answering with them, then the rest of the root. That is the
+order only: each stage runs as a reviewed saved plan through
+[public-dns-and-certificate.md](../../docs/runbooks/public-dns-and-certificate.md#normal-path),
+never as a direct `terraform apply`, and on a build from nothing the full plan has
+no reviewed shape, so that path stops there.
 
-`prevent_destroy` guards the zone. To retire it, point the registrar elsewhere
-first, wait out the longer of the parent's name-server TTL and the zone's own NS
-TTL (172800 seconds in Route 53), then lift the guard in a reviewed change and
-destroy. Retire the certificate first, once no listener uses it; the zone deletes
-only when its NS and SOA records alone remain.
+`prevent_destroy` guards the zone. Retirement runs at project end only, under
+explicit owner approval, through
+[Retire the hosted zone](../../docs/runbooks/public-dns-and-certificate.md#retire-the-hosted-zone).
+Its order: point the registrar elsewhere first, wait out the longer of the parent's
+name-server TTL and the zone's own NS TTL (172800 seconds in Route 53), then lift
+the guard in a reviewed change and destroy. Retire the certificate first, once no
+listener uses it; the zone deletes only when its NS and SOA records alone remain.
+The certificate's retirement, the change that lifts the guard and the destroy have
+no designed procedure yet, so that runbook stops before them.
 
 The zone costs 0.50 USD a month, not prorated, so the month of creation is
 charged in full, plus 0.40 USD per million queries. The certificate is free.
