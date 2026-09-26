@@ -6,9 +6,12 @@ variable "operator_cidr" {
   sensitive = true
 
   validation {
-    # cidrhost rejects what the pattern alone accepts, such as 300.1.1.1/32.
-    condition     = can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}/([1-9]|[12][0-9]|3[0-2])$", var.operator_cidr)) && can(cidrhost(var.operator_cidr, 0))
-    error_message = "operator_cidr must be one IPv4 CIDR with a prefix between /1 and /32. A /0 is rejected because it would reopen the public endpoint to the whole internet."
+    # The cidrhost round trip rejects out-of-range octets and non-canonical forms such as 010.0.0.1/32.
+    condition = (
+      can(regex("^[0-9.]+/32$", var.operator_cidr)) &&
+      try(cidrhost(var.operator_cidr, 0) == trimsuffix(var.operator_cidr, "/32"), false)
+    )
+    error_message = "operator_cidr must be exactly one IPv4 host address as a /32 in canonical dotted-decimal form, for example 203.0.113.10/32."
   }
 }
 
