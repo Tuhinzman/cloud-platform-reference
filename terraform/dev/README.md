@@ -118,12 +118,16 @@ for another account fails immediately.
 
 `operator_cidr` is the one public IPv4 CIDR allowed to reach the EKS public API
 endpoint. Use your own address as a `/32`. It changes whenever you work from a
-different network, so expect to update it. The validation rule rejects only a
-`/0`: every prefix from `/1` to `/32` passes, so a value far broader than your
-own address is accepted. The variable is sensitive, so the plan text does not
-show its value or its width. Treat any value broader than your own address as a
-`/32` as unsafe: stop and correct it before any plan, and do not rely on the
-validation rule to catch it. Only the EKS cluster uses it, so between runtime
+different network, so expect to update it. The validation rule accepts exactly
+one IPv4 host address as a `/32` in canonical dotted-decimal form and rejects
+any wider prefix, IPv6 and non-canonical forms such as `010.0.0.1/32`. The
+variable is sensitive, so the plan text does not show its value; the rule is what
+keeps a broader value out of a plan. It cannot tell whether the address is still
+yours, so a stale value must still be corrected by hand
+([API endpoint access](#api-endpoint-access)). `tests/operator_cidr.tftest.hcl`
+checks the rule with a mocked AWS provider: `terraform init -backend=false`
+followed by `terraform test` runs it with no credentials and no AWS call. Only
+the EKS cluster uses `operator_cidr`, so between runtime
 windows a new address needs only the updated `terraform.tfvars`, with nothing
 applied: a plain `terraform apply` here creates the billable runtime, and the
 retained baseline is built only with targeted plans
@@ -294,13 +298,11 @@ API server without a bastion or a VPN, which is why it is on at all.
 `public_access_cidrs` is `[var.operator_cidr]`, a single operator address. The
 AWS default is `0.0.0.0/0`, which puts the API server on the internet with
 authentication as the only barrier, and this root refuses to inherit that. The
-variable has no default and no committed value. Its validation rejects a `/0`
-but accepts every prefix from `/1` to `/32`, so it does not stop a value that
-opens the endpoint to a large part of the internet, and because the variable is
-sensitive the plan text does not show the width either. The restriction holds
-only while the value is the operator's own address as a `/32`; a broader value
-is unsafe, and the operator stops and corrects it rather than relying on the
-validation rule ([Input](#input)).
+variable has no default and no committed value. Its validation accepts only one
+IPv4 host address as a `/32`, so a wider range fails validation and produces no
+plan, even though the sensitive plan text never shows the value. It cannot tell
+whether that address is still the operator's own, so the restriction holds only
+while it is ([Input](#input)).
 
 The operational cost of that is worth knowing before it bites. The operator's
 public address changes with the network they work from, and a stale
@@ -530,8 +532,10 @@ reachability and NetworkPolicy enforcement are untested. What has run is a
 three-service slice of the AstroShop fleet rather than the fleet, so nothing here
 measures this node group under the full application. What the observability stack
 proved and did not is stated in the repository README. The state-backend
-locking contention test, the Terraform state recovery exercise, and the secret
-deletion and recovery-window verification have not run.
+locking contention test and the secret deletion and recovery-window verification
+have not run. The Terraform state recovery exercise ran successfully on an
+isolated copy of the foundation state only; recovery of an active state key,
+this root's included, remains unexercised, and ADR-0011 remains incomplete.
 
 Validation output lives outside this repository and its sanitized publication is
 governed separately, so this section records what was exercised rather than

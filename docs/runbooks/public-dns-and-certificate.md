@@ -1503,8 +1503,9 @@ validation record.
   ([ADR-0011](../decisions/0011-define-the-backup-and-recovery-model.md) and the DNS hosted zone
   row of the [architecture baseline](../architecture-baseline.md)); no reviewed sequence exists.
 - **Re-adopt the zone and certificate after state loss**: UNEXERCISED. No import procedure
-  exists; state recovery is covered, as unexercised, in
-  [terraform-operations.md](terraform-operations.md).
+  exists. State recovery is covered in [terraform-operations.md](terraform-operations.md):
+  it was exercised successfully only on an isolated copy of the foundation state, recovery of an
+  active state key remains unexercised, and ADR-0011 remains incomplete.
 - **Periodic re-verification**: UNEXERCISED. No cadence exists for re-running
   [Verify delegation](#verify-delegation) and step 2 of
   [Read back the certificate](#read-back-the-certificate).

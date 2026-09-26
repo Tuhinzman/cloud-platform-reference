@@ -1763,7 +1763,8 @@ cannot release it.
 only case in which `state pull` output is written to a file. The bootstrap stages also keep state
 on disk: the local state before migration and the private backup taken in
 [Stage 2](../../terraform/bootstrap/README.md#stage-2-migrate-state-into-the-backend). Object
-versioning also keeps prior versions, but restoring one has not been exercised.
+versioning also keeps prior versions. Restoring one has been exercised only on an isolated copy of
+the foundation state, never on an active state key ([Not yet exercised](#not-yet-exercised)).
 
 **Evidence to keep.** Nothing specific to this procedure; the campaign's evidence set applies
 ([Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set)).
@@ -1958,7 +1959,7 @@ step 1, only if the decision says so; its step 7 is then already done.
 
 | Item | Label | Note |
 |---|---|---|
-| Terraform state recovery from a prior object version | UNEXERCISED | ADR-0011 makes one Terraform-state recovery exercise mandatory before its implementation is complete. It has not run, and no reviewed procedure exists. The [README outline](../../terraform/bootstrap/README.md#recovery) names no restore mechanism, no specific isolated test key, and no commands. The exercise runs against an isolated test state object, never the active state. Versioning being enabled is not proof that a version can be restored. |
+| Terraform state recovery from a prior object version | AWS-VALIDATED (2026-09-26) on an isolated copy of the foundation state only; UNEXERCISED (never) on an active state key | ADR-0011 makes one Terraform-state recovery exercise mandatory before its implementation is complete. That exercise ran on 2026-09-26 through private tooling against an isolated copy of the foundation state in the backend bucket, never the active state, and passed: a corrupted version was rolled back by copying the prior version forward, and a deleted object was restored by removing its delete marker. Each recovered object matched the known-good hash, and a plan with `-refresh=false` after each recovery matched the pre-fault baseline; drift against live infrastructure was not tested. ADR-0011's implementation is still not complete: its other recovery obligations remain open ([Recovery obligations](README.md#recovery-obligations)). No procedure for it is published ([Reproducibility gaps](#reproducibility-gaps)), and the [README outline](../../terraform/bootstrap/README.md#recovery) names no restore mechanism, no specific isolated test key, and no commands. |
 | `terraform import` as the last resort | UNEXERCISED | It rebuilds the binding, not the state object, its serial or its outputs ([README](../../terraform/bootstrap/README.md#recovery)). |
 | A reviewed recovery procedure after a failed or interrupted apply (targeted cleanup, import, re-plan) | UNEXERCISED | Only the stop-and-inspect contract above exists. The one recovery, on 2026-08-10, ran without a reviewed procedure (EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE). |
 | Inspection after a failed or interrupted apply: the read-back of every planned address with the not-found rule, the lock listing and the five-class classification ([Stop after a failed or interrupted apply](#stop-after-a-failed-or-interrupted-apply), steps 4, 5 and 7) | DESIGNED-NOT-EXECUTED | No apply has failed since the stop rule existed. The not-found rule has run only before an apply, in the datastore's pre-apply reads on 2026-09-24. The offline-qualified inspection has no lock listing or classification. |
