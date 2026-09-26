@@ -532,8 +532,10 @@ reachability and NetworkPolicy enforcement are untested. What has run is a
 three-service slice of the AstroShop fleet rather than the fleet, so nothing here
 measures this node group under the full application. What the observability stack
 proved and did not is stated in the repository README. The state-backend
-locking contention test, the Terraform state recovery exercise, and the secret
-deletion and recovery-window verification have not run.
+locking contention test and the secret deletion and recovery-window verification
+have not run. The Terraform state recovery exercise ran successfully on an
+isolated copy of the foundation state only; recovery of an active state key,
+this root's included, remains unexercised, and ADR-0011 remains incomplete.
 
 Validation output lives outside this repository and its sanitized publication is
 governed separately, so this section records what was exercised rather than
