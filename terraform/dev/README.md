@@ -357,15 +357,19 @@ than hidden.
 
 ## Managed add-ons
 
-Four, each pinned to an exact version verified against AWS for Kubernetes 1.36
-on 2026-08-09.
+Four, each pinned to the newest version AWS listed for Kubernetes 1.36 on
+2026-09-27.
 
 | Add-on | Version |
 |---|---|
-| `vpc-cni` | `v1.22.3-eksbuild.1` |
-| `coredns` | `v1.14.3-eksbuild.3` |
-| `kube-proxy` | `v1.36.0-eksbuild.13` |
-| `eks-pod-identity-agent` | `v1.3.10-eksbuild.3` |
+| `vpc-cni` | `v1.23.1-eksbuild.1` |
+| `coredns` | `v1.14.6-eksbuild.4` |
+| `kube-proxy` | `v1.36.0-eksbuild.25` |
+| `eks-pod-identity-agent` | `v1.4.0-eksbuild.2` |
+
+These versions have not been applied. Their images have not yet been read from
+a running cluster or scanned, and nothing here claims that they run correctly
+on this cluster, including the Pod Identity agent's move from 1.3 to 1.4.
 
 The pins are the point. AWS publishes new add-on revisions continuously, and an
 unpinned resource would let one arrive during an apply that was meant to change
@@ -543,7 +547,8 @@ isolated copy of the foundation state only; recovery of an active state key,
 this root's included, remains unexercised, and ADR-0011 remains incomplete.
 Worker mode as now defined, with no self-managed add-on copies, the add-ons
 created before the node group and the node AMI release pinned, has not been
-applied; the windows above ran the earlier definition.
+applied, and neither mode has been applied with the add-on versions of
+2026-09-27; the windows above ran the earlier definition.
 
 Validation output lives outside this repository and its sanitized publication is
 governed separately, so this section records what was exercised rather than
