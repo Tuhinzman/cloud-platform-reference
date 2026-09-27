@@ -80,13 +80,16 @@ neither.
   [Find the procedure for a task](#find-the-procedure-for-a-task).
 - **Something failed or stopped:** go to [When something fails](#when-something-fails).
 
-Every runbook has the same shape: **Normal path**, the procedures in the order a normal run uses
-them; **Before you start**; **Procedures**, normal path first, then checks, then failure and
-recovery; **Not yet exercised**; **Reproducibility gaps**; and **Background prerequisites**. Every
-procedure opens with its validation label and then, where they apply, says what it does, what must
-already exist, whether it is safe and who approves it, the steps, the expected result, PASS and
-STOP, where to go on failure, the evidence to keep and the next step. Its **Engineering notes** hold
-the audit detail.
+Every runbook except [cost-and-residue.md](cost-and-residue.md) has the same shape: **Normal path**,
+the procedures in the order a normal run uses them; **Before you start**; **Procedures**, normal path
+first, then checks, then failure and recovery; **Not yet exercised**; **Reproducibility gaps**; and
+**Background prerequisites**. Every procedure opens with its validation label and then, where they
+apply, says what it does, what must already exist, whether it is safe and who approves it, the steps,
+the expected result, PASS and STOP, where to go on failure, the evidence to keep and the next step.
+Its **Engineering notes** hold the audit detail. cost-and-residue.md uses a compact operator layout: a
+trigger table, one precondition list, one pattern per procedure (validation line, steps, PASS, STOP
+or HOLD, evidence), one **Engineering notes** table for all its procedures, and **Known limitations**
+holding its **Not yet exercised** and **Reproducibility gaps** lists.
 
 Terms used across the suite:
 
@@ -171,7 +174,7 @@ runbook's own **Before you start** says what its procedures need.
   command is published. On a new account a key can be activated only after a resource carries it,
   and AWS can take up to 24 hours to list it. No order for a new account is published, and until
   the owner decides one, the tag read-back at step 2 of the [Build order](#build-order) STOPs
-  ([Background prerequisites](cost-and-residue.md#background-prerequisites)).
+  ([Preconditions](cost-and-residue.md#background-prerequisites)).
 - [ ] Read access for the cost reads and the orphan census, delete permission for one object's
   class for a cleanup, an environment-hour ledger kept by hand, and knowledge of the expected
   persistent set ([cost-and-residue.md](cost-and-residue.md#before-you-start)).
@@ -264,20 +267,21 @@ names stops.
    check prints `True` twice and the account check prints `ACCOUNT_MATCH=PASS`. Then continue at
    step 2.
 2. **Cost controls, before the first billable resource.** Confirm the budget and its alerts
-   ([Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states))
+   ([Budget check](cost-and-residue.md#read-back-the-budget-and-its-alert-states))
    and the six active cost-allocation tags
-   ([Read back the cost-allocation tags](cost-and-residue.md#read-back-the-cost-allocation-tags)).
+   ([Cost-allocation tags](cost-and-residue.md#read-back-the-cost-allocation-tags)).
    Neither the budget nor the tags have a published creation procedure. Before each later billable
    change, read the budget back again and
    [re-check the prices](cost-and-residue.md#re-check-prices-before-billable-work) the change bills.
    PASS: one budget `cloud-platform-reference` of `200.0` `USD` with its five notifications, each
-   `OK` and each with at least one subscriber, and the `UserDefined` cost-allocation keys exactly
-   the six, each `Active`. Then continue at step 3.
+   `OK` (an ACTUAL 100 `ALARM` alone follows the budget check's **Next step**) and each with at least
+   one subscriber, and the `UserDefined` cost-allocation keys exactly the six, each `Active`. Then
+   continue at step 3.
    > **Warning:** On a new account the tag read-back passes only if resources carrying the six keys
    > already exist, because AWS lists a key for activation only after a resource carries it. No
    > order for a new account is published. Until the owner decides one, the read-back's STOP holds,
    > and step 3, which creates the first billable resource, does not start
-   > ([Background prerequisites](cost-and-residue.md#background-prerequisites)).
+   > ([Preconditions](cost-and-residue.md#background-prerequisites)).
 3. **README step 1, the state backend.**
    [Build the state backend and migrate into it](terraform-operations.md#build-the-state-backend-and-migrate-into-it):
    Stage 1 on local state, then the migration, each under its own approval. The bucket is the
@@ -413,13 +417,13 @@ These recur during and after the build. Run only what the occasion calls for.
 | Before AWS work | [Sign in](operator-access.md#sign-in), [Verify the resolved identity](operator-access.md#verify-the-resolved-identity), [Check the account before AWS commands](operator-access.md#check-the-account-before-aws-commands) (PASS: `True` twice and `ACCOUNT_MATCH=PASS` on the profile the work uses; then return to the work) |
 | Before a long or sensitive operation | [Check session headroom before long operations](operator-access.md#check-session-headroom-before-long-operations), then [Export role credentials once](operator-access.md#export-role-credentials-once) |
 | Every change to a root | Steps 1 to 13 of the [Normal path](terraform-operations.md#normal-path) of terraform-operations.md, with the root's read-back. PASS: step 12 exits 0 with `No changes.` and step 13 has sealed the evidence set; then return to the work that needed the change. From public material a later change currently stops before apply on every root; see its root table and [Known reproducibility gaps](#known-reproducibility-gaps) |
-| Before each billable change | [Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states), [Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work) |
+| Before each billable change | [Budget check](cost-and-residue.md#read-back-the-budget-and-its-alert-states), [Price check](cost-and-residue.md#re-check-prices-before-billable-work) |
 | Every campaign | Steps 1 to 7 of the [Normal path](evidence-handling.md#normal-path) of evidence-handling.md: capture with redaction, a sweep with its planted positive control, handling hits, sealing. Open the set before the operation and seal it when the operation ends. PASS: step 7's manifest check reports every entry OK, the set holds no file the manifest does not list, and the manifest's full SHA-256 is in the private record outside the set; then return to the work that opened the campaign. Steps 8 to 10 run only around a teardown (next row) |
-| Around every teardown | [Export the sealed set before teardown](evidence-handling.md#export-the-sealed-set-before-teardown); after the teardown, [Run the orphan census](cost-and-residue.md#run-the-orphan-census), export the final set and [Read back exported evidence after destruction](evidence-handling.md#read-back-exported-evidence-after-destruction). The teardown itself belongs to runtime windows |
-| Each operating session while the datastore exists | [Check the datastore CPU credits](cost-and-residue.md#check-the-datastore-cpu-credits) |
-| Weekly, first due 2026-10-01 | [Record the weekly ADR-0013 review](cost-and-residue.md#record-the-weekly-adr-0013-review), after that week's budget read-back, CPU-credit check and [orphan census](cost-and-residue.md#run-the-orphan-census); [Break spend down with Cost Explorer](cost-and-residue.md#break-spend-down-with-cost-explorer) only when the budget figures cannot answer a cost question |
+| Around every teardown | [Export the sealed set before teardown](evidence-handling.md#export-the-sealed-set-before-teardown); after the teardown, [Orphan census](cost-and-residue.md#run-the-orphan-census), export the final set and [Read back exported evidence after destruction](evidence-handling.md#read-back-exported-evidence-after-destruction). The teardown itself belongs to runtime windows |
+| Each operating session while the datastore exists | [CPU credits](cost-and-residue.md#check-the-datastore-cpu-credits) |
+| Weekly, first due 2026-10-01 | [Weekly review](cost-and-residue.md#record-the-weekly-adr-0013-review), after that week's budget read-back, CPU-credit check and [orphan census](cost-and-residue.md#run-the-orphan-census); [Cost investigation](cost-and-residue.md#break-spend-down-with-cost-explorer) only when the budget figures cannot answer a cost question |
 | When state may lag AWS | [Detect state drift](terraform-operations.md#detect-state-drift); reconcile only through [Reconcile explained state-only drift](terraform-operations.md#reconcile-explained-state-only-drift) |
-| When a budget level is reached or projected | [Respond to the 100, 150 and 200 USD levels](cost-and-residue.md#respond-to-the-100-150-and-200-usd-levels) |
+| When a budget level is reached or projected | [Budget threshold response](cost-and-residue.md#respond-to-the-100-150-and-200-usd-levels) |
 
 ## Find the procedure for a task
 
@@ -452,11 +456,11 @@ These recur during and after the build. Run only what the occasion calls for.
 | Place the datastore master value | [dev-datastore.md](dev-datastore.md) | [Place the master value](dev-datastore.md#place-the-master-value) |
 | Check the datastore's network and secrets without reading a value | [dev-datastore.md](dev-datastore.md) | [Read back the network boundary](dev-datastore.md#read-back-the-network-boundary), [Verify the secret containers without reading a value](dev-datastore.md#verify-the-secret-containers-without-reading-a-value), [Account for secret reads and writes in CloudTrail](dev-datastore.md#account-for-secret-reads-and-writes-in-cloudtrail) |
 | Prove the master value is in no plan, state or log | [dev-datastore.md](dev-datastore.md) | [Prove the master value is absent from plans, state and logs](dev-datastore.md#prove-the-master-value-is-absent-from-plans-state-and-logs) |
-| Check the budget, the prices or the cost-allocation tags | [cost-and-residue.md](cost-and-residue.md) | [Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states), [Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work), [Read back the cost-allocation tags](cost-and-residue.md#read-back-the-cost-allocation-tags) |
-| Explain where spend went | [cost-and-residue.md](cost-and-residue.md) | [Break spend down with Cost Explorer](cost-and-residue.md#break-spend-down-with-cost-explorer) |
-| Check the datastore's CPU credits, or record the weekly review | [cost-and-residue.md](cost-and-residue.md) | [Check the datastore CPU credits](cost-and-residue.md#check-the-datastore-cpu-credits), [Record the weekly ADR-0013 review](cost-and-residue.md#record-the-weekly-adr-0013-review) |
-| Respond to a budget alert | [cost-and-residue.md](cost-and-residue.md) | [Respond to the 100, 150 and 200 USD levels](cost-and-residue.md#respond-to-the-100-150-and-200-usd-levels) |
-| Find and remove resources left behind | [cost-and-residue.md](cost-and-residue.md) | [Run the orphan census](cost-and-residue.md#run-the-orphan-census), [Clean up an orphan](cost-and-residue.md#clean-up-an-orphan) |
+| Check the budget, the prices or the cost-allocation tags | [cost-and-residue.md](cost-and-residue.md) | [Budget check](cost-and-residue.md#read-back-the-budget-and-its-alert-states), [Price check](cost-and-residue.md#re-check-prices-before-billable-work), [Cost-allocation tags](cost-and-residue.md#read-back-the-cost-allocation-tags) |
+| Explain where spend went | [cost-and-residue.md](cost-and-residue.md) | [Cost investigation](cost-and-residue.md#break-spend-down-with-cost-explorer) |
+| Check the datastore's CPU credits, or record the weekly review | [cost-and-residue.md](cost-and-residue.md) | [CPU credits](cost-and-residue.md#check-the-datastore-cpu-credits), [Weekly review](cost-and-residue.md#record-the-weekly-adr-0013-review) |
+| Respond to a budget alert | [cost-and-residue.md](cost-and-residue.md) | [Budget threshold response](cost-and-residue.md#respond-to-the-100-150-and-200-usd-levels) |
+| Find and remove resources left behind | [cost-and-residue.md](cost-and-residue.md) | [Orphan census](cost-and-residue.md#run-the-orphan-census), [Orphan cleanup](cost-and-residue.md#clean-up-an-orphan) |
 | Keep evidence of a campaign | [evidence-handling.md](evidence-handling.md) | [Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set), [Redact at capture](evidence-handling.md#redact-at-capture) |
 | Check an evidence set for private values and seal it | [evidence-handling.md](evidence-handling.md) | [Sweep the set before sealing](evidence-handling.md#sweep-the-set-before-sealing), [Plant a positive control for the sweep](evidence-handling.md#plant-a-positive-control-for-the-sweep), [Handle sweep hits before sealing](evidence-handling.md#handle-sweep-hits-before-sealing), [Seal the set and verify the manifest](evidence-handling.md#seal-the-set-and-verify-the-manifest) |
 | Export evidence before a teardown and check it afterwards | [evidence-handling.md](evidence-handling.md) | [Export the sealed set before teardown](evidence-handling.md#export-the-sealed-set-before-teardown), [Read back exported evidence after destruction](evidence-handling.md#read-back-exported-evidence-after-destruction) |
@@ -468,8 +472,8 @@ These recur during and after the build. Run only what the occasion calls for.
 
 What a new engineer cannot yet reproduce from the public repositories alone, grouped from each
 runbook's **Reproducibility gaps** section, which has the detail. Separately, most published command
-forms have not been executed as written; each procedure's Engineering notes say what its form is
-derived from.
+forms have not been executed as written; each procedure's Engineering notes, one table in
+cost-and-residue.md, say what its form is derived from.
 
 | Area | What cannot be reproduced | Public contract that exists | Needed later |
 |---|---|---|---|
@@ -483,8 +487,8 @@ derived from.
 | Later changes to applied roots ([terraform-operations.md](terraform-operations.md#reproducibility-gaps)) | A later reviewed change reaching apply: `terraform/bootstrap` has no published read-back, `terraform/foundation` has no published expected address set (the list is in the last apply's private evidence), and `terraform/dev` and `terraform/dev-datastore` have no later-change procedure or gate | The Normal path of terraform-operations.md and its root table | A published read-back for the backend; an expected address set for the foundation; later-change procedures for the dev and datastore roots |
 | Terraform recovery ([terraform-operations.md](terraform-operations.md#reproducibility-gaps)) | State recovery from a prior object version, mandatory under ADR-0011; recovery after a failed or interrupted apply; migrating state out and decommissioning the backend; releasing a lock found by listing | The bootstrap README's [Recovery](../../terraform/bootstrap/README.md#recovery) and [Final decommission](../../terraform/bootstrap/README.md#final-decommission) outlines; [Stop after a failed or interrupted apply](terraform-operations.md#stop-after-a-failed-or-interrupted-apply); [Handle a held state lock](terraform-operations.md#handle-a-held-state-lock) | Reviewed recovery procedures; decommission commands; a way to obtain a lock ID |
 | Plan artifacts and scan decisions ([terraform-operations.md](terraform-operations.md#reproducibility-gaps)) | When saved plans, plan JSON, logs and working trees with filled inputs are deleted; the unpublished rationale for scan findings accepted after the 2026-09-21 scan | The `<private-dir>` and `<work-dir>` conventions; the class comparison in [Run the static checks](terraform-operations.md#run-the-static-checks) | A deletion rule. For the rationale, no procedure or tool |
-| Budget, tags and Cost Explorer ([cost-and-residue.md](cost-and-residue.md#reproducibility-gaps)) | Creating the budget and its five notifications; activating the six cost-allocation tags, with an order for a new account, where a key can be activated only after a resource carries it; enabling Cost Explorer | ADR-0013; the budget's shape under [Background prerequisites](cost-and-residue.md#background-prerequisites); the budget and tag read-backs | Public creation and activation procedures, the activation with its place in the build order; a written console procedure for Cost Explorer, which the API cannot enable |
-| Cost operations ([cost-and-residue.md](cost-and-residue.md#reproducibility-gaps)) | A written re-estimate for a rate the price table lacks, such as S3 storage; ledger reconciliation; resuming after an ADR-0013 stop condition, and investigating unexplained spend; the response to a CPU-credit REVIEW; ADR-0013's other weekly duties; cleanup beyond one SNS subscription | ADR-0013; the detecting procedures; the datastore [Decommission](../../terraform/dev-datastore/README.md#decommission) design; [Clean up an orphan](cost-and-residue.md#clean-up-an-orphan) | Public procedures for each; a cleanup procedure per class when it is first needed |
+| Budget, tags and Cost Explorer ([cost-and-residue.md](cost-and-residue.md#reproducibility-gaps)) | Creating the budget and its five notifications; activating the six cost-allocation tags, with an order for a new account, where a key can be activated only after a resource carries it; enabling Cost Explorer | ADR-0013; the budget's shape under [Preconditions](cost-and-residue.md#background-prerequisites); the budget and tag read-backs | Public creation and activation procedures, the activation with its place in the build order; a written console procedure for Cost Explorer, which the API cannot enable |
+| Cost operations ([cost-and-residue.md](cost-and-residue.md#reproducibility-gaps)) | A written re-estimate for a rate the price table lacks, such as S3 storage; ledger reconciliation; resuming after an ADR-0013 stop condition, and investigating unexplained spend; the response to a CPU-credit REVIEW; ADR-0013's other weekly duties; cleanup beyond one SNS subscription | ADR-0013; the detecting procedures; the datastore [Decommission](../../terraform/dev-datastore/README.md#decommission) design; [Orphan cleanup](cost-and-residue.md#clean-up-an-orphan) | Public procedures for each; a cleanup procedure per class when it is first needed |
 | Orphan census ([cost-and-residue.md](cost-and-residue.md#reproducibility-gaps)) | The private census tool behind the retained results, and the offline controls that exercised it | The published census, its fail-closed rule and its expected-class table | A live run and an offline-controlled run of the published helpers; no public harness for the controls exists |
 | Registrar and domain ([public-dns-and-certificate.md](public-dns-and-certificate.md#reproducibility-gaps)) | The registrar change as made by hand; how the RDAP base URL was found; a registrar lock check, which never ran, and a CAA check, whose design-review lookup kept no output; DS handling and record migration; an apex under a multi-label public suffix; registration and renewal, attested only | The registrar-neutral steps, proven by [Verify delegation](public-dns-and-certificate.md#verify-delegation); IANA's RDAP bootstrap file; the lock, CAA and DS requirements; [ADR-0018](../decisions/0018-define-the-public-entry-implementation-dns-and-certificate-model.md), which defers renewal | No tool for the registrar change or RDAP. A reviewed lock check; CAA, DS, migration and multi-label forms for a reproducer who needs them; the deferred renewal procedure |
 | DNS and certificate lifecycle ([public-dns-and-certificate.md](public-dns-and-certificate.md#reproducibility-gaps)) | Certificate renewal, replacement, retirement, a stalled validation and the `PENDING_VALIDATION` scan; the destroy step of zone retirement; zone recovery and re-adoption after state loss; periodic re-verification; the private rollback inputs | The ordering rule in Public DNS; the stop conditions and status check; the checks in [Retire the hosted zone](public-dns-and-certificate.md#retire-the-hosted-zone); ADR-0011's rebuild-first posture; [Roll back the delegation](public-dns-and-certificate.md#roll-back-the-delegation), never executed | Reviewed procedures and an ACM class in the orphan census; a targeted destroy; recovery and import procedures; a cadence. No tool for the rollback inputs: each reproducer takes their own |
@@ -527,7 +531,9 @@ DESIGNED-NOT-EXECUTED or UNEXERCISED has never run. Read the list before relying
 Each procedure opens with a **Validation** line: its label, and whether its **Published command
 form** is the one that ran. Its Engineering notes table gives the validation status with its date,
 the published form with what it is derived from, the evidence it rests on, the authority it needs
-and its cost in absolute USD. Labels are assigned per procedure, never per resource, and
+and its cost in absolute USD; cost-and-residue.md puts the status with its date, the authority and
+the cost on the Validation line, and the published form's derivation and the evidence in one table.
+Labels are assigned per procedure, never per resource, and
 conservatively. A label is never upgraded without new retained evidence of that procedure. Each
 label carries the date of the execution it rests on, or `never`; where parts of one procedure rest
 on different evidence, each part carries its own label.
@@ -605,11 +611,11 @@ reviewed decision is taken under explicit approval.
 | A placement ends in any outcome other than placed | [Respond to a failed or uncertain placement](dev-datastore.md#respond-to-a-failed-or-uncertain-placement) |
 | A secret-absence proof finds the value or cannot complete, the value appears anywhere, or CloudTrail shows an unexplained read of the master | [Contain an exposed or unproven master value](dev-datastore.md#contain-an-exposed-or-unproven-master-value) |
 | A pre-apply gate check fails or cannot be read, or an instance or parameter value differs | [Run the pre-apply gate](dev-datastore.md#run-the-pre-apply-gate), [Read back the instance and its endpoint parameter](dev-datastore.md#read-back-the-instance-and-its-endpoint-parameter) |
-| The budget, a notification or a subscriber is missing or changed, or a cost-allocation tag key is missing or inactive | [Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states), [Read back the cost-allocation tags](cost-and-residue.md#read-back-the-cost-allocation-tags) |
-| A notification in `ALARM`, or spend reaching or projected to reach 100, 150 or 200 USD | [Respond to the 100, 150 and 200 USD levels](cost-and-residue.md#respond-to-the-100-150-and-200-usd-levels) |
-| A price differs from the table, or a spend line maps to no known resource | [Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work), [Break spend down with Cost Explorer](cost-and-residue.md#break-spend-down-with-cost-explorer) |
-| Surplus CPU credits charged, or a weekly review missed | [Check the datastore CPU credits](cost-and-residue.md#check-the-datastore-cpu-credits), [Record the weekly ADR-0013 review](cost-and-residue.md#record-the-weekly-adr-0013-review) |
-| The census prints `UNKNOWN`, or a runtime class stays above 0 | [Run the orphan census](cost-and-residue.md#run-the-orphan-census), then [Clean up an orphan](cost-and-residue.md#clean-up-an-orphan) |
+| The budget, a notification or a subscriber is missing or changed, or a cost-allocation tag key is missing or inactive | [Budget check](cost-and-residue.md#read-back-the-budget-and-its-alert-states), [Cost-allocation tags](cost-and-residue.md#read-back-the-cost-allocation-tags) |
+| A notification in `ALARM`, or spend reaching or projected to reach 100, 150 or 200 USD | [Budget threshold response](cost-and-residue.md#respond-to-the-100-150-and-200-usd-levels) |
+| A price differs from the table, or a spend line maps to no known resource | [Price check](cost-and-residue.md#re-check-prices-before-billable-work), [Cost investigation](cost-and-residue.md#break-spend-down-with-cost-explorer) |
+| Surplus CPU credits charged, or a weekly review missed | [CPU credits](cost-and-residue.md#check-the-datastore-cpu-credits), [Weekly review](cost-and-residue.md#record-the-weekly-adr-0013-review) |
+| The census prints `UNKNOWN`, or a runtime class stays above 0 | [Orphan census](cost-and-residue.md#run-the-orphan-census), then [Orphan cleanup](cost-and-residue.md#clean-up-an-orphan) |
 | A sweep hit, a file the sweep cannot inspect, or a planted control the sweep misses | [Sweep the set before sealing](evidence-handling.md#sweep-the-set-before-sealing), [Plant a positive control for the sweep](evidence-handling.md#plant-a-positive-control-for-the-sweep), [Handle sweep hits before sealing](evidence-handling.md#handle-sweep-hits-before-sealing) |
 | A manifest entry fails, an export count or digest differs, or an exported object is mismatched, missing or extra at read-back | [Seal the set and verify the manifest](evidence-handling.md#seal-the-set-and-verify-the-manifest), [Export the sealed set before teardown](evidence-handling.md#export-the-sealed-set-before-teardown), [Read back exported evidence after destruction](evidence-handling.md#read-back-exported-evidence-after-destruction) |
 | A prohibited value in a sealed or exported set | [Remediate a prohibited value in retained or exported evidence](evidence-handling.md#remediate-a-prohibited-value-in-retained-or-exported-evidence) |

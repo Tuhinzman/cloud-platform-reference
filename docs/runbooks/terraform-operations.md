@@ -121,8 +121,8 @@ produced the output. The exceptions:
 10. [Apply the reviewed saved plan](#apply-the-reviewed-saved-plan), once. For a billable change,
     first run
     [Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states),
-    steps 1 to 6 (PASS: the budget and its five notifications as its **PASS when** lists, all five
-    `OK`, or each `ALARM` level allowed by an owner decision recorded this month), then
+    steps 1 to 6 (PASS: the budget and its five notifications as its **PASS when** lists; an `ALARM`
+    follows [Budget threshold response](cost-and-residue.md#budget-threshold-response)), then
     [Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work),
     steps 1 to 3 (PASS: every rate the change bills is in its price table, and the value read
     equals it). A change is billable when it bills a rate; identify the rates from the root's
