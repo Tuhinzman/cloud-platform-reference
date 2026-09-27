@@ -1,8 +1,9 @@
-# OVERWRITE settles the field conflicts of adopting the EKS-installed copies.
+# The cluster installs no self-managed copies, so OVERWRITE has nothing to adopt; it only
+# settles a conflicting object if one ever appears.
 resource "aws_eks_addon" "vpc_cni" {
   cluster_name                = aws_eks_cluster.dev.name
   addon_name                  = "vpc-cni"
-  addon_version               = "v1.22.3-eksbuild.1"
+  addon_version               = "v1.23.1-eksbuild.1"
   resolve_conflicts_on_create = "OVERWRITE"
 
   tags = {
@@ -13,7 +14,7 @@ resource "aws_eks_addon" "vpc_cni" {
 resource "aws_eks_addon" "coredns" {
   cluster_name                = aws_eks_cluster.dev.name
   addon_name                  = "coredns"
-  addon_version               = "v1.14.3-eksbuild.3"
+  addon_version               = "v1.14.6-eksbuild.4"
   resolve_conflicts_on_create = "OVERWRITE"
 
   # Observation mode has no node: zero replicas creates the Deployment without scheduling a pod.
@@ -36,7 +37,7 @@ resource "aws_eks_addon" "coredns" {
 resource "aws_eks_addon" "kube_proxy" {
   cluster_name                = aws_eks_cluster.dev.name
   addon_name                  = "kube-proxy"
-  addon_version               = "v1.36.0-eksbuild.13"
+  addon_version               = "v1.36.0-eksbuild.25"
   resolve_conflicts_on_create = "OVERWRITE"
 
   tags = {
@@ -47,7 +48,7 @@ resource "aws_eks_addon" "kube_proxy" {
 resource "aws_eks_addon" "pod_identity_agent" {
   cluster_name  = aws_eks_cluster.dev.name
   addon_name    = "eks-pod-identity-agent"
-  addon_version = "v1.3.10-eksbuild.3"
+  addon_version = "v1.4.0-eksbuild.2"
 
   tags = {
     Component = "runtime"
