@@ -775,8 +775,8 @@ item follow a teardown and do not. No rule says whether or when such a prefix is
   ([What these runbooks are](README.md#scope)).
 - [ ] The cost gate for this billable write, in the exported shell:
   [Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states),
-  steps 1 to 6 (PASS: all five notifications `OK`, or each `ALARM` level allowed by an owner
-  decision recorded this month), then
+  steps 1 to 6 (PASS: as its **PASS when** lists; an `ALARM` follows
+  [Budget threshold response](cost-and-residue.md#budget-threshold-response)), then
   [Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work).
   The price table has no S3 storage rate, so that re-check stops, and the owner approves a
   re-estimate before the export; no written re-estimation procedure exists. Then return to this

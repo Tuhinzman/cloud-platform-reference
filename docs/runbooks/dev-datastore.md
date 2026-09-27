@@ -153,7 +153,8 @@ The runbook as a whole needs the following. Each procedure lists again what it n
   [pre-apply gate](#run-the-pre-apply-gate). Both must pass:
   [Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states)
   (PASS: one budget `cloud-platform-reference` of `200.0` `USD` with exactly its five
-  notifications, each with a subscriber; an `ALARM` is a STOP there), then
+  notifications, each with a subscriber; an `ALARM` follows
+  [Budget threshold response](cost-and-residue.md#budget-threshold-response)), then
   [Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work)
   (PASS: every rate the apply bills is in its price table and reads equal to it). Then return to
   Stage 1 step 8 or to the gate.
@@ -810,7 +811,7 @@ a HOLD, and a HOLD applies nothing.
    | Network boundary | Unchanged ([Read back the network boundary](#read-back-the-network-boundary)) |
    | Engine | Step 2 lists both subnet zones |
    | Prices | Every rate the instance bills equal to the price table in [Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work) |
-   | Budget | The budget and its alerts intact, each alert with a subscriber, and no alert in `ALARM` unless an owner decision recorded this month allows that level, as the read-back's **Next step** and **Cost controls** in [Before you start](#before-you-start) state ([Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states)) |
+   | Budget | The budget and its alerts intact, each alert with a subscriber, and any `ALARM` handled as [Budget threshold response](cost-and-residue.md#budget-threshold-response) states ([Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states)) |
    | Runtime | Every runtime class of the census is zero ([Run the orphan census](cost-and-residue.md#run-the-orphan-census)) |
 
 4. Start the apply straight after a full pass.

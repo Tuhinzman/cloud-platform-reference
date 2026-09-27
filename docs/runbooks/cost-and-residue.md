@@ -154,18 +154,21 @@ Before any billable change and in every weekly review.
 - The budget or a notification is missing or changed, or a notification has no subscriber: the
   ADR-0013 absent-alert stop condition. No billable resource is created; with no creation or resume
   procedure published, work stays stopped until the owner decides.
-- A 150 or 200 notification, ACTUAL or FORECASTED, is in `ALARM`, unless each such level has an owner
-  decision recorded this month that allows the change (see **Next step**).
+- A 150 or 200 notification, ACTUAL or FORECASTED, is in `ALARM`, unless the change is work that
+  [Budget threshold response](#budget-threshold-response) lists as continuing at the highest level in
+  `ALARM`, or each
+  such level has an owner decision recorded this month that allows the change (see **Next step**); at
+  200 USD that decision must change the ceiling.
 
 **Next step.**
 
 - ACTUAL 100 in `ALARM`, and nothing higher: ADR-0013 makes the 100 USD target a review, not a stop.
-  Record it and run the 100 USD row of [Budget threshold response](#budget-threshold-response); the
+  Record it and run the 100 USD entry of [Budget threshold response](#budget-threshold-response); the
   billable change may continue through the [Price check](#price-check).
-- A 150 or 200 `ALARM`: do not continue to the price check; go to
-  [Budget threshold response](#budget-threshold-response). If each 150 or 200 level in `ALARM` has an
-  owner decision recorded this month, record each `ALARM` with a reference to its decision and
-  continue only as those decisions allow.
+- A 150 or 200 `ALARM`: go to [Budget threshold response](#budget-threshold-response). Only work it
+  lists as continuing at the highest level in `ALARM` goes on to the price check. Other work goes on only if each 150
+  or 200 level in `ALARM` has an owner decision recorded this month: record each `ALARM` with a
+  reference to its decision and continue only as those decisions allow.
 - In a weekly review, record the states in entry 2 and finish the record before taking any level to
   its response.
 - Otherwise go on to the [Price check](#price-check) for a billable change, or return to the runbook
@@ -476,15 +479,16 @@ entry 7.
 **Validation:** DESIGNED-NOT-EXECUTED (never) for the 150 and 200 USD responses; UNEXERCISED (never)
 for the 100 USD target review · **Published command form:** not executed as written ·
 **Authority:** the owner decides every resume; each destructive step needs its own explicit owner
-authorization · **Cost:** USD 0.01 per Cost Explorer request when a row needs one
+authorization · **Cost:** USD 0.01 per Cost Explorer request when an entry needs one
 
 Nothing responds automatically, and no level has been reached. No alert fires while spend approaches
-100 USD; only the weekly review or a window estimate detects it. ADR-0013 states what each level
-requires, halts and permits.
+100 USD; only the weekly review or a window estimate detects it. The levels below follow
+[ADR-0013](../decisions/0013-define-operations-and-cost-guardrails.md#decision), which is
+authoritative.
 
 1. Run the [Budget check](#budget-check) and record the figures and states.
 2. Identify the highest level reached or projected.
-3. Carry out its row and the rest of its ADR-0013 list, which has no procedure here.
+3. Carry out that level's entry below.
 
    > **Warning:** Each destructive step needs its own explicit owner authorization. Export evidence
    > that must survive a destroy first and read it back after
@@ -494,18 +498,46 @@ requires, halts and permits.
 
 4. Record the decision and the evidence it rests on.
 
-| Level | Trigger | Effect | Actions | Status |
-|---|---|---|---|---|
-| 100 USD target | ACTUAL 100 (fires only above 100 USD), or a review or estimate approaching it | Review, not a stop | [Cost investigation](#cost-investigation); [Orphan census](#orphan-census) to confirm the last teardown; ledger reconciliation (no procedure) | UNEXERCISED |
-| 150 USD review threshold | ACTUAL or FORECASTED 150, or a projection past it | ADR-0013 stop condition without a written justification; owner review before further billable work | [Cost investigation](#cost-investigation) for the written explanation; [Orphan census](#orphan-census); ledger reconciliation (no procedure) | DESIGNED-NOT-EXECUTED |
-| 200 USD ceiling | ACTUAL or FORECASTED 200, or a projection at or above it | ADR-0013 stop condition; hold | [Orphan census](#orphan-census); [Cost investigation](#cost-investigation) for unexplained spend; [Orphan cleanup](#orphan-cleanup) for what the census finds | DESIGNED-NOT-EXECUTED |
+**100 USD target: REVIEW, not a stop** (UNEXERCISED). Trigger: ACTUAL 100, which fires only above
+100 USD, or a forecast, review or window estimate approaching it; there is no FORECASTED 100
+notification. Nothing halts. Compare actual use against the target, reconcile the environment-hour
+ledger (no procedure), verify that the last teardown completed ([Orphan census](#orphan-census)), and
+identify retained resources no longer needed ([Cost investigation](#cost-investigation) where the
+budget figures cannot explain spend).
 
-**PASS when.** The budget figures and states, the highest level with its row carried out, and the
+**150 USD review threshold** (DESIGNED-NOT-EXECUTED). Trigger: ACTUAL or FORECASTED 150, or a
+projection past it. Reaching or projecting past it is permitted when the work justifies it, never
+silently; crossing or projecting it without a written justification is an ADR-0013 stop condition.
+
+- Required: a written cost explanation ([Cost investigation](#cost-investigation)), an
+  environment-hour reconciliation (no procedure), an [Orphan census](#orphan-census), confirmation
+  that the remaining work is necessary, owner review before further billable work, and destroying
+  unnecessary environments.
+- Halts: optional new billable work. Required additional validation does not start without renewed
+  owner approval.
+- Continues: already-approved evidence capture runs to completion, safety work continues, and
+  controlled teardown continues.
+
+**200 USD ceiling: HOLD** (DESIGNED-NOT-EXECUTED). Trigger: ACTUAL or FORECASTED 200, or a projection
+at or above it.
+
+- Halts: work stops and holds, an ADR-0013 stop condition; no new billable resource is created.
+- Required: unnecessary ephemeral resources are destroyed once the evidence they exist to produce has
+  been captured, an [Orphan census](#orphan-census) runs ([Orphan cleanup](#orphan-cleanup) for what it
+  finds), and unexplained spend is investigated ([Cost investigation](#cost-investigation)).
+- Continues: capturing the evidence those ephemeral resources exist to produce, then their controlled
+  destruction.
+- Resumes only through a new explicit owner decision that changes the ceiling.
+
+**PASS when.** The budget figures and states, the highest level with its entry carried out, and the
 owner decision with the evidence it rests on are recorded.
 
-**STOP if.** A 150 or 200 USD level is reached or projected; ADR-0013 states what halts and what
-continues. No resume procedure is published: work resumes only on the owner's decision, which at 200
-USD must be a new explicit decision that changes the ceiling.
+**STOP if.** The highest level reached or projected governs. At 150 USD, work listed under Halts
+stops, further billable work waits for the owner review under Required, and crossing or projecting 150
+USD without a written justification stops work; the 150 USD Continues work goes on. At 200 USD, work
+stops and holds and no new billable resource is created; only the 200 USD Required and Continues
+actions go on. No resume procedure is published: work resumes only on the owner's decision, which at
+200 USD must be a new explicit decision that changes the ceiling.
 
 **Evidence.** Budget figures and states, the written cost explanation where required, the census
 output, and a reference to the owner decision.
