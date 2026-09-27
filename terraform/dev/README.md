@@ -240,7 +240,10 @@ carry the whole of what these subnets currently need to express.
 
 Kubernetes is pinned to `1.36`. It is not tracking a moving default: an upgrade
 is a reviewed code change, which is what makes the version an inspectable fact
-rather than whatever AWS happened to offer on the day of the apply.
+rather than whatever AWS happened to offer on the day of the apply. The node AMI
+release is pinned the same way: `release_version = "1.36.4-20260923"` selects one
+immutable EKS-optimized Amazon Linux 2023 AMI, and the images baked into it, rather
+than the release AWS recommends when the node group is created.
 
 The node group is two `m6a.large` on-demand instances with 20 GiB disks, on the
 private subnets only, with `desired`, `min` and `max` all set to two. There is no
@@ -370,13 +373,15 @@ something else entirely. ADR-0006 makes add-on upgrades a controlled project
 responsibility, so a version change here is a reviewed code change with a diff
 rather than a decision AWS makes on the project's behalf.
 
-EKS installs its own self-managed copies of `vpc-cni`, `coredns` and
-`kube-proxy` when a cluster is created. The three resources here deliberately
-take those over as Terraform-managed add-ons, and
-`resolve_conflicts_on_create = "OVERWRITE"` is what settles the field conflicts
-that transition produces. The Pod Identity agent is not part of that bootstrap
-set and needs no conflict resolution. In observation mode, described under
-Lifecycle below, the cluster is created without the self-managed copies.
+By default EKS installs its own self-managed copies of `vpc-cni`, `coredns` and
+`kube-proxy` when a cluster is created, outside the version pins above. This
+cluster is created without them in both modes
+(`bootstrap_self_managed_addons = false`), so every `kube-system` workload comes
+from a version-pinned managed add-on. The node group is therefore created only
+after the `vpc-cni`, `kube-proxy` and Pod Identity agent add-ons exist, and
+`coredns` only after the node group, because it needs schedulable capacity.
+`resolve_conflicts_on_create = "OVERWRITE"` has nothing to adopt and only
+settles a conflicting object if one ever appears.
 
 `aws-ebs-csi-driver` is out of scope for this slice, so this cluster has no
 dynamic block storage provisioner.
@@ -536,6 +541,9 @@ locking contention test and the secret deletion and recovery-window verification
 have not run. The Terraform state recovery exercise ran successfully on an
 isolated copy of the foundation state only; recovery of an active state key,
 this root's included, remains unexercised, and ADR-0011 remains incomplete.
+Worker mode as now defined, with no self-managed add-on copies, the add-ons
+created before the node group and the node AMI release pinned, has not been
+applied; the windows above ran the earlier definition.
 
 Validation output lives outside this repository and its sanitized publication is
 governed separately, so this section records what was exercised rather than

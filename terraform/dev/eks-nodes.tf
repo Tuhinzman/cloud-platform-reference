@@ -115,6 +115,9 @@ resource "aws_eks_node_group" "dev" {
   ami_type       = "AL2023_x86_64_STANDARD"
   capacity_type  = "ON_DEMAND"
 
+  # One immutable AMI release, and the images baked into it, until a reviewed change moves it.
+  release_version = "1.36.4-20260923"
+
   # latest_version makes a template edit a rolling node replacement.
   launch_template {
     id      = aws_launch_template.eks_node[0].id
@@ -135,11 +138,15 @@ resource "aws_eks_node_group" "dev" {
     Component = "runtime"
   }
 
-  # Node registration and image pulls leave through the NAT route.
+  # Node registration and image pulls leave through the NAT route. With no self-managed copies,
+  # the node group is created only after the CNI, kube-proxy and Pod Identity agent add-ons exist.
   depends_on = [
     aws_iam_role_policy_attachment.eks_node_worker,
     aws_iam_role_policy_attachment.eks_node_cni,
     aws_iam_role_policy_attachment.eks_node_ecr_pull,
     aws_route.private_default,
+    aws_eks_addon.vpc_cni,
+    aws_eks_addon.kube_proxy,
+    aws_eks_addon.pod_identity_agent,
   ]
 }

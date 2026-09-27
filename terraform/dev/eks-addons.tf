@@ -1,4 +1,5 @@
-# OVERWRITE settles the field conflicts of adopting the EKS-installed copies.
+# The cluster installs no self-managed copies, so OVERWRITE has nothing to adopt; it only
+# settles a conflicting object if one ever appears.
 resource "aws_eks_addon" "vpc_cni" {
   cluster_name                = aws_eks_cluster.dev.name
   addon_name                  = "vpc-cni"
