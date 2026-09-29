@@ -2,7 +2,8 @@
 
 Operates the cost controls that
 [ADR-0013](../decisions/0013-define-operations-and-cost-guardrails.md#decision) requires and the
-residue checks that close a runtime window. ADR-0013 owns the budget levels, review cadence and stop
+residue checks that close a
+[runtime window](../validation/runtime-validation.md#windows). ADR-0013 owns the budget levels, review cadence and stop
 conditions;
 [ADR-0018](../decisions/0018-define-the-public-entry-implementation-dns-and-certificate-model.md#decision)
 owns the orphan-scan classes. This runbook does not create the budget, activate tags, or run runtime
@@ -25,6 +26,9 @@ windows. A procedure labeled DESIGNED-NOT-EXECUTED or UNEXERCISED has never run
 | After every teardown, weekly, and at 150 and 200 USD | [Orphan census](#orphan-census) |
 | An orphan found by the census or an investigation | [Orphan cleanup](#orphan-cleanup), with the owner's authorization for that object |
 
+Meet the [Preconditions](#preconditions) first: every procedure runs in the exported shell described
+there and follows its **Rules for every procedure**.
+
 <a id="before-you-start"></a>
 <a id="background-prerequisites"></a>
 <a id="hidden-prerequisites"></a>
@@ -34,13 +38,15 @@ windows. A procedure labeled DESIGNED-NOT-EXECUTED or UNEXERCISED has never run
 - [ ] **The exported shell.** Every procedure runs in a `bash` shell prepared by
   [Export role credentials once](operator-access.md#export-role-credentials-once), steps 1 to 4,
   holding one exported role credential and nothing else. Continue only when it prints
-  `ACCOUNT_MATCH=PASS` and no HOLD line, and the headroom check exits 0. Inputs:
+  `ACCOUNT_MATCH=PASS` and no HOLD line, and the headroom check exits 0. Inputs to that procedure,
+  set once when you export:
   - `<root-tfvars>`: the bootstrap root's filled, untracked `<inputs-dir>/terraform.tfvars`, which
     sets `allowed_account_id` ([operator-access.md](operator-access.md#before-you-start)).
   - `<profile>`: ReadOnly for reads ([conventions](README.md#conventions)); for a cleanup, one that
     may delete that object's class. Every recorded run used the administrator permission set, so
     ReadOnly is unexercised here. A denied call is a failed read.
-  - `<required-minutes>`: no minimum is established; use the expected duration plus a margin. After
+  - `<required-minutes>`: the minutes the credential must still have left, which the headroom check
+    compares with its expiry. No minimum is established; use the expected duration plus a margin. After
     a destroy, the census's repeat bound alone takes about ten minutes.
 - [ ] **Read access** to Budgets, Cost Explorer, the Price List API, CloudWatch metrics, and the EC2,
   ELB, Auto Scaling, EKS, RDS, CloudWatch Logs, SNS, IAM, Secrets Manager and Route 53 reads.
@@ -48,16 +54,11 @@ windows. A procedure labeled DESIGNED-NOT-EXECUTED or UNEXERCISED has never run
 - [ ] **Cost Explorer enabled** in the console; the API cannot enable it, data appears after about 24
   hours, and a member account's access depends on the management account.
 - [ ] **The budget** `cloud-platform-reference`: monthly, cost, 200 USD, the project account's spend,
-  created outside Terraform before the first billable resource (the state bucket), scoped to the
-  project account in a management account. Five notifications, each `GREATER_THAN` with
-  `ABSOLUTE_VALUE`: ACTUAL 100, 150 and 200, FORECASTED 150 and 200. Owner decisions recorded beside
-  ADR-0013, not part of it: no FORECASTED 100, and no tags on the budget. Subscriber addresses stay
-  private.
+  scoped to the project account in a management account, with the five notifications (ACTUAL 100,
+  150 and 200, FORECASTED 150 and 200) that the [Budget check](#budget-check) verifies. Subscriber
+  addresses stay private.
 - [ ] **The six cost-allocation tag keys** activated by an identity with billing authority (the
-  management account in an organization). AWS lists a key for activation only after a resource
-  carries it; listing and activation each take up to 24 hours. On a new account the tag check passes
-  only once tagged resources exist; no order is published, and until the owner decides one, that
-  check's STOP holds.
+  management account in an organization).
 - [ ] **The environment-hour ledger**, kept by hand with the fields ADR-0013 defines per window.
 - [ ] **The expected persistent set:** the
   [architecture baseline](../architecture-baseline.md#persistent-foundations) register, the Dev
@@ -81,6 +82,8 @@ windows. A procedure labeled DESIGNED-NOT-EXECUTED or UNEXERCISED has never run
 - STOP and HOLD halt the work. Without a written resume procedure, work stays stopped until the owner
   takes a reviewed decision ([When to stop](README.md#when-to-stop)).
 - Figures are absolute USD.
+- When a procedure passes, follow its **Next step** where it has one, then return to the runbook or
+  trigger that sent you.
 
 <a id="read-back-the-budget-and-its-alert-states"></a>
 
@@ -154,11 +157,7 @@ Before any billable change and in every weekly review.
 - The budget or a notification is missing or changed, or a notification has no subscriber: the
   ADR-0013 absent-alert stop condition. No billable resource is created; with no creation or resume
   procedure published, work stays stopped until the owner decides.
-- A 150 or 200 notification, ACTUAL or FORECASTED, is in `ALARM`, unless the change is work that
-  [Budget threshold response](#budget-threshold-response) lists as continuing at the highest level in
-  `ALARM`, or each
-  such level has an owner decision recorded this month that allows the change (see **Next step**); at
-  200 USD that decision must change the ceiling.
+- A 150 or 200 notification, ACTUAL or FORECASTED, is in `ALARM`, except as **Next step** allows.
 
 **Next step.**
 
@@ -166,13 +165,13 @@ Before any billable change and in every weekly review.
   Record it and run the 100 USD entry of [Budget threshold response](#budget-threshold-response); the
   billable change may continue through the [Price check](#price-check).
 - A 150 or 200 `ALARM`: go to [Budget threshold response](#budget-threshold-response). Only work it
-  lists as continuing at the highest level in `ALARM` goes on to the price check. Other work goes on only if each 150
-  or 200 level in `ALARM` has an owner decision recorded this month: record each `ALARM` with a
-  reference to its decision and continue only as those decisions allow.
+  lists as continuing at the highest level in `ALARM` goes on to the price check. Other work goes on
+  only if each 150 or 200 level in `ALARM` has an owner decision recorded this month that allows the
+  change; at 200 USD that decision must change the ceiling. Record each `ALARM` with a reference to
+  its decision and continue only as those decisions allow.
 - In a weekly review, record the states in entry 2 and finish the record before taking any level to
   its response.
-- Otherwise go on to the [Price check](#price-check) for a billable change, or return to the runbook
-  that sent you here.
+- Otherwise go on to the [Price check](#price-check) for a billable change.
 
 **Evidence.** UTC time, `ACCOUNT_MATCH` verdict, pass or fail per criterion, the two spend figures and
 the five states; never the unprojected response.
@@ -204,7 +203,7 @@ plan.
    }
    ```
 
-2. Read the rates the change bills. These lines cover every rate in the table.
+2. Run the lines for the rates the change bills; together they cover every rate in the table.
 
    ```
    price AmazonRDS regionCode=us-east-1 instanceType=db.t4g.micro databaseEngine=PostgreSQL deploymentOption=Single-AZ
@@ -246,16 +245,19 @@ plan.
 **PASS when.** Every rate the change bills is in the table, returned a line with the expected usage
 type and range start, and equals the table's value.
 
-**STOP if.** A value differs, a billed rate is missing from the table, or a read fails or returns no
-matching line. Stop before the change, re-estimate and obtain owner approval; no re-estimation
-procedure is written. The table has no rate for Route 53 queries (0.40 USD per million,
-[Public DNS](../../terraform/foundation/README.md#public-dns)), load balancers, registry storage or S3
-storage, so a change billing them, such as a hosted-zone build
-([Build the zone on its own](public-dns-and-certificate.md#build-the-zone-on-its-own)), always stops
-here. A changed EKS control plane, NAT gateway or public IPv4 rate also triggers the ADR-0013 revisit.
+**STOP if.**
+
+- A value differs, a billed rate is missing from the table, or a read fails or returns no matching
+  line. Stop before the change, re-estimate and obtain owner approval; no re-estimation procedure is
+  written. A changed EKS control plane, NAT gateway or public IPv4 rate also triggers the ADR-0013
+  revisit.
+- The change bills a rate the table does not have: Route 53 queries (0.40 USD per million,
+  [Public DNS](../../terraform/foundation/README.md#public-dns)), load balancers, registry storage or
+  S3 storage. Such a change, for example a hosted-zone build
+  ([Build the zone on its own](public-dns-and-certificate.md#build-the-zone-on-its-own)), always stops
+  here.
 
 **Next step.** This check does not approve the change, which proceeds only under its own approval.
-Return to the runbook that sent you here.
 
 **Evidence.** UTC time, each rate as read, and the verdict.
 
@@ -279,7 +281,10 @@ Before the first billable resource. Billing groups spend by a tag only while it 
 are recorded and do not fail the check.
 
 **STOP if.** The check fails: cost attribution cannot be demonstrated, an ADR-0013 stop condition. No
-activation command is published; work stays stopped until the owner decides.
+activation command is published; work stays stopped until the owner decides. On a new account AWS
+lists a key for activation only after a resource carries it, and listing and activation each take up
+to 24 hours, so this check passes only once tagged resources exist. No order is published, and until
+the owner decides one, this STOP holds.
 
 **Evidence.** UTC time and the listed keys with status and type.
 
@@ -337,11 +342,9 @@ decides.
 the recurring cadence and the 3,600-second form · **Published command form:** not executed as written ·
 **Authority:** none, read-only · **Cost:** within the CloudWatch free allowance
 
-The datastore runs in unlimited CPU-credit mode: surplus credits bill once they exceed 24 hours of
-earnings, or when the instance stops or is deleted, and no alarm exists
-([costs](../../terraform/dev-datastore/README.md#decommission)). This check detects a runaway; it does
-not cap spend, erase incurred cost or change the 200 USD ceiling. Detection lags by the check
-interval, the five-minute metric period and an undocumented publishing delay.
+Detects a runaway in the datastore's unlimited-mode CPU credits; it does not cap spend, erase
+incurred cost or change the 200 USD ceiling. How surplus credits bill, and the detection lag, are
+under [Known limitations](#known-limitations).
 
 `<previous-check-utc>` is the previous check's ISO 8601 UTC time, such as `2026-09-24T18:48:40Z`; for
 the first check, the instance's creation time or earlier.
@@ -373,19 +376,22 @@ the first check, the instance's creation time or earlier.
 - [ ] Every metric printed lines. No lines means no datapoints, not zero: check the span and the
   identifier, and allow for the five-minute period.
 - [ ] `CPUSurplusCreditsCharged` is 0 in every period since the last check.
-- [ ] `CPUSurplusCreditBalance` is 0 in the latest periods.
+- [ ] `CPUSurplusCreditBalance` is 0 in the latest periods. Exception: a surplus balance above 0 with
+  a documented cause, such as the start-up burst after a create or start, and nothing charged, is
+  recorded as an explained review trigger. The next check must show a balance of 0 and nothing
+  charged.
 
-A surplus balance above 0 with a documented cause, such as the start-up burst after a create or start,
-and nothing charged, is recorded as an explained review trigger. The next check must show a balance of
-0 and nothing charged.
+**REVIEW and HOLD.**
 
-**REVIEW and HOLD.** Any charge, or an unexplained surplus balance, is a REVIEW: optional billable work
-holds until it is explained, and the instance keeps running. Investigate in that session when the
-balance rises across
-two checks or CPU averages above 10 percent over 24 hours (the EC2 `t4g.micro` baseline, applied to
-RDS by inference; no 24-hour average has been computed). The response is owner-controlled and
-UNEXERCISED: find the CPU consumer and end any window driving it. Stopping or decommissioning the
-instance are not exercised procedures ([dev-datastore.md](dev-datastore.md)).
+- Trigger: any charge, or an unexplained surplus balance, is a REVIEW.
+- What holds: optional billable work, until the charge or surplus is explained. The instance keeps
+  running.
+- Investigate in that session when the balance rises across two checks or CPU averages above 10
+  percent over 24 hours (the EC2 `t4g.micro` baseline, applied to RDS by inference; no 24-hour
+  average has been computed).
+- Response: owner-controlled and UNEXERCISED. Find the CPU consumer and end any window driving it.
+  Stopping or decommissioning the instance are not exercised procedures
+  ([dev-datastore.md](dev-datastore.md)).
 
 > **Warning:** Stopping ends instance-hours but bills any outstanding surplus and loses earned
 > credits, and AWS restarts a stopped instance after seven days.
@@ -402,33 +408,37 @@ maximum surplus balance, sum charged, minimum credit balance, average and maximu
 **Authority:** the continue, REVIEW or HOLD decision is the owner's · **Cost:** USD 0.01 per Cost
 Explorer request in entry 6
 
-Run that week's [Budget check](#budget-check), [Orphan census](#orphan-census) and
-[CPU credits](#cpu-credits) first. If the datastore build stopped after Stage 1, no instance exists.
-Read only the **Checks that still apply** bullet under
-[Stopping after Stage 1](dev-datastore.md#stopping-after-stage-1); its "Stopping here ends the path"
-ends the build path, not this review. The CPU-credit input and entry 5, entry 4's instance status and
-the first period's start then have no published form: record in entry 7 how the owner decided to
-record each.
+**Before you start.**
 
-Write one dated private record per review, not in a sealed evidence set. The period starts at the
-previous record, the first at the instance's creation. Keep each entry to what the linked procedure's
-**Evidence** names, and redact identifiers with your own literal list and filter per
-[Redact at capture](evidence-handling.md#redact-at-capture), steps 1 to 4 (PASS: the step 4 re-scan
-finds nothing). The record does not cover ADR-0013's other weekly duties. The seven entries:
+- Run that week's [Budget check](#budget-check), [Orphan census](#orphan-census) and
+  [CPU credits](#cpu-credits).
+- If the datastore build stopped after Stage 1 (no instance exists):
+  - Read only the **Checks that still apply** bullet under
+    [Stopping after Stage 1](dev-datastore.md#stopping-after-stage-1). That stop ends the build
+    path, not this review.
+  - The CPU-credit input and entry 5, entry 4's instance status and the first period's start have no
+    published form. Record in entry 7 how the owner decided to record each.
+
+**The record.**
+
+- Where: one dated private record per review, not in a sealed evidence set.
+- Period: starts at the previous record; the first period starts at the instance's creation.
+- Content: each entry holds only what the linked procedure's **Evidence** names.
+- Redaction: identifiers redacted with your own literal list and filter per
+  [Redact at capture](evidence-handling.md#redact-at-capture), steps 1 to 4 (PASS: the step 4 re-scan
+  finds nothing).
+- Scope: the record does not cover ADR-0013's other weekly duties.
+
+Write these seven entries:
 
 1. Review time (UTC) and reviewer.
 2. Budget: month-to-date actual, forecast (absent if not returned, never 0), the five states, and the
    level reached or projected. Across a month start, add the budget check's step 5 for the previous
    month. Nothing defines "approaching" 100 USD or a projection method: state what yours rests on.
-3. Census: every runtime class 0 outside an approved window; exception classes as expected.
+3. Census: every [runtime class](#orphan-census) 0 outside an approved window;
+   [exception classes](#orphan-census) as expected.
 4. Persistent set: instance status, secrets (total, scheduled for deletion), hosted zones (total,
-   private) and manual DB snapshots, one line each: `True` when its name starts with the datastore's
-   final-snapshot name (so `-final-2` counts), then its status and creation time. This tracks the
-   final-snapshot rule in the
-   [dev-datastore README](../../terraform/dev-datastore/README.md#decommission); a `False` line is a
-   snapshot that rule does not cover. Expected: instance
-   `available`; 4 secrets (the Dev network's two, the datastore's two), none scheduled for deletion;
-   1 hosted zone, not private; no manual snapshot before a decommission.
+   private) and manual DB snapshots.
 
    > **Warning:** These commands are derived and have not been reviewed or run.
 
@@ -441,6 +451,15 @@ finds nothing). The record does not cover ADR-0013's other weekly duties. The se
    aws rds describe-db-snapshots --region us-east-1 --snapshot-type manual \
      --query 'DBSnapshots[].[starts_with(DBSnapshotIdentifier, `"cloud-platform-reference-dev-datastore-final"`), Status, SnapshotCreateTime]' --output text
    ```
+
+   **Expected:** instance `available`; 4 secrets (the Dev network's two, the datastore's two), none
+   scheduled for deletion; 1 hosted zone, not private; no manual snapshot before a decommission.
+
+   Each manual snapshot prints one line: `True` when its name starts with the datastore's
+   final-snapshot name (so `-final-2` counts), then its status and creation time. This tracks the
+   final-snapshot rule in the
+   [dev-datastore README](../../terraform/dev-datastore/README.md#decommission); a `False` line is a
+   snapshot that rule does not cover.
 
 5. CPU credits over every check in the period, this review's included: the largest maximum surplus
    balance, the total charged, the largest maximum CPU, and how the average was derived. A span over
@@ -488,7 +507,7 @@ authoritative.
 
 1. Run the [Budget check](#budget-check) and record the figures and states.
 2. Identify the highest level reached or projected.
-3. Carry out that level's entry below.
+3. Carry out that level's entry: the 100, 150 and 200 USD entries after step 4.
 
    > **Warning:** Each destructive step needs its own explicit owner authorization. Export evidence
    > that must survive a destroy first and read it back after
@@ -532,12 +551,15 @@ at or above it.
 **PASS when.** The budget figures and states, the highest level with its entry carried out, and the
 owner decision with the evidence it rests on are recorded.
 
-**STOP if.** The highest level reached or projected governs. At 150 USD, work listed under Halts
-stops, further billable work waits for the owner review under Required, and crossing or projecting 150
-USD without a written justification stops work; the 150 USD Continues work goes on. At 200 USD, work
-stops and holds and no new billable resource is created; only the 200 USD Required and Continues
-actions go on. No resume procedure is published: work resumes only on the owner's decision, which at
-200 USD must be a new explicit decision that changes the ceiling.
+**STOP if.** The highest level reached or projected governs.
+
+- At 150 USD, work listed under Halts stops, further billable work waits for the owner review under
+  Required, and crossing or projecting 150 USD without a written justification stops work; the
+  150 USD Continues work goes on.
+- At 200 USD, work stops and holds and no new billable resource is created; only the 200 USD Required
+  and Continues actions go on.
+- No resume procedure is published: work resumes only on the owner's decision, which at 200 USD must
+  be a new explicit decision that changes the ceiling.
 
 **Evidence.** Budget figures and states, the written cost explanation where required, the census
 output, and a reference to the owner decision.
@@ -657,12 +679,13 @@ census.
   screen only.
 - A runtime class above 0 once settled, or at the bound: an orphaned resource, an ADR-0013 stop
   condition. Investigate before further billable work and remove it only through
-  [Orphan cleanup](#orphan-cleanup). Right after a destroy of the dev root it may be an incomplete
-  destroy: run steps 1 to 3 of
-  [Confirm the retained and runtime split](dev-network.md#confirm-the-retained-and-runtime-split)
-  with its **Before you start** met (PASS: 21 retained addresses in state, 17 to add, no drift), then
-  return here instead of following its **Next step**. On its PASS the class is an orphan; on its STOP,
-  work stays stopped as its **If it fails** says.
+  [Orphan cleanup](#orphan-cleanup).
+  - Right after a destroy of the dev root it may be an incomplete destroy: run steps 1 to 3 of
+    [Confirm the retained and runtime split](dev-network.md#confirm-the-retained-and-runtime-split)
+    with its **Before you start** met (PASS: 21 retained addresses in state, 17 to add, no drift),
+    then return here instead of following its **Next step**.
+  - On its PASS the class is an orphan.
+  - On its STOP, work stays stopped as its **If it fails** says.
 - `DATASTORE_SG` other than 1 with the datastore root applied, `RDS_DATASTORE` other than 1 when the
   instance should exist, or `DATASTORE_ENI` other than 1 with it present: HOLD and review, the first
   live run included. No review procedure is written; work stays stopped until the owner decides.
@@ -685,15 +708,21 @@ Removes one orphan: a resource no Terraform root declares or holds in state, tha
 persistent foundation nor a datastore exception class, and that belongs to no open window. Only one
 class has been removed, once: an email subscription left on a deleted SNS topic.
 
+**Before you start.** Export the shell for step 6 with a `<profile>` that may delete that object's
+class, as the `<profile>` input under [Preconditions](#preconditions) says.
+
 1. Investigate read-only. Project only the fields needed; never read an endpoint, value or address.
    For a subscription, leave the endpoint out and record whether it is pending confirmation.
-2. Confirm it is an orphan and record each answer: no root in this repository declares it; no root's
-   state holds it (on each root, initialized per
-   [Initialize a root against the state backend](terraform-operations.md#initialize-a-root-against-the-state-backend),
-   run step 1 of [Inspect state without writing it](terraform-operations.md#inspect-state-without-writing-it);
-   PASS here: the object is not listed, and that procedure's other criteria and **Next step** do not
-   apply); it is neither a persistent foundation nor a datastore exception class; it belongs to no
-   open window; and whether its parent still exists.
+2. Confirm it is an orphan and record each answer:
+   - No root in this repository declares it.
+   - No root's state holds it. On each root, initialized per
+     [Initialize a root against the state backend](terraform-operations.md#initialize-a-root-against-the-state-backend),
+     run step 1 of [Inspect state without writing it](terraform-operations.md#inspect-state-without-writing-it).
+     PASS here: the object is not listed; that procedure's other criteria and **Next step** do not
+     apply.
+   - It is neither a persistent foundation nor a datastore exception class.
+   - It belongs to no open window.
+   - Whether its parent still exists.
 3. Record the class, why it is an orphan, and its cost effect.
 4. Obtain explicit owner authorization bounded to that one object and no other change.
 5. Capture anything it must still yield, per steps 3 and 4 of
@@ -758,6 +787,10 @@ What each published form derives from, and its evidence. Evidence is retained pr
 | Orphan census | Queries follow the private census tool; helpers, SNS, IAM and per-cluster EKS lines rewritten; VPC count omitted; datastore steps derived from the tool's rule | The 2026-09-22 censuses ([ADR-0019](../decisions/0019-bound-immutable-image-controls-for-aws-managed-runtime-images.md#evidence), [Runtime Validation](../validation/runtime-validation.md#what-has-been-demonstrated)); offline controls of the tool |
 | Orphan cleanup | Generalized from the single cleanup; the ARN variable is derived | The 2026-09-11 investigation, authorization, removal and read-back |
 
+**Background.** The budget was created outside Terraform before the first billable resource (the state
+bucket). Owner decisions recorded beside ADR-0013, not part of it: no FORECASTED 100 notification,
+and no tags on the budget.
+
 ## Known limitations
 
 - The forecast was unreliable on this account's short history (observed 2026-08-08), so FORECASTED
@@ -765,6 +798,10 @@ What each published form derives from, and its evidence. Evidence is retained pr
 - Budget figures refresh up to three times a day. The budget check does not read the cost filter,
   cost types or time period, and the budget's tags have not been read back.
 - Alert delivery is untested; an `ALARM` state does not prove a message arrived.
+- The datastore runs in unlimited CPU-credit mode: surplus credits bill once they exceed 24 hours of
+  earnings, or when the instance stops or is deleted, and no alarm exists
+  ([costs](../../terraform/dev-datastore/README.md#decommission)). The CPU-credit check's detection
+  lags by the check interval, the five-minute metric period and an undocumented publishing delay.
 - Active tag keys show the billing setting, not that cost records carry the tags; attribution by tag
   is not demonstrated end to end.
 - The census covers us-east-1 only. ADR-0018 classes 1, 2 and 4 are counted directly, 3 and 5 only

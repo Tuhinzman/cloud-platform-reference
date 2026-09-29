@@ -1,17 +1,37 @@
 # Persistent Foundation Operations
 
-This runbook covers the recurring operation and verification of three persistent foundations
-declared in [`terraform/foundation`](../../terraform/foundation/README.md): the evidence store, the
-artifact registry, and the CI push identity. The CI push identity is the GitLab OIDC provider, the
-IAM role that main-branch pipelines assume to publish images (the push role), and that role's
-inline push policy. What each foundation is, why it exists, its inputs, its protections, its
-recovery path and its final decommission order are in that README and are not repeated here. The
-decommission order is an order only: no command-level procedure exists, it has never run, and it
-needs the owner's explicit approval ([Not yet exercised](#not-yet-exercised)). The
-persistent-foundation register is in the
-[architecture baseline](../architecture-baseline.md#persistent-foundations).
+This runbook operates and verifies three persistent foundations declared in
+[`terraform/foundation`](../../terraform/foundation/README.md): the evidence store, the artifact
+registry, and the CI push identity. The CI push identity is the GitLab OIDC provider, the IAM role
+that main-branch pipelines assume to publish images (the push role,
+`cloud-platform-reference-shared-ci-checkout`, Terraform address `aws_iam_role.ci_checkout`), and
+that role's inline push policy. That README explains what each foundation is, why it exists, its
+inputs, its protections, its recovery path and its final decommission order; this page does not
+repeat them. The decommission order has no command-level procedure, has never run and needs the
+owner's explicit approval ([Not yet exercised](#not-yet-exercised)). The persistent-foundation
+register is in the [architecture baseline](../architecture-baseline.md#persistent-foundations).
 
-It links, rather than owns:
+> **Warning: the platform image mirroring procedure is not published.** This suite has no
+> procedure for populating `platform/opentelemetry-collector`; see item 1 of
+> [Reproducibility gaps](#reproducibility-gaps).
+
+## When to use this runbook
+
+| If you need to | Go to |
+|---|---|
+| Continue a platform build once the foundation root is applied | [Normal path](#normal-path) |
+| Confirm the evidence bucket still has its versioning, encryption, public access block, TLS-only policy and tags | [Read back the evidence-store controls](#read-back-the-evidence-store-controls) |
+| Give a service that enters the delivery path its own registry repository and push access. This changes AWS and needs an [owner grant](README.md#approvals). | [Add a registry repository and widen the CI push scope](#add-a-registry-repository-and-widen-the-ci-push-scope) |
+| Confirm the registry holds an image that a pin or a pipeline artifact names by digest | [Verify an image in the registry by digest](#verify-an-image-in-the-registry-by-digest) |
+| Check which GitLab jobs can assume the push role | [Read back the CI trust](#read-back-the-ci-trust) |
+| Check which repositories the push role can reach | [Read back the CI push scope](#read-back-the-ci-push-scope) |
+| Connect a GitLab project to the push role, or change the trust on an existing root. This changes GitLab project settings, and the IAM trust in a trust change, so it needs an owner grant. | [Connect a GitLab project to the CI push identity](#connect-a-gitlab-project-to-the-ci-push-identity) |
+| Find out why a publish job failed | [Diagnose a failed publication](#diagnose-a-failed-publication) |
+| Review a plan of this root (step 7 of the shared [Normal path](terraform-operations.md#normal-path)) | Check every address in the reviewed list against [Read-back coverage](#read-back-coverage) |
+| Mirror a platform image into `platform/` | No published procedure: [Reproducibility gaps](#reproducibility-gaps) |
+| Anything this page does not cover, such as revoking the CI trust, recovery or decommissioning | [Not yet exercised](#not-yet-exercised) says what has never run and, where a description exists, where it is |
+
+Other runbooks own these related tasks:
 
 - plan, apply, convergence, drift, refresh-only reconciliation, locks and interrupted applies:
   [terraform-operations.md](terraform-operations.md);
@@ -24,13 +44,6 @@ It links, rather than owns:
   [GitOps Delivery](../implementation/gitops-delivery.md#1-build-once-gitlab-ci-to-an-immutable-digest)
   and the workload repository's
   [`ecr-publish.yml`](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/ci/templates/ecr-publish.yml).
-
-> **Warning: the platform image mirroring procedure is not published.** This suite publishes no
-> procedure for mirroring a third-party platform image into the `platform/` namespace.
-> `platform/opentelemetry-collector` must hold the pinned image by digest before any runtime uses
-> it, the push role cannot reach that repository, and an engineer rebuilding the platform has no
-> public procedure for populating it. How the reference mirror was made is under
-> [Reproducibility gaps](#reproducibility-gaps).
 
 ## Normal path
 
@@ -46,19 +59,10 @@ suite's [task list](README.md#task-list) shows where they sit in the whole build
    [Read back the CI trust](#read-back-the-ci-trust) and then
    [Read back the CI push scope](#read-back-the-ci-push-scope).
 
-**When a trigger occurs:**
-
-- A service enters the delivery path:
-  [Add a registry repository and widen the CI push scope](#add-a-registry-repository-and-widen-the-ci-push-scope).
-  This changes AWS and needs an owner grant.
-- A pin or a pipeline artifact names an image digest:
-  [Verify an image in the registry by digest](#verify-an-image-in-the-registry-by-digest).
-
-**When a publish job fails:** [Diagnose a failed publication](#diagnose-a-failed-publication).
-
-**When a plan of this root is reviewed** (step 7 of the shared
-[Normal path](terraform-operations.md#normal-path)): check every address in the reviewed list
-against [Read-back coverage](#read-back-coverage).
+When a trigger occurs, in a build or outside one, start from
+[When to use this runbook](#when-to-use-this-runbook): a service entering the delivery path, a
+digest to verify, a failed publish job, or a plan of this root under review (step 7 of the shared
+[Normal path](terraform-operations.md#normal-path)).
 
 ## Before you start
 
@@ -69,7 +73,8 @@ against [Read-back coverage](#read-back-coverage).
       [Verify the resolved identity](operator-access.md#verify-the-resolved-identity),
       [Check the account before AWS commands](operator-access.md#check-the-account-before-aws-commands)).
 - [ ] `jq` and `shasum` on the operator workstation, in addition to the toolchain in
-      [operator-access.md](operator-access.md#prepare-the-workstation-toolchain).
+      [operator-access.md](operator-access.md#prepare-the-workstation-toolchain). The AWS commands
+      on this page run there, each with `--profile <profile>`.
 - [ ] The values behind the placeholders below.
 - [ ] A private, untracked location for saved plans, plan and apply logs and read-back output,
       because plan output carries the evidence bucket name and account identifiers. Output kept
@@ -81,16 +86,24 @@ against [Read-back coverage](#read-back-coverage).
       state write separately. A change to GitLab project settings needs the same written grant. An
       "owner grant" in this runbook is that written approval ([Approvals](README.md#approvals)).
 
-| Placeholder | Value |
+| Placeholder | What it is and where you get it |
 |---|---|
-| `<profile>` | Your signed-in AWS CLI profile for the project account. For [Add a registry repository](#add-a-registry-repository-and-widen-the-ci-push-scope) and [Connect a GitLab project](#connect-a-gitlab-project-to-the-ci-push-identity), the AdministratorAccess profile, as [terraform-operations.md](terraform-operations.md#before-you-start) defines `<profile>`. For the read-only procedures, see **Permission set** below. |
+| `<profile>` | Your signed-in AWS CLI profile for the project account. For [Add a registry repository](#add-a-registry-repository-and-widen-the-ci-push-scope) and [Connect a GitLab project](#connect-a-gitlab-project-to-the-ci-push-identity), the AdministratorAccess profile, as [terraform-operations.md](terraform-operations.md#before-you-start) defines `<profile>`. For the read-only procedures, inspection is meant for a profile on the ReadOnly permission set that [operator-access.md](operator-access.md) prescribes; **Permission set** below says what past checks ran on. |
 | `<evidence-bucket>` | The root's `evidence_bucket_name` [input](../../terraform/foundation/README.md#input) |
 | `<allowed-account-id>` | The root's `allowed_account_id` input |
-| `<project-id>` | The GitLab project's numeric ID, which is the root's `gitlab_project_id` |
+| `<project-id>` | The GitLab project's numeric ID, which is the root's `gitlab_project_id`. Read it from the project's Settings, General page. |
 | `<service>` | A service name; its repository is `astroshop/<service>` |
 | `<repository>` | A registry repository, for example `astroshop/checkout` |
-| `<digest>` | An image digest, `sha256:<hex>` |
+| `<digest>` | An image digest, `sha256:<hex>`. `<hex>` is the part after `sha256:`. |
 | `<tag>` | An image tag, as defined in [Verify an image in the registry by digest](#verify-an-image-in-the-registry-by-digest) |
+| `<commit>`, `<inputs-dir>`, `<private-dir>` | As [terraform-operations.md](terraform-operations.md#before-you-start) defines them; used by [Add a registry repository](#add-a-registry-repository-and-widen-the-ci-push-scope), and `<inputs-dir>` also by [Connect a GitLab project](#connect-a-gitlab-project-to-the-ci-push-identity) |
+
+**Permission set.** Every recorded operator read-only check in this runbook ran on the
+administrator permission set. The 2026-09-17 manifest was read by the CI publish job on the push
+role. None has run on the ReadOnly permission set.
+
+The bucket name and the account ID stay private: output that carries them stays in your private
+location and is never published.
 
 Each command sets its output format, so the expected results do not depend on the profile's
 default. Successful output is projected with `--query` or `jq` and contains no ARN and no account
@@ -100,58 +113,11 @@ ID.
 > which is the account ID, so redact error output at capture
 > ([Redact at capture](evidence-handling.md#redact-at-capture)).
 
-**Permission set.** Inspection is meant for the ReadOnly permission set that
-[operator-access.md](operator-access.md) prescribes. Every recorded operator read-only check in
-this runbook ran on the administrator permission set. The 2026-09-17 manifest was read by the CI
-publish job on the push role. None has run on the ReadOnly permission set.
-
 **Labels.** Each procedure opens with its **Validation** label, defined in the
 [runbook index](README.md#validation-labels), and its **Published command form**. *Executed as
 written* means this exact command form, placeholders aside, appears as executed in retained private
 evidence. *Not executed as written* means the commands on the page are derived from something else;
 the procedure's Engineering notes say what.
-
-### Read-back coverage
-
-Before approval, step 7 of the shared [Normal path](terraform-operations.md#normal-path) checks
-that every address in the reviewed list, the addresses and actions the change intends, has a
-published read-back. This table is that check for the foundation root. The hosted zone and the
-certificate are read back in [public-dns-and-certificate.md](public-dns-and-certificate.md).
-
-| Address | Published read-back |
-|---|---|
-| `aws_s3_bucket.evidence` | [Read back the evidence-store controls](#read-back-the-evidence-store-controls), step 5 (the tags) |
-| `aws_s3_bucket_versioning.evidence` | [Read back the evidence-store controls](#read-back-the-evidence-store-controls), step 1 |
-| `aws_s3_bucket_server_side_encryption_configuration.evidence` | [Read back the evidence-store controls](#read-back-the-evidence-store-controls), step 2 |
-| `aws_s3_bucket_public_access_block.evidence` | [Read back the evidence-store controls](#read-back-the-evidence-store-controls), step 3 |
-| `aws_s3_bucket_policy.evidence` | [Read back the evidence-store controls](#read-back-the-evidence-store-controls), step 4 |
-| `aws_ecr_repository.workload["<service>"]` and `aws_ecr_lifecycle_policy.workload["<service>"]`, created by the change | [Add a registry repository and widen the CI push scope](#add-a-registry-repository-and-widen-the-ci-push-scope), step 5 |
-| The same two addresses for a repository that already exists, changed or destroyed | **None**: step 5 reads only a new repository |
-| `aws_ecr_repository.collector` | **None** |
-| `aws_iam_openid_connect_provider.gitlab` | [Read back the CI trust](#read-back-the-ci-trust), step 1 |
-| `aws_iam_role.ci_checkout` | [Read back the CI trust](#read-back-the-ci-trust), steps 2 and 3 |
-| `aws_iam_role_policy.ci_checkout_ecr_push` | [Read back the CI push scope](#read-back-the-ci-push-scope) |
-| `aws_route53_zone.public` | [Read back the hosted zone](public-dns-and-certificate.md#read-back-the-hosted-zone), steps 1 to 4 |
-| `aws_acm_certificate.public`, `aws_route53_record.certificate_validation` and `aws_acm_certificate_validation.public` | [Read back the certificate](public-dns-and-certificate.md#read-back-the-certificate), steps 1 to 3, and [Read back the hosted zone](public-dns-and-certificate.md#read-back-the-hosted-zone), steps 1 to 4 |
-
-For the last two rows, PASS: one public zone for `<apex>` with four name servers, the six
-mandatory tags with `Component` set to `dns`, and only `NS` and `SOA` records, plus, after the
-certificate, exactly one `CNAME`, its validation record, with TTL 300; and a certificate `ISSUED`
-and `AMAZON_ISSUED` for `<apex>` with SANs exactly `<apex>` and `*.<apex>`, both names `DNS` and
-`SUCCESS` with one shared validation record, `Export` `DISABLED`, and the same six tags. Then
-return to the step that sent you here.
-
-Count an address as **None** also when:
-
-- the table does not list it, such as a resource the change declares in the root for the first
-  time;
-- the change destroys it; or
-- the change sets a value that its read-back's expected result states differently. Those
-  expected results are the values the root declares today; none is published for another value.
-
-No procedure on this page or in public-dns-and-certificate.md checks a foundation address another
-way, so an address counted as **None** stops the plan at step 7, before approval. Work resumes
-only on a reviewed decision under explicit approval.
 
 ## Procedures
 
@@ -159,11 +125,8 @@ only on a reviewed decision under explicit approval.
 
 **Validation:** EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-08-08) · **Published command form:** not executed as written
 
-**What this does.** Five reads confirm that the evidence bucket still carries the controls listed in
-[What it creates](../../terraform/foundation/README.md#what-it-creates) and the six mandatory tags:
-versioning, default encryption, the public access block, the bucket policy that denies requests
-without TLS, and the tags. The evidence bucket is where evidence is exported so that it outlives the
-environment it documents ([evidence-handling.md](evidence-handling.md)).
+Five reads confirm that the evidence bucket still carries the controls listed in
+[What it creates](../../terraform/foundation/README.md#what-it-creates) and the six mandatory tags.
 
 **Before you start.**
 
@@ -175,63 +138,63 @@ environment it documents ([evidence-handling.md](evidence-handling.md)).
 **Safety and authority.** Read-only. No approval is needed, and it costs nothing. Step 4 prints the
 statement fields only, because the policy's resource field carries the bucket name.
 
-**Steps.**
+Every step is safe to re-run. Any output that differs from its **Expected** line is a
+STOP (see **If it fails.**).
 
-1. Versioning:
+#### Step 1 — Read versioning
 
-   ```
-   aws s3api get-bucket-versioning --bucket <evidence-bucket> --profile <profile> \
-     --query Status --output text
-   ```
+```
+aws s3api get-bucket-versioning --bucket <evidence-bucket> --profile <profile> \
+  --query Status --output text
+```
 
-2. Default encryption:
+**Expected:** `Enabled`.
 
-   ```
-   aws s3api get-bucket-encryption --bucket <evidence-bucket> --profile <profile> \
-     --query 'ServerSideEncryptionConfiguration.Rules[].ApplyServerSideEncryptionByDefault.SSEAlgorithm' \
-     --output text
-   ```
+#### Step 2 — Read default encryption
 
-3. Public access block:
+```
+aws s3api get-bucket-encryption --bucket <evidence-bucket> --profile <profile> \
+  --query 'ServerSideEncryptionConfiguration.Rules[].ApplyServerSideEncryptionByDefault.SSEAlgorithm' \
+  --output text
+```
 
-   ```
-   aws s3api get-public-access-block --bucket <evidence-bucket> --profile <profile> \
-     --query PublicAccessBlockConfiguration --output json
-   ```
+**Expected:** `AES256`.
 
-4. Bucket policy, statement fields only:
+#### Step 3 — Read the public access block
 
-   ```
-   aws s3api get-bucket-policy --bucket <evidence-bucket> --profile <profile> \
-     --query Policy --output text |
-     jq '{statements: (.Statement | length), content: [.Statement[] | {Sid, Effect, Principal, Action, Condition}]}'
-   ```
+```
+aws s3api get-public-access-block --bucket <evidence-bucket> --profile <profile> \
+  --query PublicAccessBlockConfiguration --output json
+```
 
-5. Tags:
+**Expected:** `BlockPublicAcls`, `IgnorePublicAcls`, `BlockPublicPolicy` and
+`RestrictPublicBuckets` are all `true`.
 
-   ```
-   aws s3api get-bucket-tagging --bucket <evidence-bucket> --profile <profile> \
-     --query 'TagSet[].[Key,Value]' --output text
-   ```
+#### Step 4 — Read the bucket policy, statement fields only
 
-**Expected result.**
+```
+aws s3api get-bucket-policy --bucket <evidence-bucket> --profile <profile> \
+  --query Policy --output text |
+  jq '{statements: (.Statement | length), content: [.Statement[] | {Sid, Effect, Principal, Action, Condition}]}'
+```
 
-1. `Enabled`.
-2. `AES256`.
-3. `BlockPublicAcls`, `IgnorePublicAcls`, `BlockPublicPolicy` and `RestrictPublicBuckets` are all
-   `true`.
-4. Exactly one statement: `Sid` `DenyUnencryptedTransport`, `Effect` `Deny`, `Principal` `*`,
-   `Action` `s3:*`, and the condition `Bool` `aws:SecureTransport` = `"false"`.
-5. Exactly six tags: `Project` `cloud-platform-reference`, `Environment` `shared`, `Component`
-   `evidence-store`, `Lifecycle` `persistent`, `Owner` `platform-engineer`, `ManagedBy` `terraform`.
+**Expected:** exactly one statement: `Sid` `DenyUnencryptedTransport`, `Effect` `Deny`,
+`Principal` `*`, `Action` `s3:*`, and the condition `Bool` `aws:SecureTransport` = `"false"`.
+
+#### Step 5 — Read the tags
+
+```
+aws s3api get-bucket-tagging --bucket <evidence-bucket> --profile <profile> \
+  --query 'TagSet[].[Key,Value]' --output text
+```
+
+**Expected:** exactly six tags: `Project` `cloud-platform-reference`, `Environment` `shared`,
+`Component` `evidence-store`, `Lifecycle` `persistent`, `Owner` `platform-engineer`, `ManagedBy`
+`terraform`.
 
 **PASS when.**
 
 - [ ] All five outputs equal the expected result.
-
-A plan of the foundation root that reports no changes
-([Confirm convergence](terraform-operations.md#confirm-convergence)) confirms the same five
-resources from Terraform's side.
 
 **STOP if.**
 
@@ -257,6 +220,10 @@ more evidence to the bucket.
 | Authority | None (read-only) |
 | Cost | None |
 
+**Background.** A plan of the foundation root that reports no changes
+([Confirm convergence](terraform-operations.md#confirm-convergence)) confirms the same five
+resources from Terraform's side.
+
 **Known limitations.**
 
 - The TLS-only rule has been verified only by reading the policy text. No request over plain HTTP
@@ -273,9 +240,13 @@ more evidence to the bucket.
 
 **Validation:** DESIGNED-NOT-EXECUTED (never, against the current root) · **Published command form:** not executed as written
 
-**What this does.** Gives a service that has entered the delivery path its own `astroshop/`
-repository, and lets the CI push identity publish to it. Membership follows the delivery path, not
-the fleet inventory ([Artifact registry](../../terraform/foundation/README.md#artifact-registry)).
+**Current public boundary:** without the address list from this root's last apply, this procedure
+stops at state inspection in step 3, because no expected address set is published
+([root table](terraform-operations.md#normal-path)).
+
+Gives a service that has entered the delivery path its own `astroshop/` repository, and lets the CI
+push identity publish to it. Membership follows the delivery path, not the fleet inventory
+([Artifact registry](../../terraform/foundation/README.md#artifact-registry)).
 
 You add one name to one Terraform set. The push policy's resource list derives from that set, so the
 same change creates the repository and its lifecycle policy and widens the push role's scope to the
@@ -284,22 +255,22 @@ Terraform state has caught up with AWS, and seals the campaign's evidence set. I
 service's publish job: wiring it with `ECR_REPOSITORY: astroshop/<service>` comes after the
 repository exists and belongs to the publication path, outside this runbook.
 
-Three Terraform terms matter here. A **reviewed saved plan** is a plan written to a file, checked
-against the exact list of changes in step 3, and then applied exactly as reviewed. The
-**convergence plan** is an ordinary plan after the apply; it must report no changes. The
-**refresh-only drift check** compares Terraform state with AWS and changes nothing; applying a
-refresh-only plan writes state. Step 9 exists because an ordinary plan can exit 0 while Terraform's
-stored copy of the push policy is stale (see the Engineering notes).
+Terms used here:
+
+- A **reviewed saved plan** is a plan written to a file, checked against the exact list of changes
+  in step 3, and then applied exactly as reviewed.
+- The **convergence plan** is an ordinary plan after the apply; it must report no changes.
+- The **refresh-only drift check** compares Terraform state with AWS and changes nothing; applying a
+  refresh-only plan writes state.
+- A **campaign** is one bounded operation whose evidence is kept together, here the apply with its
+  read-back.
 
 **Before you start.**
 
 - [ ] The service has a build-and-scan pipeline in the workload repository
       ([Artifact registry](../../terraform/foundation/README.md#artifact-registry)).
-- [ ] An approver for the written owner grant this change needs. The grant is the owner's written
-      approval of the reviewed saved plan, identified by its sha256, after the review in step 3 and
-      before the apply in step 4: step 9 of the shared
-      [Normal path](terraform-operations.md#normal-path) and the [Approvals](README.md#approvals)
-      list. A refresh-only apply in this procedure's step 9 needs its own approval.
+- [ ] An approver for the written owner grant this change needs, and for the separate approval a
+      refresh-only apply in step 9 needs (see **Safety and authority**).
 - [ ] Step 1 of the shared [Normal path](terraform-operations.md#normal-path) done: the root's
       filled `backend.hcl` and `terraform.tfvars`, with all four inputs including `public_domain`
       ([Input](../../terraform/foundation/README.md#input)), in its private `<inputs-dir>`, and a
@@ -308,144 +279,184 @@ stored copy of the push policy is stale (see the Engineering notes).
       against its backend, after the change is committed.
 - [ ] The expected address set for state inspection in step 3: the address list that step 2 of
       [Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan) printed
-      after this root's last apply, kept in that campaign's evidence. None is published; without
-      it this procedure stops at state inspection ([root table](terraform-operations.md#normal-path)).
+      after this root's last apply, kept in that campaign's evidence.
 - [ ] The campaign's evidence set opened for this change, as the shared Normal path requires before
       its step 1 ([Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set)).
-      A *campaign* is one bounded operation whose evidence is kept together, here the apply with its
-      read-back.
 - [ ] `<service>` and `<profile>`.
 
 **Safety and authority.** Mutating, owner-authorized, and billable once the repository holds an
 image. The apply changes ECR and IAM and needs an explicit owner grant: the owner approves the
-reviewed saved plan in writing, identified by its sha256, after the review and before the apply
-([Approvals](README.md#approvals)). A refresh-only apply in step 9 needs its own explicit approval
-of that refresh-only plan, because applying it writes state. The new repository costs nothing while
-it holds no image; ECR then bills stored image data ([cost-and-residue.md](cost-and-residue.md)).
-So the apply bills no rate, and the budget read-back and price re-check that step 10 of the shared
-[Normal path](terraform-operations.md#normal-path) requires before a billable change do not apply
-to it. Storage billing starts with the first image, published outside this runbook; registry
-storage has no rate in the price table, and its re-check is not yet exercised
-([Not yet exercised](cost-and-residue.md#not-yet-exercised)).
+reviewed saved plan in writing, identified by its sha256, after the review in step 3 and before the
+apply in step 4 (step 9 of the shared [Normal path](terraform-operations.md#normal-path) and the
+[Approvals](README.md#approvals) list). A refresh-only apply in step 9 needs its own explicit
+approval of that refresh-only plan, because applying it writes state. The new repository costs
+nothing while it holds no image; ECR then bills stored image data
+([cost-and-residue.md](cost-and-residue.md)). So the apply bills no rate, and the budget read-back
+and price re-check that step 10 of the shared [Normal path](terraform-operations.md#normal-path)
+requires before a billable change do not apply to it.
 
 > **Warning:** This procedure has never run against the current root. The hosted-zone, certificate
 > and `public_domain` criteria in step 3, and the order of steps 8 and 9, were never part of an
 > executed run.
 
-**Steps.**
+#### Step 1 — Record the registry inventory
 
-1. Record the registry inventory, one line per repository with its image count:
+```
+for repository in $(aws ecr describe-repositories --profile <profile> \
+    --query 'repositories[].repositoryName' --output text); do
+  printf '%s %s\n' "${repository}" "$(aws ecr describe-images --repository-name "${repository}" \
+    --profile <profile> --query 'length(imageDetails)' --output text)"
+done
+```
 
-   ```
-   for repository in $(aws ecr describe-repositories --profile <profile> \
-       --query 'repositories[].repositoryName' --output text); do
-     printf '%s %s\n' "${repository}" "$(aws ecr describe-images --repository-name "${repository}" \
-       --profile <profile> --query 'length(imageDetails)' --output text)"
-   done
-   ```
+**Expected:** one line per repository, its name and image count. Keep the output: step 7
+compares a second run with it.
 
-2. Add `"<service>"` to `local.workload_repositories` in
-   [`artifact-registry.tf`](../../terraform/foundation/artifact-registry.tf) and change nothing else.
-   The push policy's resource list derives from that set. Commit the change. That commit is the
-   reviewed commit, `<commit>`, that the static checks, the initialization and the bind check in
-   steps 3 and 4 all work from ([terraform-operations.md](terraform-operations.md#before-you-start)).
+#### Step 2 — Add the service to the repository set and commit
 
-3. Create a reviewed saved plan from `<commit>` through the shared workflow, steps 2 to 7 of its
-   [Normal path](terraform-operations.md#normal-path):
-   [Run the static checks](terraform-operations.md#run-the-static-checks),
-   [Initialize a root against the state backend](terraform-operations.md#initialize-a-root-against-the-state-backend)
-   in a clean working tree at `<commit>`,
-   [Inspect state without writing it](terraform-operations.md#inspect-state-without-writing-it),
-   [Keep Terraform debug logging off](terraform-operations.md#keep-terraform-debug-logging-off),
-   [Plan to a saved file](terraform-operations.md#plan-to-a-saved-file) and
-   [Review the saved plan](terraform-operations.md#review-the-saved-plan). Accept the plan only if
-   it holds exactly:
-   - a create of `aws_ecr_repository.workload["<service>"]` and of
-     `aws_ecr_lifecycle_policy.workload["<service>"]` for each added name;
-   - one in-place update of `aws_iam_role_policy.ci_checkout_ecr_push`;
-   - nothing else: no destroy, no replace, no output change, and no change to
-     `aws_iam_role.ci_checkout`, `aws_iam_openid_connect_provider.gitlab`,
-     `aws_ecr_repository.collector`, any evidence-store resource, `aws_route53_zone.public`,
-     `aws_acm_certificate.public`, `aws_route53_record.certificate_validation` or
-     `aws_acm_certificate_validation.public`.
+Add `"<service>"` to `local.workload_repositories` in
+[`artifact-registry.tf`](../../terraform/foundation/artifact-registry.tf) and change nothing else.
+The push policy's resource list derives from that set. Commit the change. That commit is the
+reviewed commit, `<commit>`, that the static checks, the initialization and the bind check in
+steps 3 and 4 all work from ([terraform-operations.md](terraform-operations.md#before-you-start)).
 
-   The planned policy document shows as known after apply, because the new repository's ARN does not
-   exist yet (observed 2026-09-17), so step 6 confirms the scope.
+**Expected:** a commit whose only change is `"<service>"` added to `local.workload_repositories`.
 
-   > **Warning:** If the plan reports that `aws_iam_role.ci_checkout` changed outside Terraform,
-   > stop. That is drift left by an earlier change, not part of this one. Explain it and reconcile it
-   > through [terraform-operations.md](terraform-operations.md#reconcile-explained-state-only-drift)
-   > under its own approval, then plan this change again.
+#### Step 3 — Create and review the saved plan
 
-4. Apply exactly that saved plan, steps 8 to 10 of the shared
-   [Normal path](terraform-operations.md#normal-path):
-   [Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state),
-   the owner's approval, and
-   [Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan). The
-   shared step 10's budget read-back and price re-check do not apply, because this apply bills no
-   rate (see **Safety and authority**).
+Create a reviewed saved plan from `<commit>` through the shared workflow, steps 2 to 7 of its
+[Normal path](terraform-operations.md#normal-path):
+[Run the static checks](terraform-operations.md#run-the-static-checks),
+[Initialize a root against the state backend](terraform-operations.md#initialize-a-root-against-the-state-backend)
+in a clean working tree at `<commit>`,
+[Inspect state without writing it](terraform-operations.md#inspect-state-without-writing-it),
+[Keep Terraform debug logging off](terraform-operations.md#keep-terraform-debug-logging-off),
+[Plan to a saved file](terraform-operations.md#plan-to-a-saved-file) and
+[Review the saved plan](terraform-operations.md#review-the-saved-plan).
 
-   > **Warning:** This step changes ECR and IAM. Run it only after the owner has approved this
-   > reviewed saved plan in writing, identified by its sha256, and the bind check has passed again
-   > immediately before the apply ([Approvals](README.md#approvals)).
+**Expected:** the plan holds exactly:
 
-5. Read back each new repository:
+- a create of `aws_ecr_repository.workload["<service>"]` and of
+  `aws_ecr_lifecycle_policy.workload["<service>"]` for each added name;
+- one in-place update of `aws_iam_role_policy.ci_checkout_ecr_push`;
+- nothing else: no destroy, no replace, no output change, and no change to
+  `aws_iam_role.ci_checkout`, `aws_iam_openid_connect_provider.gitlab`,
+  `aws_ecr_repository.collector`, any evidence-store resource, `aws_route53_zone.public`,
+  `aws_acm_certificate.public`, `aws_route53_record.certificate_validation` or
+  `aws_acm_certificate_validation.public`.
 
-   ```
-   aws ecr describe-repositories --repository-names astroshop/<service> --profile <profile> \
-     --query 'repositories[].{name:repositoryName,mutability:imageTagMutability,encryption:encryptionConfiguration.encryptionType,scanOnPush:imageScanningConfiguration.scanOnPush}' \
-     --output json
-   aws ecr get-lifecycle-policy --repository-name astroshop/<service> --profile <profile> \
-     --query lifecyclePolicyText --output text
-   aws ecr list-tags-for-resource --profile <profile> \
-     --resource-arn "$(aws ecr describe-repositories --repository-names astroshop/<service> \
-       --profile <profile> --query 'repositories[0].repositoryArn' --output text)" \
-     --query 'tags[].[Key,Value]' --output text
-   ```
+The planned policy document shows as known after apply, because the new repository's ARN does not
+exist yet, so step 6 confirms the scope.
 
-6. Run [Read back the CI push scope](#read-back-the-ci-push-scope).
+**If not:** do not accept the plan: any other address, action or count is a STOP.
 
-   > **Warning:** This read runs immediately after the apply, when IAM may briefly return the
-   > previous document: the push scope without the repositories this change adds. Use step 2 of
-   > [Read back the CI push scope](#read-back-the-ci-push-scope): at most four reads 10 seconds
-   > apart, tolerating only that previous document. The STOP conditions of this procedure and of
-   > that read both apply, so a push scope still without the new repository on the fourth read, or
-   > any other difference on any read, is a STOP.
+> **Warning:** If the plan reports that `aws_iam_role.ci_checkout` changed outside Terraform,
+> stop. That is drift left by an earlier change, not part of this one. Explain it and reconcile it
+> through [terraform-operations.md](terraform-operations.md#reconcile-explained-state-only-drift)
+> under its own approval, then plan this change again.
 
-7. Repeat step 1 and compare it with the first run.
+#### Step 4 — Bind and apply the saved plan
 
-8. Run the convergence plan
-   ([Confirm convergence](terraform-operations.md#confirm-convergence)).
+Apply exactly that saved plan, steps 8 to 10 of the shared
+[Normal path](terraform-operations.md#normal-path):
+[Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state),
+the owner's approval, and
+[Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan). The
+shared step 10's budget read-back and price re-check do not apply, because this apply bills no
+rate (see **Safety and authority**).
 
-9. Run the refresh-only drift check
-   ([Detect state drift](terraform-operations.md#detect-state-drift)). If it reports no drift,
-   continue at step 10. If its only drift is `aws_iam_role.ci_checkout` attribute `inline_policy`,
-   and the live policy read in step 6 equals the configured one, it is the known state lag: reconcile
-   it through
-   [Reconcile explained state-only drift](terraform-operations.md#reconcile-explained-state-only-drift),
-   which binds the refresh-only plan and needs its own explicit owner approval before that plan is
-   applied, then continue at step 10.
+> **Warning:** This step changes ECR and IAM. Run it only after the owner has approved this
+> reviewed saved plan in writing, identified by its sha256, and the bind check has passed again
+> immediately before the apply ([Approvals](README.md#approvals)).
 
-   > **Warning:** Applying the refresh-only plan writes state. The grant for step 4 does not cover
-   > it.
+**Expected:** the saved plan applied as reviewed, with the results that
+[Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan) defines.
 
-10. Close the evidence set: step 13 of the shared
-    [Normal path](terraform-operations.md#normal-path). Sweep the set with its planted positive
-    control, handle any hit, and seal it: steps 4 to 7 of the
-    [Normal path](evidence-handling.md#normal-path) of evidence-handling.md. The procedure ends
-    here.
+**If not:** an apply that stops partway follows
+[Stop after a failed or interrupted apply](terraform-operations.md#stop-after-a-failed-or-interrupted-apply).
 
-**Expected result.**
+#### Step 5 — Read back each new repository
 
-- Step 5: `IMMUTABLE`, `AES256`, `scanOnPush` `false`; a lifecycle policy with one rule that
-  expires `tagged` images matching `*` once `imageCountMoreThan` 10; and exactly the six tags
-  listed for the evidence store, except `Component` `artifact-registry`.
-- Step 6: the new repository is in scope and nothing else changed, within at most four reads.
-- Step 7: every repository that existed before keeps its image count, and each new one holds 0.
-- Step 8: exit 0 and no changes.
-- Step 9: no drift, or only the role's `inline_policy` lag; after any reconciliation the drift check
-  exits 0.
-- Step 10: the set swept with its planted positive control, and sealed.
+```
+aws ecr describe-repositories --repository-names astroshop/<service> --profile <profile> \
+  --query 'repositories[].{name:repositoryName,mutability:imageTagMutability,encryption:encryptionConfiguration.encryptionType,scanOnPush:imageScanningConfiguration.scanOnPush}' \
+  --output json
+aws ecr get-lifecycle-policy --repository-name astroshop/<service> --profile <profile> \
+  --query lifecyclePolicyText --output text
+aws ecr list-tags-for-resource --profile <profile> \
+  --resource-arn "$(aws ecr describe-repositories --repository-names astroshop/<service> \
+    --profile <profile> --query 'repositories[0].repositoryArn' --output text)" \
+  --query 'tags[].[Key,Value]' --output text
+```
+
+**Expected:** `IMMUTABLE`, `AES256`, `scanOnPush` `false`; a lifecycle policy with one rule that
+expires `tagged` images matching `*` once `imageCountMoreThan` 10; and exactly the six tags listed
+for the evidence store, except `Component` `artifact-registry`.
+
+**If not:** the step misses **PASS when**; go to **If it fails.**, which says that no procedure
+in this suite handles a step 5 difference.
+
+#### Step 6 — Read back the CI push scope
+
+Run [Read back the CI push scope](#read-back-the-ci-push-scope).
+
+> **Warning:** This read runs immediately after the apply, when IAM may briefly return the
+> previous document: the push scope without the repositories this change adds. Use step 2 of
+> [Read back the CI push scope](#read-back-the-ci-push-scope): at most four reads 10 seconds
+> apart, tolerating only that previous document. The STOP conditions of this procedure and of
+> that read both apply, so a push scope still without the new repository on the fourth read, or
+> any other difference on any read, is a STOP.
+
+**Expected:** the new repository is in scope and nothing else changed, within at most four reads.
+
+#### Step 7 — Compare the registry inventory
+
+Repeat step 1 and compare it with the first run.
+
+**Expected:** every repository that existed before keeps its image count, and each new one holds 0.
+
+**If not:** an existing repository whose image count changed is a STOP.
+
+#### Step 8 — Run the convergence plan
+
+Run the convergence plan ([Confirm convergence](terraform-operations.md#confirm-convergence)).
+
+**Expected:** exit 0 and no changes.
+
+**If not:** exit 1 or 2 is a STOP.
+
+#### Step 9 — Run the refresh-only drift check
+
+Run the refresh-only drift check
+([Detect state drift](terraform-operations.md#detect-state-drift)), then:
+
+- **No drift:** continue at step 10.
+- **Only `aws_iam_role.ci_checkout` attribute `inline_policy`, and the live policy read in step 6
+  equals the configured one:** this is the known state lag. Reconcile it through
+  [Reconcile explained state-only drift](terraform-operations.md#reconcile-explained-state-only-drift),
+  which binds the refresh-only plan and needs its own explicit owner approval before that plan is
+  applied, then continue at step 10.
+
+This check exists because an ordinary plan can exit 0 while Terraform's stored copy of the push
+policy is stale (see the Engineering notes).
+
+> **Warning:** Applying the refresh-only plan writes state. The grant for step 4 does not cover
+> it.
+
+**Expected:** no drift, or only the role's `inline_policy` lag; after any reconciliation the drift
+check exits 0.
+
+**If not:** any other drift, or a live policy that differs from the configured one, is a STOP.
+
+#### Step 10 — Close the evidence set
+
+Close the evidence set: step 13 of the shared
+[Normal path](terraform-operations.md#normal-path). Sweep the set with its planted positive
+control, handle any hit, and seal it: steps 4 to 7 of the
+[Normal path](evidence-handling.md#normal-path) of evidence-handling.md. The procedure ends
+here.
+
+**Expected:** the set swept with its planted positive control, and sealed.
 
 **PASS when.**
 
@@ -486,13 +497,7 @@ prints the evidence bucket name and account identifiers (observed), so none of i
 
 **Next step.** Wiring the service's publish job and its first publication, both outside this
 runbook ([GitOps Delivery](../implementation/gitops-delivery.md#1-build-once-gitlab-ci-to-an-immutable-digest)).
-Publication is billable, because ECR bills stored image data from the first image, and it needs
-its own explicit owner authorization. The cost gate runs first: read the budget back
-([Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states))
-and [re-check the prices](cost-and-residue.md#re-check-prices-before-billable-work). The price
-table has no registry-storage rate, so that re-check stops and gives no complete storage
-estimate; the owner approves a re-estimate before the publication. Once a repository holds more
-than 10 tagged images, its lifecycle policy can expire the oldest.
+Complete [Before a publication](#before-a-publication) before the publication.
 
 #### Engineering notes
 
@@ -503,6 +508,13 @@ than 10 tagged images, its lifecycle policy can expire the oldest.
 | Evidence basis | [Artifact registry](../../terraform/foundation/README.md#artifact-registry), [CI push identity](../../terraform/foundation/README.md#ci-push-identity) and [Status](../../terraform/foundation/README.md#status). The 2026-09-17 and 2026-09-22 applies and read-backs are retained as private evidence. The 2026-09-02 apply and read-back are recorded as outcomes only; its reviewed plan is retained. All three predate the hosted zone (2026-09-23) and the certificate, and ran before `public_domain` was a declared input. |
 | Authority | Explicit owner grant for the ECR and IAM mutation. A refresh-only apply in step 9 needs its own explicit approval of that refresh-only plan, because applying it writes state. |
 | Cost | None while the new repository holds no image; ECR then bills stored image data ([cost-and-residue.md](cost-and-residue.md)) |
+
+**Background.**
+
+- Storage billing starts with the first image, published outside this runbook; registry storage
+  has no rate in the price table, and its re-check is not yet exercised
+  ([Not yet exercised](cost-and-residue.md#not-yet-exercised)).
+- The planned policy document showing as known after apply (step 3) was observed on 2026-09-17.
 
 **Known limitations.**
 
@@ -517,12 +529,10 @@ than 10 tagged images, its lifecycle policy can expire the oldest.
 
 **Validation:** AWS-VALIDATED (2026-09-10) · **Published command form:** not executed as written
 
-**What this does.** Confirms that the registry holds an image under the digest a pin or a pipeline
-artifact names, and that the manifest it returns hashes to that digest. A digest is the SHA-256 of
-the image's manifest, so the manifest bytes must hash to the `<hex>` part of `<digest>`.
-
-The check proves which bytes the registry holds. It says nothing about the image's scan result or
-provenance.
+Confirms that the registry holds an image under the digest a pin or a pipeline artifact names, and
+that the manifest it returns hashes to that digest. A digest is the SHA-256 of the image's manifest,
+so the manifest bytes must hash to the `<hex>` part of `<digest>`. The check proves which bytes the
+registry holds. It says nothing about the image's scan result or provenance.
 
 **Before you start.**
 
@@ -539,29 +549,34 @@ provenance.
 **Safety and authority.** Read-only. No approval is needed, and it costs nothing. Redact any error
 text before you keep it: ECR's not-found errors can name the registry ID, which is the account ID.
 
-**Steps.**
+#### Step 1 — Find the image by digest
 
-1. Find the image by digest:
+```
+aws ecr describe-images --repository-name <repository> --image-ids imageDigest=<digest> \
+  --profile <profile> \
+  --query 'imageDetails[].{digest:imageDigest,tags:imageTags,pushedAt:imagePushedAt,mediaType:imageManifestMediaType}' \
+  --output json
+```
 
-   ```
-   aws ecr describe-images --repository-name <repository> --image-ids imageDigest=<digest> \
-     --profile <profile> \
-     --query 'imageDetails[].{digest:imageDigest,tags:imageTags,pushedAt:imagePushedAt,mediaType:imageManifestMediaType}' \
-     --output json
-   ```
+**Expected:** one image whose digest equals `<digest>` and whose tags include `<tag>`.
 
-2. Hash the exact manifest bytes. Command substitution drops the newline the CLI appends to text
-   output, and `printf '%s'` writes the rest unchanged:
+**If not:** `ImageNotFoundException` is a STOP.
 
-   ```
-   manifest=$(aws ecr batch-get-image --repository-name <repository> \
-     --image-ids imageDigest=<digest> --profile <profile> \
-     --query 'images[0].imageManifest' --output text)
-   printf '%s' "${manifest}" | shasum -a 256
-   ```
+#### Step 2 — Hash the exact manifest bytes
 
-**Expected result.** Step 1 returns one image whose digest equals `<digest>` and whose tags include
-`<tag>`. Step 2 prints `<hex>  -`, where `<hex>` is the part of `<digest>` after `sha256:`.
+Command substitution drops the newline the CLI appends to text output, and `printf '%s'` writes the
+rest unchanged.
+
+```
+manifest=$(aws ecr batch-get-image --repository-name <repository> \
+  --image-ids imageDigest=<digest> --profile <profile> \
+  --query 'images[0].imageManifest' --output text)
+printf '%s' "${manifest}" | shasum -a 256
+```
+
+**Expected:** `<hex>  -`, where `<hex>` is the part of `<digest>` after `sha256:`.
+
+**If not:** a hash that differs from `<digest>` is a STOP.
 
 **PASS when.**
 
@@ -574,10 +589,8 @@ text before you keep it: ECR's not-found errors can name the registry ID, which 
 - A hash that differs from `<digest>`. Do not rely on the digest until the difference is explained.
   A missing image returns no manifest, so its hash cannot match.
 
-**If it fails.** No procedure in this suite explains a missing image or a hash mismatch; do not rely
-on the digest until the difference is explained. Two known limits of this form can only produce a
-false failure, never a false pass: a manifest that ends in a newline, and a manifest type other than
-the Docker schema-2 manifests it was exercised on. Both are described in the Engineering notes.
+**If it fails.** No procedure in this suite explains a missing image or a hash mismatch. Two known
+limits of this form can give a false failure, never a false pass; see **Known limitations.**
 
 **Evidence to keep.** Both outputs, captured privately, with any error text redacted
 ([Redact at capture](evidence-handling.md#redact-at-capture)).
@@ -603,17 +616,14 @@ images file ([GitOps Delivery](../implementation/gitops-delivery.md#3-pinning-by
   The read omits the `--accepted-media-types` the publish template passes, and its behaviour for OCI
   manifests or image indexes has not been measured. A different manifest returned there would fail
   the comparison, not pass it.
-- The check proves which bytes the registry holds. It says nothing about the image's scan result or
-  provenance.
 
 ### Read back the CI trust
 
 **Validation:** EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-08-15) in part; DESIGNED-NOT-EXECUTED (never) for step 1's detail read and step 2's principal count · **Published command form:** not executed as written
 
-**What this does.** Confirms that only main-branch jobs of the one pinned GitLab project, presenting
-the pinned audience, can assume the push role. The trust is the role's trust policy: it decides
-which GitLab ID tokens may be exchanged for credentials on the role. Three reads cover the GitLab
-OIDC provider, the role's trust statement and its principal, and the role's policies and tags.
+Confirms that only main-branch jobs of the one pinned GitLab project, presenting the pinned
+audience, can assume the push role. The trust is the role's trust policy: it decides which GitLab
+ID tokens may be exchanged for credentials on the role.
 
 **Before you start.**
 
@@ -623,53 +633,60 @@ OIDC provider, the role's trust statement and its principal, and the role's poli
 
 **Safety and authority.** Read-only. No approval is needed, and it costs nothing.
 
-**Steps.**
+#### Step 1 — Read the OIDC provider
 
-1. The OIDC provider:
+```
+aws iam list-open-id-connect-providers --profile <profile> \
+  --query "OpenIDConnectProviderList[?ends_with(Arn, ':oidc-provider/gitlab.com')] | length(@)" \
+  --output text
+aws iam get-open-id-connect-provider --profile <profile> \
+  --open-id-connect-provider-arn arn:aws:iam::<allowed-account-id>:oidc-provider/gitlab.com \
+  --query '{url:Url,clientIds:ClientIDList,tags:Tags}' --output json
+```
 
-   ```
-   aws iam list-open-id-connect-providers --profile <profile> \
-     --query "OpenIDConnectProviderList[?ends_with(Arn, ':oidc-provider/gitlab.com')] | length(@)" \
-     --output text
-   aws iam get-open-id-connect-provider --profile <profile> \
-     --open-id-connect-provider-arn arn:aws:iam::<allowed-account-id>:oidc-provider/gitlab.com \
-     --query '{url:Url,clientIds:ClientIDList,tags:Tags}' --output json
-   ```
+**Expected:**
 
-2. The trust statement and its principal:
+- `list-open-id-connect-providers`: `1`.
+- `get-open-id-connect-provider`: `url` `gitlab.com` (IAM returns the provider URL without its
+  scheme; `ci-identity.tf` declares `https://gitlab.com`), `clientIds` `["sts.amazonaws.com"]`,
+  and the six tags with `Component` `identity`. This read has no recorded execution; see
+  **Known limitations.**
 
-   ```
-   aws iam get-role --role-name cloud-platform-reference-shared-ci-checkout --profile <profile> \
-     --query 'Role.AssumeRolePolicyDocument.Statement[].{effect:Effect,action:Action,condition:Condition}' \
-     --output json
-   aws iam get-role --role-name cloud-platform-reference-shared-ci-checkout --profile <profile> \
-     --query "Role.AssumeRolePolicyDocument.Statement[].Principal.Federated | [?ends_with(@, ':oidc-provider/gitlab.com')] | length(@)" \
-     --output text
-   ```
+#### Step 2 — Read the trust statement and its principal
 
-3. Attached and inline policies, and tags:
+```
+aws iam get-role --role-name cloud-platform-reference-shared-ci-checkout --profile <profile> \
+  --query 'Role.AssumeRolePolicyDocument.Statement[].{effect:Effect,action:Action,condition:Condition}' \
+  --output json
+aws iam get-role --role-name cloud-platform-reference-shared-ci-checkout --profile <profile> \
+  --query "Role.AssumeRolePolicyDocument.Statement[].Principal.Federated | [?ends_with(@, ':oidc-provider/gitlab.com')] | length(@)" \
+  --output text
+```
 
-   ```
-   aws iam list-attached-role-policies --role-name cloud-platform-reference-shared-ci-checkout \
-     --profile <profile> --query 'AttachedPolicies[].PolicyName' --output json
-   aws iam list-role-policies --role-name cloud-platform-reference-shared-ci-checkout \
-     --profile <profile> --query PolicyNames --output json
-   aws iam list-role-tags --role-name cloud-platform-reference-shared-ci-checkout \
-     --profile <profile> --query 'Tags[].[Key,Value]' --output text
-   ```
+**Expected:**
 
-**Expected result.**
+- first `get-role`: exactly one statement: `Allow`, `sts:AssumeRoleWithWebIdentity`, a
+  `StringEquals` condition with `gitlab.com:aud` = `sts.amazonaws.com` and `gitlab.com:sub` =
+  `project_id:<project-id>:ref_type:branch:ref:main`.
+- second `get-role`, the principal count: `1`. This count has no recorded execution; see
+  **Known limitations.**
 
-1. `1`. Then `url` `gitlab.com` (IAM returns the provider URL without its scheme; `ci-identity.tf`
-   declares `https://gitlab.com`), `clientIds` `["sts.amazonaws.com"]`, and the six tags with
-   `Component` `identity`. This provider URL, client-ID and tag read has no recorded execution; its
-   expected values come from `ci-identity.tf` and the AWS CLI reference, not from a run.
-2. Exactly one statement: `Allow`, `sts:AssumeRoleWithWebIdentity`, a `StringEquals` condition with
-   `gitlab.com:aud` = `sts.amazonaws.com` and `gitlab.com:sub` =
-   `project_id:<project-id>:ref_type:branch:ref:main`; the principal count is `1`. The principal
-   count has no recorded execution; its expected value comes from `ci-identity.tf`.
-3. `[]`; `["cloud-platform-reference-shared-ci-checkout-ecr-push"]`; the six tags with `Component`
-   `identity`.
+#### Step 3 — Read the attached and inline policies, and the tags
+
+```
+aws iam list-attached-role-policies --role-name cloud-platform-reference-shared-ci-checkout \
+  --profile <profile> --query 'AttachedPolicies[].PolicyName' --output json
+aws iam list-role-policies --role-name cloud-platform-reference-shared-ci-checkout \
+  --profile <profile> --query PolicyNames --output json
+aws iam list-role-tags --role-name cloud-platform-reference-shared-ci-checkout \
+  --profile <profile> --query 'Tags[].[Key,Value]' --output text
+```
+
+**Expected:**
+
+- `list-attached-role-policies`: `[]`.
+- `list-role-policies`: `["cloud-platform-reference-shared-ci-checkout-ecr-push"]`.
+- `list-role-tags`: the six tags with `Component` `identity`.
 
 **PASS when.**
 
@@ -678,14 +695,14 @@ OIDC provider, the role's trust statement and its principal, and the role's poli
 **STOP if.**
 
 - A second statement, a `StringLike` operator, a wildcard in any condition, a subject for another
-  project or ref, an attached managed policy, or a second inline policy. Run no publish job until
-  the difference is explained.
-- Any other read that differs from its expected result. Run no publish job until the difference
-  is explained.
+  project or ref, an attached managed policy, or a second inline policy.
+- Any other read that differs from its expected result.
+
+Run no publish job until the difference is explained.
 
 **If it fails.** Any read that misses PASS comes here. No procedure in this suite corrects a trust
-that differs. Run no publish job until the difference is explained. Revoking or rotating the trust
-is not exercised; see [Not yet exercised](#not-yet-exercised).
+that differs. Revoking or rotating the trust is not exercised; see
+[Not yet exercised](#not-yet-exercised).
 
 **Evidence to keep.** The output of each command, captured privately.
 
@@ -715,9 +732,9 @@ is not exercised; see [Not yet exercised](#not-yet-exercised).
 
 **Validation:** AWS-VALIDATED (2026-09-22) · **Published command form:** not executed as written
 
-**What this does.** Confirms that the push role reaches exactly the declared `astroshop/`
-repositories and nothing else. The push scope is the role's inline push policy. The `jq` filter
-removes the Region and account prefix from each resource ARN, so the output carries no account ID.
+Confirms that the push role reaches exactly the declared `astroshop/` repositories and nothing
+else. The push scope is the role's inline push policy. The `jq` filter removes the Region and
+account prefix from each resource ARN, so the output carries no account ID.
 
 **Before you start.**
 
@@ -727,34 +744,34 @@ removes the Region and account prefix from each resource ARN, so the output carr
 
 **Safety and authority.** Read-only. No approval is needed, and it costs nothing.
 
-**Steps.**
+#### Step 1 — Read the push policy
 
-1. Read the push policy:
+```
+aws iam get-role-policy --profile <profile> \
+  --role-name cloud-platform-reference-shared-ci-checkout \
+  --policy-name cloud-platform-reference-shared-ci-checkout-ecr-push \
+  --output json |
+  jq '.PolicyDocument.Statement[] | {Effect, Action, Resource: ([.Resource] | flatten | map(sub("^arn:aws:ecr:us-east-1:[0-9]{12}:"; "")))}'
+```
 
-   ```
-   aws iam get-role-policy --profile <profile> \
-     --role-name cloud-platform-reference-shared-ci-checkout \
-     --policy-name cloud-platform-reference-shared-ci-checkout-ecr-push \
-     --output json |
-     jq '.PolicyDocument.Statement[] | {Effect, Action, Resource: ([.Resource] | flatten | map(sub("^arn:aws:ecr:us-east-1:[0-9]{12}:"; "")))}'
-   ```
-
-2. Only when this read runs immediately after an apply that changed the push policy, as in step 6 of
-   [Add a registry repository and widen the CI push scope](#add-a-registry-repository-and-widen-the-ci-push-scope):
-   IAM may briefly return the previous document, the push scope as it stood before that apply. If
-   step 1 shows exactly that previous document, wait 10 seconds and run step 1 again, for at most
-   four reads in total.
-
-   > **Warning:** Only the previous document may be read again. Any other difference from the
-   > expected result, on any read, is a STOP at once, and so is the previous document on the fourth
-   > read. At any other time a single read decides.
-
-**Expected result.** Exactly two statements:
+**Expected:** exactly two statements:
 
 - `Allow` for `ecr:BatchCheckLayerAvailability`, `ecr:InitiateLayerUpload`, `ecr:UploadLayerPart`,
   `ecr:CompleteLayerUpload`, `ecr:PutImage` and `ecr:BatchGetImage`, on `repository/astroshop/<name>`
   for exactly the names in `local.workload_repositories`;
 - `Allow` for `ecr:GetAuthorizationToken` on `*`, the only unscoped call.
+
+#### Step 2 — Repeat the read, only right after an apply
+
+Only when this read runs immediately after an apply that changed the push policy, as in step 6 of
+[Add a registry repository and widen the CI push scope](#add-a-registry-repository-and-widen-the-ci-push-scope):
+IAM may briefly return the previous document, the push scope as it stood before that apply. If
+step 1 shows exactly that previous document, wait 10 seconds and run step 1 again, for at most
+four reads in total.
+
+> **Warning:** Only the previous document may be read again. Any other difference from the
+> expected result, on any read, is a STOP at once, and so is the previous document on the fourth
+> read. At any other time a single read decides.
 
 **PASS when.**
 
@@ -807,8 +824,12 @@ continue with its step 5.
 
 **Validation:** EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-08-15) for the recorded connection by a trust change on the root of that date; DESIGNED-NOT-EXECUTED (never) for a trust change against the current root and for the first-build branch; UNEXERCISED (never) for the first build that branch presumes · **Published command form:** not executed as written
 
-**What this does.** Lets main-branch pipelines of exactly one GitLab project exchange their ID token
-for short-lived credentials on the push role
+**Current public boundary:** without the address list from this root's last apply, a trust change
+stops at state inspection in step 3, because no expected address set is published
+([root table](terraform-operations.md#normal-path)).
+
+Lets main-branch pipelines of exactly one GitLab project exchange their ID token for short-lived
+credentials on the push role
 ([ADR-0009](../decisions/0009-define-the-software-delivery-model.md)). It has a GitLab side, a
 project setting that shapes the token's subject and two CI/CD variables, and an AWS side, the trust
 that pins the project ID through the foundation root's `gitlab_project_id` input.
@@ -825,11 +846,12 @@ change from project path to project ID, which re-pinned the same project.
       ([Background prerequisites](#background-prerequisites)).
 - [ ] A written owner grant.
 - [ ] `<project-id>`, read from the project's Settings, General page, and `<allowed-account-id>`.
+- [ ] `<inputs-dir>`, the root's private directory that holds its untracked `terraform.tfvars`
+      ([placeholders](terraform-operations.md#before-you-start)).
 - [ ] For a trust change on an existing root (step 3): the expected address set for state
       inspection, the address list that step 2 of
       [Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan) printed
-      after this root's last apply. None is published; without it step 3 stops at state inspection
-      ([root table](terraform-operations.md#normal-path)).
+      after this root's last apply.
 
 **Safety and authority.** Mutating and owner-authorized: an explicit owner grant covers the IAM
 trust change and the GitLab project settings. The apply in step 3 also needs the owner's written
@@ -840,74 +862,96 @@ direct charge.
 > **Warning:** No trust change has run against the current root, with the hosted zone, the
 > certificate and `public_domain` present. No acceptance shape exists for a first build.
 
-**Steps.**
+#### Step 1 — Set the ID token subject claim in GitLab
 
-1. In GitLab, set the project attribute `ci_id_token_sub_claim_components` to `project_id`,
-   `ref_type`, `ref`, and read it back. The read-back must be `["project_id", "ref_type", "ref"]`.
-   GitLab's default subject names the project path, while the trust pins the project ID, so without
-   this setting no job can assume the role.
+In GitLab, set the project attribute `ci_id_token_sub_claim_components` to `project_id`,
+`ref_type`, `ref`, and read it back. GitLab's default subject names the project path, while the
+trust pins the project ID, so without this setting no job can assume the role.
 
-   This step has no published command: the call that made the change was not recorded (see the
-   Engineering notes).
+This step has no published command: the call that made the change was not recorded (see the
+Engineering notes).
 
-2. Set `gitlab_project_id = <project-id>` in the root's untracked `terraform.tfvars`. Which case
-   applies decides whether step 3 runs:
+**Expected:** the read-back is `["project_id", "ref_type", "ref"]`.
 
-   - **The root was first built with this project's ID.** `gitlab_project_id` is one of the root's
-     four required [inputs](../../terraform/foundation/README.md#input), and the trust pins the
-     project ID through it, so that build already pinned the trust to this project. Skip step 3
-     and continue at step 4, which reads the pinned subject back. No acceptance shape exists for a
-     first build ([Not yet exercised](#not-yet-exercised)).
-   - **A trust change on an existing root**, such as the recorded change from project path to
-     project ID: continue at step 3.
+**If not:** the step misses **PASS when**; see **If it fails.**
 
-   > **Warning:** The trust pins exactly one subject. Setting a different `gitlab_project_id` on an
-   > existing root replaces the trusted project and disconnects the previous one. That has never
-   > been executed, and no procedure covers it: it is outside this procedure. See the row
-   > "Revoking or rotating the CI push trust" in [Not yet exercised](#not-yet-exercised).
+#### Step 2 — Set the project ID and choose the case
 
-3. Only for a trust change on an existing root: plan and apply the foundation root through the
-   shared workflow in [terraform-operations.md](terraform-operations.md#normal-path):
-   [Run the static checks](terraform-operations.md#run-the-static-checks),
-   [Initialize a root against the state backend](terraform-operations.md#initialize-a-root-against-the-state-backend),
-   [Inspect state without writing it](terraform-operations.md#inspect-state-without-writing-it),
-   [Keep Terraform debug logging off](terraform-operations.md#keep-terraform-debug-logging-off),
-   [Plan to a saved file](terraform-operations.md#plan-to-a-saved-file),
-   [Review the saved plan](terraform-operations.md#review-the-saved-plan),
-   [Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state),
-   [Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan) and
-   [Confirm convergence](terraform-operations.md#confirm-convergence). Accept only one in-place
-   update of `aws_iam_role.ci_checkout` (0 added, 1 changed, 0 destroyed), followed by a plan with
-   no changes. That shape was recorded for a change that re-pinned the same project (see Step
-   history in the Engineering notes). It is not an acceptance shape for pointing the root at a
-   different project, which the warning at step 2 places outside this procedure.
+Set `gitlab_project_id = <project-id>` in the root's untracked `terraform.tfvars` in its private
+`<inputs-dir>`. Then pick the case that applies:
 
-   > **Warning:** The apply changes the IAM trust. Run it only after the owner has approved this
-   > reviewed saved plan in writing, identified by its sha256, and the bind check has passed again
-   > immediately before the apply ([Approvals](README.md#approvals)).
+- **Root first built with this project's ID:** skip step 3, continue at step 4, which reads the
+  pinned subject back. `gitlab_project_id` is one of the root's four required
+  [inputs](../../terraform/foundation/README.md#input) and the trust pins the project ID through
+  it, so that build already pinned the trust to this project. No acceptance shape exists for a
+  first build ([Not yet exercised](#not-yet-exercised)).
+- **Trust change on an existing root**, such as the recorded change from project path to project
+  ID: continue at step 3.
 
-4. Run [Read back the CI trust](#read-back-the-ci-trust) and
-   [Read back the CI push scope](#read-back-the-ci-push-scope).
+> **Warning:** The trust pins exactly one subject. Setting a different `gitlab_project_id` on an
+> existing root replaces the trusted project and disconnects the previous one. That has never
+> been executed, and no procedure covers it: it is outside this procedure. See the row
+> "Revoking or rotating the CI push trust" in [Not yet exercised](#not-yet-exercised).
 
-5. In the GitLab project, create two masked CI/CD variables:
-   - `AWS_ROLE_ARN`: `arn:aws:iam::<allowed-account-id>:role/cloud-platform-reference-shared-ci-checkout`
-   - `ECR_REGISTRY`: `<allowed-account-id>.dkr.ecr.us-east-1.amazonaws.com`, the registry host only
-     and never a repository path
+#### Step 3 — Plan and apply the trust change (existing root only)
 
-   Each service whose publish job is wired sets `ECR_REPOSITORY` in its `ci.yml` to its own
-   `astroshop/<service>`.
+Only for a trust change on an existing root.
 
-6. Keep `environment:` off every publish job.
+> **Warning:** The apply changes the IAM trust. Run it only after the owner has approved this
+> reviewed saved plan in writing, identified by its sha256, and the bind check has passed again
+> immediately before the apply ([Approvals](README.md#approvals)).
 
-   > **Warning:** `environment:` changes the ID token's subject, which the trust matches exactly, as
-   > the comments in `ci-identity.tf` and `ecr-publish.yml` state. This has not been observed in a
-   > run.
+Plan and apply the foundation root through the shared workflow in
+[terraform-operations.md](terraform-operations.md#normal-path):
+[Run the static checks](terraform-operations.md#run-the-static-checks),
+[Initialize a root against the state backend](terraform-operations.md#initialize-a-root-against-the-state-backend),
+[Inspect state without writing it](terraform-operations.md#inspect-state-without-writing-it),
+[Keep Terraform debug logging off](terraform-operations.md#keep-terraform-debug-logging-off),
+[Plan to a saved file](terraform-operations.md#plan-to-a-saved-file),
+[Review the saved plan](terraform-operations.md#review-the-saved-plan),
+[Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state),
+[Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan) and
+[Confirm convergence](terraform-operations.md#confirm-convergence).
 
-**Expected result.** The step 1 read-back is `["project_id", "ref_type", "ref"]`. For a trust
-change, the step 3 plan is 0 added, 1 changed, 0 destroyed, and the plan after it has no changes.
-Both read-backs in step 4 match their expected results. The first manual publish job on `main` then
-proves the chain; running it is outside this runbook
-([GitOps Delivery](../implementation/gitops-delivery.md#1-build-once-gitlab-ci-to-an-immutable-digest)).
+**Expected:** only one in-place update of `aws_iam_role.ci_checkout` (0 added, 1 changed, 0
+destroyed), followed by a plan with no changes. It is not an acceptance shape for pointing the root
+at a different project, which the warning at step 2 places outside this procedure. Where the shape
+was recorded: Step history in the Engineering notes.
+
+**If not:** a plan that touches anything other than the role's trust is a STOP. An apply that stops
+partway follows **If it fails.**
+
+#### Step 4 — Read back the trust and the push scope
+
+Run [Read back the CI trust](#read-back-the-ci-trust) and
+[Read back the CI push scope](#read-back-the-ci-push-scope).
+
+**Expected:** both read-backs match their expected results.
+
+**If not:** a trust read-back that fails its expected result is a STOP.
+
+#### Step 5 — Create the two masked CI/CD variables
+
+In the GitLab project, create two masked CI/CD variables:
+
+- `AWS_ROLE_ARN`: `arn:aws:iam::<allowed-account-id>:role/cloud-platform-reference-shared-ci-checkout`
+- `ECR_REGISTRY`: `<allowed-account-id>.dkr.ecr.us-east-1.amazonaws.com`, the registry host only
+  and never a repository path
+
+Each service whose publish job is wired sets `ECR_REPOSITORY` in its `ci.yml` to its own
+`astroshop/<service>`.
+
+**Expected:** both variables exist and are masked.
+
+#### Step 6 — Keep `environment:` off every publish job
+
+Check each publish job in the project and leave `environment:` out of it.
+
+> **Warning:** `environment:` changes the ID token's subject, which the trust matches exactly, as
+> the comments in `ci-identity.tf` and `ecr-publish.yml` state. This has not been observed in a
+> run.
+
+**Expected:** no publish job declares `environment:`.
 
 **PASS when.**
 
@@ -934,15 +978,10 @@ proves the chain; running it is outside this runbook
 privately. The saved plan and the plan and apply logs from step 3 stay private
 ([terraform-operations.md](terraform-operations.md)).
 
-**Next step.** The first publication from the connected project, outside this runbook
+**Next step.** The first publication from the connected project: the first manual publish job on
+`main` proves the chain. Running it is outside this runbook
 ([GitOps Delivery](../implementation/gitops-delivery.md#1-build-once-gitlab-ci-to-an-immutable-digest)).
-Publication is billable, because ECR bills stored image data from the first image, and it needs
-its own explicit owner authorization. The cost gate runs first: read the budget back
-([Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states))
-and [re-check the prices](cost-and-residue.md#re-check-prices-before-billable-work). The price
-table has no registry-storage rate, so that re-check stops and gives no complete storage
-estimate; the owner approves a re-estimate before the publication. Once a repository holds more
-than 10 tagged images, its lifecycle policy can expire the oldest.
+Complete [Before a publication](#before-a-publication) first.
 
 #### Engineering notes
 
@@ -979,10 +1018,9 @@ than 10 tagged images, its lifecycle policy can expire the oldest.
 
 **Validation:** EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (2026-08-15) · **Published command form:** not executed as written
 
-**What this does.** Maps an observed publication failure to its measured cause and its correction.
-Only failures that have actually occurred are listed. Failures that have not occurred, such as an
-audience or subject mismatch at the STS call, are not listed. This is a symptom table; it contains
-no command.
+Maps an observed publication failure to its measured cause and its correction. Only failures that
+have actually occurred are listed. Failures that have not occurred, such as an audience or subject
+mismatch at the STS call, are not listed. This is a symptom table; it contains no command.
 
 **Before you start.**
 
@@ -991,19 +1029,21 @@ no command.
 **Safety and authority.** Read-only to diagnose, with no approval needed. A correction that changes
 the trust or GitLab settings is mutating and needs an explicit owner grant.
 
-**Steps.**
+#### Step 1 — Match the failing job against the table
 
-1. Match the failing publish job against the table.
+| Symptom | Observed cause | Correction |
+|---|---|---|
+| GitLab refuses to issue the job's ID token, and the job fails before any AWS call | The project's path had previously belonged to another GitLab project | Switch the sub-claim components to `project_id`, `ref_type`, `ref` and pin the trust to the project ID, as in steps 1 to 3 of [Connect a GitLab project](#connect-a-gitlab-project-to-the-ci-push-identity) |
+| The token exchange, the STS call and the registry login succeed, and then the push fails | `ECR_REGISTRY` held the registry host plus the repository path | Set `ECR_REGISTRY` to the registry host only; the repository path belongs in `ECR_REPOSITORY` |
 
-   | Symptom | Observed cause | Correction |
-   |---|---|---|
-   | GitLab refuses to issue the job's ID token, and the job fails before any AWS call | The project's path had previously belonged to another GitLab project | Switch the sub-claim components to `project_id`, `ref_type`, `ref` and pin the trust to the project ID, as in steps 1 to 3 of [Connect a GitLab project](#connect-a-gitlab-project-to-the-ci-push-identity) |
-   | The token exchange, the STS call and the registry login succeed, and then the push fails | `ECR_REGISTRY` held the registry host plus the repository path | Set `ECR_REGISTRY` to the registry host only; the repository path belongs in `ECR_REPOSITORY` |
+**Expected:** the symptom matches one row, and that row names the cause and the correction.
 
-2. Apply the correction in the matching row, under an explicit owner grant when it changes the trust
-   or GitLab settings.
+**If not:** see **If it fails.**
 
-**Expected result.** The symptom matches one row, and that row names the cause and the correction.
+#### Step 2 — Apply the correction
+
+Apply the correction in the matching row, under an explicit owner grant when it changes the trust
+or GitLab settings.
 
 **PASS when.**
 
@@ -1020,13 +1060,7 @@ the trust or GitLab settings is mutating and needs an explicit owner grant.
 
 **Next step.** The next publication from the project, outside this runbook
 ([GitOps Delivery](../implementation/gitops-delivery.md#1-build-once-gitlab-ci-to-an-immutable-digest)).
-Publication is billable, because ECR bills stored image data from the first image, and it needs
-its own explicit owner authorization. The cost gate runs first: read the budget back
-([Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states))
-and [re-check the prices](cost-and-residue.md#re-check-prices-before-billable-work). The price
-table has no registry-storage rate, so that re-check stops and gives no complete storage
-estimate; the owner approves a re-estimate before the publication. Once a repository holds more
-than 10 tagged images, its lifecycle policy can expire the oldest.
+Complete [Before a publication](#before-a-publication) first.
 
 #### Engineering notes
 
@@ -1040,6 +1074,65 @@ than 10 tagged images, its lifecycle policy can expire the oldest.
 
 **Known limitations.** Failures that have not occurred, such as an audience or subject mismatch at
 the STS call, are not listed.
+
+## Plan review and publication gates
+
+The procedures point here for two checks: the coverage table used at step 7 of the shared
+Normal path, and the cost gate that runs before a publication.
+
+### Read-back coverage
+
+Before approval, step 7 of the shared [Normal path](terraform-operations.md#normal-path) checks
+that every address in the reviewed list, the addresses and actions the change intends, has a
+published read-back. This table is that check for the foundation root. The hosted zone and the
+certificate are read back in [public-dns-and-certificate.md](public-dns-and-certificate.md).
+
+| Address | Published read-back |
+|---|---|
+| `aws_s3_bucket.evidence` | [Read back the evidence-store controls](#read-back-the-evidence-store-controls), step 5 (the tags) |
+| `aws_s3_bucket_versioning.evidence` | [Read back the evidence-store controls](#read-back-the-evidence-store-controls), step 1 |
+| `aws_s3_bucket_server_side_encryption_configuration.evidence` | [Read back the evidence-store controls](#read-back-the-evidence-store-controls), step 2 |
+| `aws_s3_bucket_public_access_block.evidence` | [Read back the evidence-store controls](#read-back-the-evidence-store-controls), step 3 |
+| `aws_s3_bucket_policy.evidence` | [Read back the evidence-store controls](#read-back-the-evidence-store-controls), step 4 |
+| `aws_ecr_repository.workload["<service>"]` and `aws_ecr_lifecycle_policy.workload["<service>"]`, created by the change | [Add a registry repository and widen the CI push scope](#add-a-registry-repository-and-widen-the-ci-push-scope), step 5 |
+| The same two addresses for a repository that already exists, changed or destroyed | **None**: step 5 reads only a new repository |
+| `aws_ecr_repository.collector` | **None** |
+| `aws_iam_openid_connect_provider.gitlab` | [Read back the CI trust](#read-back-the-ci-trust), step 1 |
+| `aws_iam_role.ci_checkout` | [Read back the CI trust](#read-back-the-ci-trust), steps 2 and 3 |
+| `aws_iam_role_policy.ci_checkout_ecr_push` | [Read back the CI push scope](#read-back-the-ci-push-scope) |
+| `aws_route53_zone.public` | [Read back the hosted zone](public-dns-and-certificate.md#read-back-the-hosted-zone), steps 1 to 4 |
+| `aws_acm_certificate.public`, `aws_route53_record.certificate_validation` and `aws_acm_certificate_validation.public` | [Read back the certificate](public-dns-and-certificate.md#read-back-the-certificate), steps 1 to 3, and [Read back the hosted zone](public-dns-and-certificate.md#read-back-the-hosted-zone), steps 1 to 4 |
+
+For the last two rows, PASS: one public zone for `<apex>` with four name servers, the six
+mandatory tags with `Component` set to `dns`, and only `NS` and `SOA` records, plus, after the
+certificate, exactly one `CNAME`, its validation record, with TTL 300; and a certificate `ISSUED`
+and `AMAZON_ISSUED` for `<apex>` with SANs exactly `<apex>` and `*.<apex>`, both names `DNS` and
+`SUCCESS` with one shared validation record, `Export` `DISABLED`, and the same six tags. Then
+return to the step that sent you here.
+
+Count an address as **None** also when:
+
+- the table does not list it, such as a resource the change declares in the root for the first
+  time;
+- the change destroys it; or
+- the change sets a value that its read-back's expected result states differently. Those
+  expected results are the values the root declares today; none is published for another value.
+
+No procedure on this page or in public-dns-and-certificate.md checks a foundation address another
+way, so an address counted as **None** stops the plan at step 7, before approval. Work resumes
+only on a reviewed decision under explicit approval.
+
+### Before a publication
+
+Three procedures end at a publication that runs outside this runbook
+([GitOps Delivery](../implementation/gitops-delivery.md#1-build-once-gitlab-ci-to-an-immutable-digest)).
+Publication is billable, because ECR bills stored image data from the first image, and it needs
+its own explicit owner authorization. The cost gate runs first: read the budget back
+([Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states))
+and [re-check the prices](cost-and-residue.md#re-check-prices-before-billable-work). The price
+table has no registry-storage rate, so that re-check stops and gives no complete storage
+estimate; the owner approves a re-estimate before the publication. Once a repository holds more
+than 10 tagged images, its lifecycle policy can expire the oldest.
 
 ## Not yet exercised
 

@@ -17,77 +17,91 @@ inside a window, are outside this suite; [Runtime Validation](../validation/runt
 summarizes the windows that ran. Validation labels and the task order are in the
 [runbook index](README.md).
 
+## When to use this runbook
+
+| If you need to | Go to |
+|---|---|
+| Start AWS work on a workstation that is already set up | [Daily flow](#daily-flow) |
+| Set up a new workstation, account or operator | [Normal path](#normal-path), steps 1 to 4 |
+| Run a long or sensitive operation | [Normal path](#normal-path), steps 8 and 9 |
+| Recover after a read-only command failed on an expired or missing token | [Recover from session expiry](#recover-from-session-expiry) |
+| Recover after credentials expired during a run, or after a command that could have written state (an apply, a destroy or a state change) failed on an expired or missing token | [Recover from credential expiry mid-run](#recover-from-credential-expiry-mid-run). Do not re-run the command. |
+| Respond when the identity check errors or prints `False`, the account check prints `ACCOUNT_MATCH=HOLD`, or a mutating command already ran against another account | [Recover from a wrong account](#recover-from-a-wrong-account) |
+| Retire the access key or console password a human IAM user still holds (once, where it applies) | [Retire legacy IAM user credentials](#retire-legacy-iam-user-credentials) |
+
 ## Normal path
 
-Steps 1 to 4 run once; skip any whose result already exists. A new operator who has an invitation
-or a one-time password from the Identity Center administrator skips step 2, does the operator part
-of step 3 (a password and an MFA device), then runs step 4. Step 4's account list shows whether the
-project account and both permission sets are assigned; its failure table routes anything missing
-back to the administrator's part of step 3. Steps 5 to 7 come before AWS work. Steps 8 and 9 come
-before a long or sensitive operation. No general rule for what counts as one is published: where a
-task runbook needs an exported shell or a minimum session time, it says so, as
-[dev-datastore.md](dev-datastore.md) and [cost-and-residue.md](cost-and-residue.md) do.
+**Setup, once.** Skip any step whose result already exists.
 
 1. [Prepare the workstation toolchain](#prepare-the-workstation-toolchain): once per workstation.
 2. [Enable Organizations and Identity Center](#enable-organizations-and-identity-center): once per
-   account. Never exercised in this project.
+   account. Never exercised in this project, and no command form is published.
 3. [Set up an operator in Identity Center](#set-up-an-operator-in-identity-center): once per
    operator.
 4. [Configure the local CLI profiles](#configure-the-local-cli-profiles): once per workstation.
+
+A new operator who has an invitation or a one-time password from the Identity Center administrator
+skips step 2, does the operator part of step 3 (a password and an MFA device), then runs step 4.
+Step 4's account list shows whether the project account and both permission sets are assigned; its
+failure table routes anything missing back to the administrator's part of step 3.
+
+**Before AWS work.**
+
 5. [Sign in](#sign-in) with the profile the work needs. Its step 2 runs steps 6 and 7.
 6. [Verify the resolved identity](#verify-the-resolved-identity): two values, both `True`.
 7. [Check the account before AWS commands](#check-the-account-before-aws-commands):
    `ACCOUNT_MATCH=PASS`.
+
+**Before a long or sensitive operation.**
+
 8. [Check session headroom before long operations](#check-session-headroom-before-long-operations):
    the credential outlives the operation.
 9. [Export role credentials once](#export-role-credentials-once): a clean shell that holds one role
    credential and nothing else.
 
-When something goes wrong:
+No general rule for what counts as a long or sensitive operation is published: where a task
+runbook needs an exported shell or a minimum session time, it says so, as
+[dev-datastore.md](dev-datastore.md) and [cost-and-residue.md](cost-and-residue.md) do.
 
-- A read-only command fails on an expired or missing token:
-  [Recover from session expiry](#recover-from-session-expiry).
-- Credentials expire during a run, or a command that could have written state (an apply, a destroy
-  or a state change) fails on an expired or missing token: do not re-run it;
-  [Recover from credential expiry mid-run](#recover-from-credential-expiry-mid-run).
-- The identity check errors or prints `False`, the account check prints `ACCOUNT_MATCH=HOLD`, or a
-  mutating command already ran against another account:
-  [Recover from a wrong account](#recover-from-a-wrong-account).
+## Daily flow
 
-Once, where it applies: a human IAM user still holds an access key or a console password:
-[Retire legacy IAM user credentials](#retire-legacy-iam-user-credentials).
+Once setup exists, each working session runs in this order. Every step links to the procedure
+that holds the command and its PASS and STOP rules.
+
+1. **Sign in.** Run the `aws sso login` line for the profile the work needs and approve it in the
+   browser ([Sign in](#sign-in), step 1).
+2. **Verify the identity and the account** on that profile ([Sign in](#sign-in), step 2). In the
+   bash shell that will do the work:
+   - define `account_check`
+     ([Check the account before AWS commands](#check-the-account-before-aws-commands), step 1);
+   - run [Verify the resolved identity](#verify-the-resolved-identity);
+   - run the account check.
+
+   Continue only on `True` twice and `ACCOUNT_MATCH=PASS`. Anything else is a STOP: follow
+   [Recover from a wrong account](#recover-from-a-wrong-account), part A.
+3. **Choose the profile for each command.** One sign-in serves both profiles; the `--profile` each
+   command names decides which role it uses. Use `cloud-platform-readonly` for inspection and
+   review, and name `cloud-platform-admin` deliberately, in the command that needs it. Each profile
+   selected its account separately, so run both checks on a profile before its first use: one
+   profile's `ACCOUNT_MATCH=PASS` does not cover the other.
+4. **Work.** Every AWS CLI command names its profile with `--profile`. For a long or sensitive
+   operation, first [check session headroom](#check-session-headroom-before-long-operations), then
+   [export role credentials once](#export-role-credentials-once) and run the work inside that
+   exported shell.
+5. **Leave the shell.** If you worked in an exported shell, exit it when the work ends
+   ([Export role credentials once](#export-role-credentials-once), step 6). Exiting does not end
+   the role credential at AWS or clear the AWS CLI's local cache; that step says what remains. No
+   sign-out procedure is published ([Not yet exercised](#not-yet-exercised)).
 
 <a id="hidden-prerequisites"></a>
 
 ## Before you start
 
+**For setup.**
+
 - [ ] A dedicated AWS account for the platform. Its ID goes only into each root's untracked
   `terraform.tfvars` (a root is a Terraform root directory under `terraform/`, not the AWS root
   user), as `allowed_account_id`, and into local AWS CLI configuration; never into the repository.
-- [ ] That account ID, supplied by the owner, the person accountable for the AWS account. It is
-  the pin every account check compares against, so never take it from what the CLI or AWS shows
-  you: not from the account list in `aws configure sso` or the access portal, and not from
-  `get-caller-identity`. A pin copied from the account a profile selected compares the profile
-  with itself, and the check passes in the wrong account.
-- [ ] For the account check: `<root-tfvars>`, the path to the filled, untracked `terraform.tfvars`
-  of the root the work targets (`terraform/bootstrap`, `terraform/foundation`, `terraform/dev` or
-  `terraform/dev-datastore`). Create that file in the root's private `<inputs-dir>`, outside every
-  working tree, as [terraform-operations.md](terraform-operations.md#before-you-start) sets out,
-  so `<root-tfvars>` is `<inputs-dir>/terraform.tfvars`. Once
-  [Initialize a root against the state backend](terraform-operations.md#initialize-a-root-against-the-state-backend)
-  has copied it into `terraform/<root>`, `./terraform.tfvars` from inside that directory holds the
-  same values. It sets `allowed_account_id` to the owner-supplied account ID, the account pin each
-  root reads, described in the Input sections of the
-  [bootstrap](../../terraform/bootstrap/README.md#input),
-  [foundation](../../terraform/foundation/README.md#input) and
-  [dev](../../terraform/dev/README.md#input) roots, and the inputs of the
-  [dev-datastore](../../terraform/dev-datastore/README.md#what-it-creates) root.
-  For work that targets no root, such as sign-in, the identity and account checks and read-backs,
-  `<root-tfvars>` is the bootstrap root's `<inputs-dir>/terraform.tfvars`: copy the tracked
-  `terraform/bootstrap/terraform.tfvars.example` there and set `allowed_account_id` to the
-  owner-supplied account ID. Its other input, `state_bucket_name`, can wait until
-  [Build the state backend and migrate into it](terraform-operations.md#build-the-state-backend-and-migrate-into-it).
-  Every root pins the same account, so this file serves the account check for that work.
 - [ ] An AWS Organizations management account with an IAM Identity Center organization instance
   ([Enable Organizations and Identity Center](#enable-organizations-and-identity-center)).
 - [ ] For a new account only: an identity for the first Identity Center setup. In the reference
@@ -101,10 +115,55 @@ Once, where it applies: a human IAM user still holds an access key or a console 
 - [ ] The Identity Center start URL and its Region, from the Identity Center administrator, and one
   SSO session name, a local label both profiles share. All three are kept only in local AWS CLI
   configuration.
+
+**For every working session.**
+
+- [ ] The account ID of that dedicated account, supplied by the owner, the person accountable for
+  the AWS account. It is the pin every account check compares against, so never take it from what
+  the CLI or AWS shows you: not from the account list in `aws configure sso` or the access portal,
+  and not from `get-caller-identity`. A pin copied from the account a profile selected compares
+  the profile with itself, and the check passes in the wrong account.
+- [ ] `<root-tfvars>` for the account check (see [Values you supply](#values-you-supply)).
+- [ ] The default Region `us-east-1`, set in each profile
+  ([Configure the local CLI profiles](#configure-the-local-cli-profiles), step 1).
 - [ ] A browser on the workstation to approve the sign-in.
 - [ ] The toolchain in [Prepare the workstation toolchain](#prepare-the-workstation-toolchain).
 - [ ] An approver for every step that needs an explicit owner grant. An explicit owner grant is
   written approval given before the step by the person accountable for the AWS account.
+
+<a id="values-you-supply"></a>
+
+**Values you supply.** Each placeholder is defined here once.
+
+| Placeholder | What it is | Where it comes from |
+|---|---|---|
+| `<profile>` | `cloud-platform-readonly` or `cloud-platform-admin` | You choose the profile the work needs. |
+| `<permission-set>` | `ReadOnlyAccess` or `AdministratorAccess` | The permission set you selected for `<profile>`. |
+| `<root-tfvars>` | The path to the filled, untracked `terraform.tfvars` of the root the work targets | You create it, as set out below. It holds the account ID, which is never printed or recorded. |
+| `<inputs-dir>` | The root's private inputs directory, outside every working tree | You create it, as [terraform-operations.md](terraform-operations.md#before-you-start) sets out. |
+| `<os>_<arch>` | The Terraform release's platform suffix, for example `darwin_arm64` | Your workstation's platform. |
+| `<required-minutes>` | The headroom a long operation needs | You set it ([Check session headroom](#check-session-headroom-before-long-operations), step 1). |
+| `<sso-cache-dir>` | `sso/cache` inside the AWS CLI's configuration directory | Your workstation. No cached session's start URL is recorded. |
+| `<legacy-user>`, `<access-key-id>` | The legacy IAM user's name and its access key ID | Key retirement only. You read the key ID locally from IAM; both stay out of every record. |
+
+**Setting up `<root-tfvars>`.** For work that targets no root, such as sign-in, the identity and
+account checks and read-backs, `<root-tfvars>` is the bootstrap root's
+`<inputs-dir>/terraform.tfvars`: copy the tracked `terraform/bootstrap/terraform.tfvars.example`
+there and set `allowed_account_id` to the owner-supplied account ID. Its other input,
+`state_bucket_name`, can wait until
+[Build the state backend and migrate into it](terraform-operations.md#build-the-state-backend-and-migrate-into-it).
+Every root pins the same account, so this file serves the account check for that work.
+
+Work that targets a root uses that root's file: `terraform/bootstrap`, `terraform/foundation`,
+`terraform/dev` or `terraform/dev-datastore`. Create its `terraform.tfvars` in the root's private
+`<inputs-dir>`, so `<root-tfvars>` is `<inputs-dir>/terraform.tfvars`. Once
+[Initialize a root against the state backend](terraform-operations.md#initialize-a-root-against-the-state-backend)
+has copied it into `terraform/<root>`, `./terraform.tfvars` inside that directory holds the same
+values. It sets `allowed_account_id`, the account pin each root reads, to the owner-supplied
+account ID, as the Input sections of the [bootstrap](../../terraform/bootstrap/README.md#input),
+[foundation](../../terraform/foundation/README.md#input) and
+[dev](../../terraform/dev/README.md#input) roots and the inputs of the
+[dev-datastore](../../terraform/dev-datastore/README.md#what-it-creates) root describe.
 
 **Rules for every procedure.**
 
@@ -122,6 +181,8 @@ Once, where it applies: a human IAM user still holds an access key or a console 
   No command relies on a default profile or an inherited `AWS_PROFILE`, except the deliberate
   default-path check in [Retire legacy IAM user credentials](#retire-legacy-iam-user-credentials),
   step 6.
+- If another runbook sent you to a procedure here, return to the step that sent you once that
+  procedure passes.
 
 ## Procedures
 
@@ -131,16 +192,11 @@ Once, where it applies: a human IAM user still holds an access key or a console 
 
 **Validation:** OFFLINE-VALIDATED · **Published command form:** not executed as written
 
-**What this does.** Prepares the workstation to run the Terraform binary and provider the recorded
-applies used, and shows that the binary is HashiCorp's release. HashiCorp's signature covers the
-release's checksum file, the checksum file covers the archive, and a hash comparison ties the
-installed binary to the archive.
-
-Use Terraform 1.15.5, the version recorded for the 2026-09-23 and 2026-09-24 applies.
-Every root accepts `>= 1.11, < 2.0`, but later releases have not been exercised. A package manager
-may now resolve a later release, so install 1.15.5 explicitly from HashiCorp's release archive. The
-AWS provider `hashicorp/aws` 6.58.0 is pinned by the committed lock file in every root, and
-`terraform init` checks it against that file
+Install Terraform 1.15.5 explicitly from HashiCorp's release archive and prove it is HashiCorp's
+release; a package manager may now resolve a later release. This gives the workstation the
+Terraform binary and provider the recorded applies used. The AWS provider `hashicorp/aws`
+6.58.0 is pinned by the committed lock file in every root, and `terraform init` checks it against
+that file
 ([Initialize a root against the state backend](terraform-operations.md#initialize-a-root-against-the-state-backend)).
 
 **Before you start.**
@@ -154,11 +210,10 @@ AWS provider `hashicorp/aws` 6.58.0 is pinned by the committed lock file in ever
 **Safety and authority.** Local-only; no owner grant. A binary that fails any check below is never
 run against the account.
 
-**Steps.**
+#### Step 1 — Download the release files and import HashiCorp's key
 
-1. Download the release checksum file, its signature and the archive for your platform, and
-   import HashiCorp's signing key. `<os>_<arch>` is the release's platform suffix, for example
-   `darwin_arm64` or `linux_amd64`:
+Download the release checksum file, its signature and the archive for your platform. Set `p` to
+your platform suffix, for example `darwin_arm64` or `linux_amd64`.
 
 ```
 v=1.15.5; p=<os>_<arch>
@@ -169,26 +224,38 @@ curl -fsSO "$base/terraform_${v}_${p}.zip"
 curl -fsS https://www.hashicorp.com/.well-known/pgp-key.txt | gpg --import
 ```
 
-2. Compare the key's fingerprint with the one HashiCorp publishes on its
-   [security page](https://www.hashicorp.com/trust/security)
-   (`C874 011F 0AB4 0511 0D02 1055 3436 5D94 72D7 468F` when this was checked), then verify the
-   signature. It covers the checksum file, not the archive and not the binary.
+#### Step 2 — Check the key fingerprint and the signature
+
+Compare the key's fingerprint with the one HashiCorp publishes on its
+[security page](https://www.hashicorp.com/trust/security)
+(`C874 011F 0AB4 0511 0D02 1055 3436 5D94 72D7 468F` when this was checked), then verify the
+signature. It covers the checksum file, not the archive and not the binary.
 
 ```
 gpg --fingerprint 72D7468F
 gpg --verify "terraform_${v}_SHA256SUMS.sig" "terraform_${v}_SHA256SUMS"
 ```
 
-3. Check the archive against the signed checksum file:
+**Expected:** the published fingerprint, and a good signature from that key.
+**If not:** STOP. Do not run that binary against the account.
+
+#### Step 3 — Check the archive against the signed checksum file
 
 ```
 grep " terraform_${v}_${p}.zip\$" "terraform_${v}_SHA256SUMS" | shasum -a 256 -c
 ```
 
-4. Install the `terraform` binary from the verified archive into a directory on `PATH`.
-   `command -v terraform` must then resolve to this binary, not to another `terraform` earlier on
-   `PATH`.
-5. Tie the installed binary to that archive:
+**Expected:** `OK` for the archive.
+**If not:** STOP. Do not run that binary against the account.
+
+#### Step 4 — Install the binary
+
+Install the `terraform` binary from the verified archive into a directory on `PATH`.
+
+**Expected:** `command -v terraform` resolves to this binary, not to another `terraform` earlier
+on `PATH`.
+
+#### Step 5 — Tie the installed binary to the archive
 
 ```
 unzip -p "terraform_${v}_${p}.zip" terraform | shasum -a 256
@@ -196,8 +263,8 @@ shasum -a 256 "$(command -v terraform)"
 terraform version
 ```
 
-**Expected result.** A good signature from the key with the published fingerprint, `OK` for the
-archive, equal hashes for the extracted and the installed binary, and Terraform v1.15.5.
+**Expected:** equal hashes for the extracted and the installed binary, and Terraform v1.15.5.
+**If not:** STOP. Do not run that binary against the account.
 
 **PASS when.**
 
@@ -234,6 +301,13 @@ configured, [Sign in](#sign-in).
 | Authority | None (local) |
 | Cost | None |
 
+**Why 1.15.5.** It is the version recorded for the 2026-09-23 and 2026-09-24 applies. Every root
+accepts `>= 1.11, < 2.0`, but later releases have not been exercised.
+
+**How the check ties the binary to HashiCorp.** HashiCorp's signature covers the release's
+checksum file, the checksum file covers the archive, and a hash comparison ties the installed
+binary to the archive.
+
 **Known limitations.**
 
 - Only `darwin_arm64` was checked.
@@ -249,12 +323,12 @@ configured, [Sign in](#sign-in).
 
 **Validation:** UNEXERCISED · **Published command form:** not executed as written
 
-**What this does.** Puts in place what
+Puts in place what
 [Set up an operator in Identity Center](#set-up-an-operator-in-identity-center) assumes: AWS
 Organizations and an IAM Identity Center organization instance, once per account. This project did
 not perform these steps, so they are a manual prerequisite, not a validated procedure. No command
-form is published; the AWS Organizations and IAM Identity Center documentation is the source for
-these steps.
+form or output is published; the AWS Organizations and IAM Identity Center documentation is the
+source for these steps.
 
 **Before you start.**
 
@@ -264,24 +338,29 @@ these steps.
 **Safety and authority.** Mutating and owner-authorized: organization and identity changes. Step 3
 may mean a root-user session.
 
-**Steps.** Manual and unexercised.
+#### Step 1 — Enable AWS Organizations
 
-1. In the account that will hold the platform, enable AWS Organizations, within the scope
-   [ADR-0005](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#decision)
-   sets for it.
-2. Enable the IAM Identity Center organization instance with its built-in identity store. Keep
-   its start URL and Region in local CLI configuration only.
-3. Decide which identity performs the operator setup. No Identity Center user exists yet, and
-   this project identified and exercised no path that avoids a root-user session for first-time
-   setup: the reference setup ran in a root-user session, recorded and reviewed as a deviation
-   from ADR-0005.
+In the account that will hold the platform, enable AWS Organizations, within the scope
+[ADR-0005](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#decision)
+sets for it.
+
+#### Step 2 — Enable the Identity Center organization instance
+
+Enable the IAM Identity Center organization instance with its built-in identity store. Keep its
+start URL and Region in local CLI configuration only.
+
+#### Step 3 — Decide which identity performs the operator setup
+
+No Identity Center user exists yet, and this project identified and exercised no path that avoids
+a root-user session for first-time setup: the reference setup ran in a root-user session, recorded
+and reviewed as a deviation from ADR-0005.
 
 > **Warning:** Any root session is recorded and reviewed as
 > [ADR-0005](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#decision)
 > requires.
 
 **Expected result.** AWS Organizations enabled in the account, and an IAM Identity Center
-organization instance with its built-in identity store. No output is published for these steps.
+organization instance with its built-in identity store.
 
 **PASS when.**
 
@@ -318,9 +397,9 @@ organization instance with its built-in identity store. No output is published f
 
 **Validation:** EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE · **Published command form:** not executed as written
 
-**What this does.** Gives one operator a user, MFA and two permission sets on the project account,
-through console steps. It is done once per operator. Each permission set gives the operator a role
-in the account, and Identity Center derives that role's name from the permission-set name.
+Gives one operator a user, MFA and two permission sets on the project account, through console
+steps, once per operator. Each permission set gives the operator a role in the account, and
+Identity Center derives that role's name from the permission-set name.
 [ADR-0005](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#decision)
 sets what each permission set serves.
 
@@ -340,35 +419,45 @@ sets what each permission set serves.
 > [ADR-0005](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#decision)
 > requires. The recorded setup ran in one.
 
-**Steps.**
+#### Step 1 — Create the user and set a password
 
-1. **Administrator.** Create the operator's user in IAM Identity Center. The user needs an email
-   address. **Operator.** Set a password, from the emailed invitation or a one-time password,
-   before registering MFA.
-2. **Operator.** Register your own MFA device for that user. Requiring MFA at sign-in is an
-   Identity Center setting for every user of the instance, not a per-user one.
-3. **Administrator.** Create or select two permission sets named exactly `ReadOnlyAccess` and
-   `AdministratorAccess`. Set the `AdministratorAccess` session duration to 12 hours instead of
-   Identity Center's default of one hour, so that a long apply, its verification and any teardown
-   finish on one exported credential. The reference account keeps `ReadOnlyAccess` at one hour.
-   ADR-0005
-   [defers](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#deferred-decisions)
-   the exact contents of the permission sets; what the reference account's sets are recorded to
-   hold is under Recorded detail in the Engineering notes below.
+**Administrator.** Create the operator's user in IAM Identity Center. The user needs an email
+address. **Operator.** Set a password, from the emailed invitation or a one-time password, before
+registering MFA.
+
+#### Step 2 — Register the operator's MFA device
+
+**Operator.** Register your own MFA device for that user. Requiring MFA at sign-in is an Identity
+Center setting for every user of the instance, not a per-user one.
+
+#### Step 3 — Create the two permission sets
+
+**Administrator.** Create or select two permission sets named exactly `ReadOnlyAccess` and
+`AdministratorAccess`. Set the `AdministratorAccess` session duration to 12 hours instead of
+Identity Center's default of one hour, so that a long apply, its verification and any teardown
+finish on one exported credential. The reference account keeps `ReadOnlyAccess` at one hour.
+ADR-0005
+[defers](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#deferred-decisions)
+the exact contents of the permission sets; what the reference account's sets are recorded to hold
+is under Recorded detail in the Engineering notes below.
 
 > **Warning:** Use exactly these two names.
 > [Verify the resolved identity](#verify-the-resolved-identity) matches the role name Identity
 > Center derives from the permission-set name, so any other name fails it. It checks the name, not
 > what the set grants.
 
-4. **Administrator.** Assign the user, or a group containing the user, to the project AWS account
-   with both permission sets. Give the operator the start URL and its Region, for their local CLI
-   configuration.
+**Expected:** session durations of 12 hours for `AdministratorAccess` and one hour for
+`ReadOnlyAccess`, as the reference account's read-back shows.
 
-**Expected result.** Session durations of 12 hours for `AdministratorAccess` and one hour for
-`ReadOnlyAccess`, as the reference account's read-back shows. Once profiles exist, the
-`AdministratorAccess` profile resolves its role in the pinned account, the account that
-`allowed_account_id` names ([Verify the resolved identity](#verify-the-resolved-identity)).
+#### Step 4 — Assign the account and hand over the start URL
+
+**Administrator.** Assign the user, or a group containing the user, to the project AWS account with
+both permission sets. Give the operator the start URL and its Region, for their local CLI
+configuration.
+
+**Expected:** once profiles exist, the `AdministratorAccess` profile resolves its role in the
+pinned account, the account that `allowed_account_id` names
+([Verify the resolved identity](#verify-the-resolved-identity)).
 
 **PASS when.**
 
@@ -409,9 +498,7 @@ URL, the account ID and the role-name suffixes stay out of every record.
 ([Verify the resolved identity](#verify-the-resolved-identity)). The reference account's
 `ReadOnlyAccess` set is recorded, from a 2026-08-08 inspection without retained output, as holding
 only the AWS managed `ReadOnlyAccess` policy, with no inline policy, customer managed policy or
-permissions boundary. The contents of its `AdministratorAccess` set were not recorded; ADR-0005
-[defers](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#deferred-decisions)
-the exact contents of the permission sets.
+permissions boundary. The contents of its `AdministratorAccess` set were not recorded.
 
 **Known limitations.**
 
@@ -428,8 +515,8 @@ the exact contents of the permission sets.
 
 **Validation:** EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE · **Published command form:** not executed as written
 
-**What this does.** Creates one local AWS CLI profile per permission set, `cloud-platform-readonly`
-and `cloud-platform-admin`, so that elevation is explicit. Reaching for `cloud-platform-admin` is a
+Creates one local AWS CLI profile per permission set, `cloud-platform-readonly` and
+`cloud-platform-admin`, so that elevation is explicit. Reaching for `cloud-platform-admin` is a
 deliberate choice that stays visible in the command that used it, rather than a permission level
 already held by default.
 
@@ -447,38 +534,52 @@ already held by default.
 **Safety and authority.** Local-only: this writes local CLI configuration; no owner grant. The
 start URL, account ID and role names belong in local configuration, not in this repository.
 
-**Steps.**
+#### Step 1 — Configure the two profiles
 
-1. Configure the two profiles. Run the commands one at a time, and finish the first one's prompts
-   before starting the second:
+Run the commands one at a time, and finish the first one's prompts before starting the second:
 
 ```
 aws configure sso --profile cloud-platform-readonly
 aws configure sso --profile cloud-platform-admin
 ```
 
-   The CLI may first ask for an SSO session name, then for the Identity Center start URL, its
-   Region and the registration scope. Give both profiles the same SSO session name, the one in
-   [Before you start](#before-you-start). The CLI opens a browser for authorization, then lists
-   the AWS accounts and roles available to the user. Prompt order and wording differ between CLI
-   versions. Set the default Region to `us-east-1`.
+Answer the prompts. Prompt order and wording differ between CLI versions.
+
+- SSO session name: the same for both profiles, the one in [Before you start](#before-you-start).
+- Identity Center start URL and its Region: from the Identity Center administrator.
+- Registration scope: this page gives no value.
+- Account: after the CLI opens a browser for authorization, it lists the AWS accounts and roles
+  available to the user. Select the project account (see the warning below).
+- Role: the intended permission set.
+- Default Region: `us-east-1`.
 
 > **Warning:** The account list can show more than one account. For each profile, select the
 > project account by matching its ID with the account ID the owner supplied, and select the
 > intended permission set, deliberately.
 
-2. Before any other command, run [Verify the resolved identity](#verify-the-resolved-identity) for
-   each profile, then the [Account check](#check-the-account-before-aws-commands) for each
-   profile. The identity check shows the role, not the account. The account check needs a root's
-   filled `terraform.tfvars`; until it prints `ACCOUNT_MATCH=PASS`, the profile is not verified
-   and nothing but the identity check runs on it.
+**Expected:** both profiles exist, each with its own permission set, the shared SSO session name
+and the default Region `us-east-1`.
+**If not:** match the symptom in the table under **If it fails.**
+
+#### Step 2 — Verify each profile before any other command
+
+In the bash shell that will do the work:
+
+- define `account_check`
+  ([Check the account before AWS commands](#check-the-account-before-aws-commands), step 1);
+- for each profile, run [Verify the resolved identity](#verify-the-resolved-identity);
+- then run `account_check <root-tfvars> --profile <profile>`.
+
+The identity check shows the role, not the account. The account check needs a root's filled
+`terraform.tfvars`; until it prints `ACCOUNT_MATCH=PASS`, the profile is not verified and nothing
+but the identity check runs on it.
 
 > **Warning:** Never test a profile with a mutating command. Use only the read-only checks in this
 > step.
 
-**Expected result.** For each profile, [Verify the resolved identity](#verify-the-resolved-identity)
-prints two values, both `True`, for the permission set selected, and the account check prints
+**Expected:** for each profile, two values, both `True`, for the permission set selected, and
 `ACCOUNT_MATCH=PASS`.
+**If not:** STOP. See **STOP if.** below.
 
 **PASS when.**
 
@@ -486,8 +587,7 @@ prints two values, both `True`, for the permission set selected, and the account
   default Region `us-east-1`.
 - [ ] Each profile prints `True` twice in
   [Verify the resolved identity](#verify-the-resolved-identity).
-- [ ] The account check prints `ACCOUNT_MATCH=PASS` for each profile. Without it the profile is
-  configured but not verified, whatever the identity check printed.
+- [ ] The account check prints `ACCOUNT_MATCH=PASS` for each profile.
 
 **STOP if.**
 
@@ -530,12 +630,9 @@ resolved an administrative role there
 
 **Validation:** EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (step 1, both profiles; step 2, ReadOnly profile); AWS-VALIDATED (step 2 role check and account match, Administrator profile) · **Published command form:** not executed as written
 
-**What this does.** Starts the SSO session both profiles share, through the profile the work needs,
-approved in the browser.
-The sign-in gives the CLI an SSO access token, which governs issuing new role credentials; a role
-credential, once issued, lasts until its own expiry
-([Recover from credential expiry mid-run](#recover-from-credential-expiry-mid-run) explains the two
-lifetimes).
+Starts the SSO session both profiles share, through the profile the work needs, approved in the
+browser. [Recover from credential expiry mid-run](#recover-from-credential-expiry-mid-run)
+explains how long the sign-in and the role credentials last.
 
 **Before you start.**
 
@@ -549,30 +646,41 @@ lifetimes).
 
 **Safety and authority.** Read-only; no owner grant.
 
-**Steps.**
+#### Step 1 — Sign in with the profile the work needs
 
-1. Sign in with the profile the work needs, and approve the sign-in in the browser. The
-   authorization flow differs between CLI versions and was not recorded. Run only the line for the
-   profile the work needs; for inspection and review, that is `cloud-platform-readonly`:
+Run only the line for the profile the work needs; for inspection and review, that is
+`cloud-platform-readonly`. Approve the sign-in in the browser. The authorization flow differs
+between CLI versions and was not recorded.
 
 ```
 aws sso login --profile cloud-platform-readonly
 aws sso login --profile cloud-platform-admin
 ```
 
-   Both profiles share one SSO session
-   ([Configure the local CLI profiles](#configure-the-local-cli-profiles), step 1), so one sign-in
-   serves both. Signing in with one line does not limit which role a later command can reach; the
-   `--profile` each command names decides, and that is where elevation stays explicit.
+One sign-in serves both profiles, which share one SSO session
+([Configure the local CLI profiles](#configure-the-local-cli-profiles), step 1). The `--profile`
+each later command names decides the role, so elevation stays explicit.
 
-2. Run [Verify the resolved identity](#verify-the-resolved-identity) and the
-   [Account check](#check-the-account-before-aws-commands) on the profile the work will use. Each
-   profile selected its account separately, so one profile's `ACCOUNT_MATCH=PASS` does not cover
-   the other.
+**Expected:** no sign-in output is published, because the authorization flow was not recorded.
+Step 2 shows whether the sign-in worked.
+**If not:** no procedure is published for a sign-in that fails in the browser.
 
-**Expected result.** After the browser approval, step 2 prints two values, both `True`, and
-`ACCOUNT_MATCH=PASS`. No sign-in output is published, because the authorization flow was not
-recorded.
+#### Step 2 — Check the identity and the account
+
+In the bash shell that will do the work:
+
+- define `account_check`
+  ([Check the account before AWS commands](#check-the-account-before-aws-commands), step 1);
+- on the profile the work will use, run
+  [Verify the resolved identity](#verify-the-resolved-identity);
+- then run `account_check <root-tfvars> --profile <profile>`.
+
+Each profile selected its account separately, so one profile's `ACCOUNT_MATCH=PASS` does not cover
+the other.
+
+**Expected:** two values, both `True`, and `ACCOUNT_MATCH=PASS`.
+**If not:** STOP. Nothing further runs. Follow
+[Recover from a wrong account](#recover-from-a-wrong-account), part A.
 
 **PASS when.**
 
@@ -604,6 +712,9 @@ token and the authorization code are never recorded.
 | Authority | None |
 | Cost | None |
 
+**Lifetimes.** The sign-in gives the CLI an SSO access token, which governs issuing new role
+credentials; a role credential, once issued, lasts until its own expiry.
+
 **Known limitations.** The retained evidence covers step 2's role check and account match on
 the Administrator profile only; no retained output captures a sign-in on either profile. The
 retained read-only checks since 2026-08-08 also ran on the Administrator profile rather than on
@@ -613,12 +724,12 @@ ReadOnly, whose sessions last one hour.
 
 **Validation:** AWS-VALIDATED (AdministratorAccess); EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (ReadOnlyAccess role check); DESIGNED-NOT-EXECUTED (ReadOnlyAccess `UserId` check) · **Published command form:** not executed as written
 
-**What this does.** Confirms which identity the CLI actually resolved before running anything
-against AWS. A profile can be pointed at the wrong account or resolve a wider role than intended,
-and the returned identity, not the profile name, shows which one is in force. The query prints two
-`True` or `False` values and no identifier. It checks the role, not the account: a profile in
-another account with a permission set of the same name passes it, which is why the account check
-in step 2 follows.
+Confirms which identity the CLI actually resolved before running anything against AWS. A profile
+can be pointed at the wrong account or resolve a wider role than intended, and the returned
+identity, not the profile name, shows which one is in force. The query prints two `True` or
+`False` values and no identifier. It checks the role, not the account: a profile in another
+account with a permission set of the same name passes it, which is why the account check in step 2
+follows.
 
 **Before you start.**
 
@@ -628,10 +739,12 @@ in step 2 follows.
 
 **Safety and authority.** Read-only; no owner grant.
 
-**Steps.**
+> **Warning:** Never print the account number. The account is compared, never read off the output.
 
-1. Query the profile you intend to use, naming the permission set you selected
-   (`AdministratorAccess` or `ReadOnlyAccess`):
+#### Step 1 — Query the resolved identity
+
+Query the profile you intend to use, naming the permission set you selected
+(`AdministratorAccess` or `ReadOnlyAccess`):
 
 ```
 aws sts get-caller-identity --profile <profile> \
@@ -639,13 +752,18 @@ aws sts get-caller-identity --profile <profile> \
   --output text
 ```
 
-2. Run the [Account check](#check-the-account-before-aws-commands).
+**Expected:** two values, both `True`. The first shows a role session: a role session's `UserId`
+begins with `AROA`, an IAM user's with `AIDA`. The second shows the Identity Center role of the
+permission set deliberately selected.
+**If not:** STOP. See **If it fails.** below.
 
-> **Warning:** Never print the account number. The account is compared, never read off the output.
+#### Step 2 — Run the account check
 
-**Expected result.** Two values, both `True`. The first shows a role session: a role session's
-`UserId` begins with `AROA`, an IAM user's with `AIDA`. The second shows the Identity Center role
-of the permission set deliberately selected.
+Run the [Account check](#check-the-account-before-aws-commands).
+
+**Expected:** `ACCOUNT_MATCH=PASS`.
+**If not:** STOP. See **STOP if.** in
+[Check the account before AWS commands](#check-the-account-before-aws-commands).
 
 **PASS when.**
 
@@ -667,8 +785,7 @@ of the permission set deliberately selected.
 
 **Evidence to keep.** The two values and the account verdict.
 
-**Next step.** If another runbook sent you here, return to the step that sent you. Step 2 ran
-the account check, so continue from the Next step of
+**Next step.** Step 2 ran the account check, so continue from the Next step of
 [Check the account before AWS commands](#check-the-account-before-aws-commands).
 
 #### Engineering notes
@@ -692,15 +809,9 @@ only, and no record gives its `UserId`.
 
 **Validation:** AWS-VALIDATED (PASS verdict); OFFLINE-VALIDATED (HOLD verdict) · **Published command form:** not executed as written
 
-**What this does.** The account check compares the account the credentials resolve with the root's
-account pin, `allowed_account_id`, and prints only a verdict. It exists because each root's AWS
-provider refuses any account other than `allowed_account_id`, but only when Terraform configures
-the provider, as in plan and apply. Backend-only commands such as `terraform init`,
-`terraform state` and `terraform force-unlock` never configure it, and AWS CLI calls are outside
-Terraform, so nothing else checks the account for them.
-
-The labels rest on a private helper this function is derived from. This function has not run
-against AWS, and no retained record shows its HOLD path, offline or live (Engineering notes).
+Compares the account the credentials resolve with the root's account pin, `allowed_account_id`,
+and prints only a verdict. Its labels rest on the private helper it is derived from (Published
+form, Engineering notes).
 
 **Before you start.**
 
@@ -717,10 +828,10 @@ against AWS, and no retained record shows its HOLD path, offline or live (Engine
 > **Warning: never print the account number.** The function prints only `ACCOUNT_MATCH=PASS` or
 > `ACCOUNT_MATCH=HOLD`. The pin and the caller's account are compared, never printed or recorded.
 
-**Steps.**
+#### Step 1 — Define the check
 
-1. Define the check in the bash shell that will do the work. It reads the pin from
-   `<root-tfvars>` and prints only a verdict:
+Define the check in the bash shell that will do the work. It reads the pin from `<root-tfvars>`
+and prints only a verdict:
 
 ```
 account_check() {
@@ -736,19 +847,28 @@ account_check() {
 }
 ```
 
-2. Before commands that use a profile:
+**Expected:** no output.
+
+#### Step 2 — Run it before commands that use a profile
 
 ```
 account_check <root-tfvars> --profile <profile>
 ```
 
-3. Inside an [exported shell](#export-role-credentials-once), where no profile exists:
+**Expected:** `ACCOUNT_MATCH=PASS`.
+**If not:** STOP. See **STOP if.** below.
+
+#### Step 3 — Run it inside an exported shell
+
+Inside an [exported shell](#export-role-credentials-once), where no profile exists, use this form
+instead of step 2:
 
 ```
 account_check <root-tfvars>
 ```
 
-**Expected result.** `ACCOUNT_MATCH=PASS`.
+**Expected:** `ACCOUNT_MATCH=PASS`.
+**If not:** STOP. See **STOP if.** below.
 
 **PASS when.**
 
@@ -764,8 +884,7 @@ account_check <root-tfvars>
 
 **Evidence to keep.** The verdict line only.
 
-**Next step.** If another runbook sent you here, return to the step that sent you.
-Before a long operation,
+**Next step.** Before a long operation,
 [Check session headroom before long operations](#check-session-headroom-before-long-operations),
 then, for a long or sensitive operation,
 [Export role credentials once](#export-role-credentials-once). Otherwise return to the step that
@@ -781,6 +900,12 @@ sent you here.
 | Authority | None (read-only) |
 | Cost | None |
 
+**Why the check exists.** Each root's AWS provider refuses any account other than
+`allowed_account_id`, but only when Terraform configures the provider, as in plan and apply.
+Backend-only commands such as `terraform init`, `terraform state` and `terraform force-unlock`
+never configure it, and AWS CLI calls are outside Terraform, so nothing else checks the account
+for them.
+
 **Known limitations.** The retained offline qualification exercised the private helper's refusal
 paths, against stubbed responses, not this function: no retained record shows this function's
 HOLD path, offline or live. No live HOLD has occurred. The provider's own refusal has not been
@@ -792,14 +917,11 @@ exercised against a second account.
 
 **Validation:** AWS-VALIDATED (measuring and proceeding); OFFLINE-VALIDATED (the HOLD); DESIGNED-NOT-EXECUTED (failure handling) · **Published command form:** not executed as written
 
-**What this does.** Before a long operation, confirms that the credential running it outlives the
-operation, its verification and any teardown, with a margin. Headroom is the time left, in minutes,
-before that credential expires. A role credential cannot be extended once issued, and an exported
-one is never refreshed.
-
-The export call in step 2 is the executed form. The expiry filter and the comparison are derived
-from a private helper, which printed the recorded headroom lines; the HOLD ran only offline, in
-that helper's qualification (Engineering notes).
+Before a long operation, confirms that the credential running it outlives the operation, its
+verification and any teardown, with a margin. Headroom is the time left, in minutes, before that
+credential expires. A role credential cannot be extended once issued, and an exported one is never
+refreshed. The export call in step 2 is the executed form; the filter and the comparison are
+derived from a private helper (Engineering notes).
 
 **Before you start.**
 
@@ -811,14 +933,17 @@ that helper's qualification (Engineering notes).
 **Safety and authority.** Read-only and secret-reading; no owner grant. Step 2 reads a live
 credential's expiry without printing the credential.
 
-**Steps.**
+#### Step 1 — Set the requirement in minutes
 
-1. Set the requirement in minutes: the operation's expected duration, plus its verification or
-   teardown, plus a margin. Where the runbook for the work states a minimum session time, use it.
-   Use a measured duration of the same operation where one exists. No margin rule has been
-   established; the one recorded example is in the Engineering notes below.
-2. Read the expiry of the credential that will run the operation, without printing the
-   credential. Inside an exported shell, use `expiry=$AWS_CREDENTIAL_EXPIRATION` instead.
+Add the operation's expected duration, its verification or teardown, and a margin. Where the
+runbook for the work states a minimum session time, use it. Use a measured duration of the same
+operation where one exists. No margin rule has been established; the one recorded example is in
+the Engineering notes below. The result is `<required-minutes>` in step 3.
+
+#### Step 2 — Read the credential expiry
+
+Read the expiry of the credential that will run the operation, without printing the credential.
+Inside an exported shell, use `expiry=$AWS_CREDENTIAL_EXPIRATION` instead.
 
 > **Warning:** Keep the filter. Without it, the export call prints the live credential.
 
@@ -826,8 +951,12 @@ credential's expiry without printing the credential.
 expiry=$(aws configure export-credentials --profile <profile> --format env | sed -n 's/^\(export \)\{0,1\}AWS_CREDENTIAL_EXPIRATION=//p')
 ```
 
-3. Compare. `-I -S` keeps modules in the current directory and site hooks from loading while a
-   credential may be in the environment.
+**Expected:** no output. Step 3 checks the value it read.
+**If not:** an error here means the credential expiry could not be read; step 3 then holds.
+
+#### Step 3 — Compare the headroom with the requirement
+
+Compare the expiry read in step 2 with `<required-minutes>`.
 
 ```
 python3 -I -S - "$expiry" <required-minutes> <<'PY'
@@ -845,7 +974,11 @@ sys.exit(0 if left >= need else 3)
 PY
 ```
 
-**Expected result.** `credential headroom <n> minute(s), <required> required`, exit status 0.
+**Expected:** `credential headroom <n> minute(s), <required> required`, exit status 0.
+**If not:** STOP. Do not start the operation. Follow **If it fails.** below.
+
+`-I -S` keeps modules in the current directory and site hooks from loading while a credential may
+be in the environment.
 
 **PASS when.**
 
@@ -864,9 +997,8 @@ new sign-in, STOP and do not start the operation. This failure handling has neve
 
 **Evidence to keep.** The headroom line.
 
-**Next step.** If another runbook sent you here, return to the step that sent you. For a long or
-sensitive operation, [Export role credentials once](#export-role-credentials-once); otherwise start
-the operation.
+**Next step.** For a long or sensitive operation,
+[Export role credentials once](#export-role-credentials-once); otherwise start the operation.
 
 #### Engineering notes
 
@@ -891,14 +1023,13 @@ measured, which is why only the re-read value decides.
 
 **Validation:** AWS-VALIDATED (passing path); OFFLINE-VALIDATED (every refusal) · **Published command form:** not executed as written
 
-**What this does.** Prepares an exported shell: a shell that runs a long or sensitive operation on
-one role credential and holds nothing else, with no operator configuration, no stray `AWS_*` or
-`TF_*` variable and no default profile. Its credentials cannot change mid-run, and a failed export
-leaves nothing behind.
+Prepares an exported shell: a shell that runs a long or sensitive operation on one role credential
+and holds nothing else, with no operator configuration, no stray `AWS_*` or `TF_*` variable and no
+default profile. Its credentials cannot change mid-run, and a failed export leaves nothing behind
+in that shell.
 
 This block is derived from a private wrapper that differed from it. The labels rest on that
-wrapper, and no retained record shows this block's HOLD paths, offline or live (Engineering
-notes).
+wrapper (Engineering notes).
 
 **Before you start.**
 
@@ -913,21 +1044,33 @@ notes).
 **Safety and authority.** Read-only and secret-reading: this shell holds a live role credential in
 its environment. The work it prepares carries its own grant.
 
-**Steps.**
+#### Step 1 — Start a clean shell
 
-1. Start a clean shell. Every HOLD below exits it, taking whatever it held.
+Every HOLD below exits this shell, taking its environment.
 
 ```
 env -i HOME="$HOME" PATH="$PATH" bash --noprofile --norc
 umask 077
 ```
 
-2. In this shell, define `account_check`
-   ([Check the account before AWS commands](#check-the-account-before-aws-commands), step 1).
-3. Export once from the profile, install only the four expected names, remove the operator's
-   configuration from every later call, and check the account. Give `<root-tfvars>` as an absolute
-   path, because `HOME` changes inside the block. `/var/empty` exists on macOS; elsewhere, use any
-   empty directory the shell cannot write to.
+#### Step 2 — Define the account check in this shell
+
+Define `account_check` in this shell
+([Check the account before AWS commands](#check-the-account-before-aws-commands), step 1).
+
+**Expected:** no output.
+
+#### Step 3 — Export once and check the account
+
+The block exports once from the profile, installs only the four expected names, removes the
+operator's configuration from every later call, and checks the account.
+
+Before you paste:
+
+- Replace `<profile>`.
+- Give `<root-tfvars>` as an absolute path, because `HOME` changes inside the block.
+- `/var/empty` exists on macOS; elsewhere, replace it with any empty directory the shell cannot
+  write to.
 
 > **Warning:** Paste the block as one unit: the braces make the shell read all of it before running
 > any of it, so an `exit 3` cannot leave the remaining lines to the shell that started this one.
@@ -956,17 +1099,31 @@ umask 077
 }
 ```
 
-4. In this shell, run
-   [Check session headroom before long operations](#check-session-headroom-before-long-operations)
-   step 3 with `expiry=$AWS_CREDENTIAL_EXPIRATION`. If it does not exit 0, `exit` this shell.
-5. Run the work in this shell; Terraform commands follow terraform-operations.md.
+**Expected:** `ACCOUNT_MATCH=PASS` and no HOLD line.
+**If not:** the shell has exited. See **If it fails.** below.
+
+#### Step 4 — Check the headroom in this shell
+
+Run
+[Check session headroom before long operations](#check-session-headroom-before-long-operations)
+step 3 with `expiry=$AWS_CREDENTIAL_EXPIRATION`.
+
+**Expected:** the headroom line and exit status 0.
+**If not:** `exit` this shell.
+
+#### Step 5 — Run the work in this shell
+
+Terraform commands follow [terraform-operations.md](terraform-operations.md).
 
 > **Warning:** Never run `set -x`, print the environment unfiltered or write these variables to a
 > file.
 
-6. Exit the shell when the work ends. The credentials end with it.
+#### Step 6 — Exit the shell when the work ends
 
-**Expected result.** `ACCOUNT_MATCH=PASS` and the headroom line, before the work starts.
+Exiting removes the exported values from this shell only. The role credential stays valid at AWS
+until its own expiry, the time in `AWS_CREDENTIAL_EXPIRATION`. The AWS CLI's local cache, which holds the SSO token and any role
+credential the CLI cached, is not touched by the exit and expires on its own. No sign-out
+procedure is published ([Not yet exercised](#not-yet-exercised)).
 
 **PASS when.**
 
@@ -996,8 +1153,7 @@ never their values:
 env | sed -n 's/^\([A-Za-z_][A-Za-z0-9_]*\)=.*/\1/p' | sort
 ```
 
-**Next step.** If another runbook sent you here, return to the step that sent you. The operation
-this shell was prepared for, under that operation's own grant.
+**Next step.** The operation this shell was prepared for, under that operation's own grant.
 
 #### Engineering notes
 
@@ -1031,9 +1187,9 @@ this shell was prepared for, under that operation's own grant.
 
 **Validation:** EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE · **Published command form:** not executed as written
 
-**What this does.** Retires a human IAM user's access key, meaning the access key ID and secret
-access key pair an operator holds, and that user's console password. It does not cover workload
-identities, CI federation or the temporary credentials Identity Center issues. Under
+Retires a human IAM user's access key, meaning the access key ID and secret access key pair an
+operator holds, and that user's console password. It does not cover workload identities, CI
+federation or the temporary credentials Identity Center issues. Under
 [ADR-0005](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#decision),
 an existing long-lived human key is retired rather than kept as a fallback.
 
@@ -1052,17 +1208,24 @@ to the old default credential path into an authentication failure instead of a s
 **Safety and authority.** Mutating and owner-authorized: an IAM credential change. Step 8, deleting
 the key, needs its own separate approval.
 
-**Steps.**
+#### Step 1 — Make Identity Center access work
 
-1. Complete [Set up an operator in Identity Center](#set-up-an-operator-in-identity-center),
-   [Configure the local CLI profiles](#configure-the-local-cli-profiles) and [Sign in](#sign-in),
-   so Identity Center access works.
-2. Run [Verify the resolved identity](#verify-the-resolved-identity) with
-   `--profile cloud-platform-admin` and `AdministratorAccess`, including its account check,
-   `account_check <root-tfvars> --profile cloud-platform-admin`. Both values must be `True`, and
-   the account check must print `ACCOUNT_MATCH=PASS`.
-3. From that same Administrator session, deactivate the old key. Do not delete it yet. Read
-   `<access-key-id>` locally and keep it out of every record:
+Complete [Set up an operator in Identity Center](#set-up-an-operator-in-identity-center),
+[Configure the local CLI profiles](#configure-the-local-cli-profiles) and [Sign in](#sign-in).
+
+#### Step 2 — Verify the Administrator identity and the account
+
+Run [Verify the resolved identity](#verify-the-resolved-identity) with
+`--profile cloud-platform-admin` and `AdministratorAccess`, including its account check,
+`account_check <root-tfvars> --profile cloud-platform-admin`.
+
+**Expected:** both values `True`, and `ACCOUNT_MATCH=PASS`.
+**If not:** STOP. Nothing is deactivated from that session.
+
+#### Step 3 — Deactivate the old key
+
+From that same Administrator session, deactivate the old key. Do not delete it yet. Read
+`<access-key-id>` locally and keep it out of every record.
 
 > **Warning:** The key being retired must never be the credential that performs its own
 > deactivation.
@@ -1074,14 +1237,13 @@ aws iam update-access-key --profile cloud-platform-admin --user-name <legacy-use
   --access-key-id <access-key-id> --status Inactive
 ```
 
-4. Remove the user's console password, if it has one:
+#### Step 4 — Remove the console password, if the user has one
 
 ```
 aws iam delete-login-profile --profile cloud-platform-admin --user-name <legacy-user>
 ```
 
-5. Read both back. Every key listed must show `Inactive`; a second key is a second key to retire.
-   The login profile must return `NoSuchEntity`:
+#### Step 5 — Read both back
 
 ```
 aws iam list-access-keys --profile cloud-platform-admin --user-name <legacy-user> \
@@ -1090,29 +1252,47 @@ aws iam get-login-profile --profile cloud-platform-admin --user-name <legacy-use
   --query 'LoginProfile.CreateDate' --output text
 ```
 
-6. The deliberate exception to the profile rule in [Before you start](#before-you-start): in a
-   fresh shell with no profile set, the default credential path must now fail to authenticate.
-   This shows something only if the retired key was what the default path resolved before step 3.
-   A missing-credentials error does not prove deactivation; step 5 is the proof of the key's
-   status.
+**Expected:** every key listed shows `Inactive`; a second key is a second key to retire. The login
+profile returns `NoSuchEntity`.
+**If not:** if any key is not `Inactive`, STOP. Do not go on to step 8.
+
+#### Step 6 — Confirm the default credential path fails
+
+This is the deliberate exception to the profile rule in [Before you start](#before-you-start): in a
+fresh shell with no profile set, the default credential path must now fail to authenticate.
 
 ```
 aws sts get-caller-identity --query 'starts_with(UserId, `AROA`)' --output text
 ```
 
-7. In that same shell, step 2 must still return both values `True`.
-8. Delete the key only after steps 6 and 7 pass, and only as a separately approved cleanup step
-   ([Not yet exercised](#not-yet-exercised)).
+This shows something only if the default path resolved the retired key before step 3. If it did
+not, record this step as N/A with that reason. Either way, step 5 is the proof of the key's status:
+a missing-credentials error does not prove deactivation.
 
-**Expected result.** Every key listed shows `Inactive`, the login profile returns `NoSuchEntity`,
-the default credential path fails to authenticate, and the Administrator profile still returns both
-values `True`. A key counts as removed once its deletion has been verified. Until then it is
-deactivated, and deactivated is what the evidence supports.
+**Expected:** the default credential path fails to authenticate, or N/A as above.
+**If not:** when the default path did use the retired key before step 3 and this still
+authenticates, STOP. Do not go on to step 8.
+
+#### Step 7 — Re-check the Administrator profile
+
+In that same shell, step 2 must still return both values `True`.
+
+**Expected:** both values `True`.
+**If not:** do not go on to step 8.
+
+#### Step 8 — Delete the key, only under separate approval
+
+Delete the key only after steps 6 and 7 pass, and only as a separately approved cleanup step
+([Not yet exercised](#not-yet-exercised)).
+
+**Expected result.** A key counts as removed once its deletion has been verified. Until then it
+is deactivated, and deactivated is what the evidence supports.
 
 **PASS when.**
 
 - [ ] Step 5: every key `Inactive`, and `NoSuchEntity` for the login profile.
-- [ ] Step 6: the default credential path fails to authenticate.
+- [ ] Step 6: the default credential path fails to authenticate, or step 6 is recorded as N/A
+  because the default credential path did not use the retired key before step 3.
 - [ ] Step 7: both values `True`.
 
 **STOP if.**
@@ -1120,8 +1300,8 @@ deactivated, and deactivated is what the evidence supports.
 - The explicit owner grant for the IAM credential change is not in place.
 - Step 2 does not return both values `True` and `ACCOUNT_MATCH=PASS`. Nothing is deactivated from
   that session.
-- Step 5 shows any key that is not `Inactive`, or step 6 still authenticates. Do not go on to
-  step 8.
+- Step 5 shows any key that is not `Inactive`, or, when the default credential path did use the
+  retired key before step 3, step 6 still authenticates. Do not go on to step 8.
 
 **If it fails.** A check in step 2 fails:
 [Recover from a wrong account](#recover-from-a-wrong-account), part A. If something still depends
@@ -1160,8 +1340,8 @@ which needs its own evidence. In the reference account the key is deactivated, n
 
 **Validation:** EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (step 1, Administrator profile); AWS-VALIDATED (step 3 role check and account match, Administrator profile); DESIGNED-NOT-EXECUTED (step 2, step 3 `UserId` check, ReadOnly profile) · **Published command form:** not executed as written
 
-**What this does.** Restores access when a command fails because the SSO session has expired or is
-missing: sign in again, replace any exported shell, and repeat the identity and account checks.
+Restores access when a command fails because the SSO session has expired or is missing: sign in
+again, replace any exported shell, and repeat the identity and account checks.
 
 It is for a command that could not have written state. If the failed command was an apply, a
 destroy or a state change, or it failed partway through a run, do not re-run it: use
@@ -1173,19 +1353,26 @@ destroy or a state change, or it failed partway through a run, do not re-run it:
 
 **Safety and authority.** Read-only and secret-reading (step 2 exports again); no owner grant.
 
-**Steps.**
-
 > **Warning:** Do not re-run a command that wrote state: a lock or a partially applied change may
 > remain.
 
-1. When a command fails with an expired or missing token, [sign in](#sign-in) again with the
-   profile in use.
-2. Credentials already exported into a shell keep their original expiry; a new sign-in does not
-   extend them. Exit that shell and [export again](#export-role-credentials-once).
-3. Run [Verify the resolved identity](#verify-the-resolved-identity) and the
-   [Account check](#check-the-account-before-aws-commands) before the next AWS command.
+#### Step 1 — Sign in again
 
-**Expected result.** After step 3, both verification values `True` and `ACCOUNT_MATCH=PASS`.
+When a command fails with an expired or missing token, [sign in](#sign-in) again with the profile
+in use.
+
+#### Step 2 — Replace any exported shell
+
+Credentials already exported into a shell keep their original expiry; a new sign-in does not
+extend them. Exit that shell and [export again](#export-role-credentials-once).
+
+#### Step 3 — Repeat the identity and account checks
+
+Run [Verify the resolved identity](#verify-the-resolved-identity) and the
+[Account check](#check-the-account-before-aws-commands) before the next AWS command.
+
+**Expected:** both verification values `True` and `ACCOUNT_MATCH=PASS`.
+**If not:** STOP. Nothing further runs.
 
 **PASS when.**
 
@@ -1228,11 +1415,11 @@ Administrator caller identity, reduced to the role name and an account match; it
 
 **Validation:** DESIGNED-NOT-EXECUTED · **Published command form:** not executed as written
 
-**What this does.** Handles a run that fails because a credential lifetime ran out. Two lifetimes
-are in play. The SSO access token from the browser sign-in governs issuing new role credentials. A
-role credential, once issued, lasts until its own expiry, 12 hours for Administrator, whatever
-happens to the token. In the one recorded case, AWS CLI calls kept working while Terraform's S3
-backend failed with `InvalidGrantException` (Engineering notes).
+Handles a run that fails because a credential lifetime ran out. Two lifetimes are in play. The SSO
+access token from the browser sign-in governs issuing new role credentials. A role credential, once
+issued, lasts until its own expiry, 12 hours for Administrator, whatever happens to the token. In
+the one recorded case, AWS CLI calls kept working while Terraform's S3 backend failed with
+`InvalidGrantException` (Engineering notes).
 
 What happens in a shell whose exported credential expires mid-run has not been observed in this
 project.
@@ -1248,12 +1435,15 @@ what keeps this from happening.
 Recovering an interrupted write carries its own grant. An interrupted apply can leave billable
 resources running.
 
-**Steps.**
+#### Step 1 — Stop
 
-1. Stop. Do not re-run the failed command or start another.
-2. In the operator's normal shell, read both lifetimes without printing any credential. First the
-   SSO token expiry, reading only `expiresAt` from the AWS CLI's SSO token cache. `<sso-cache-dir>`
-   is that cache directory: `sso/cache` inside the CLI's configuration directory.
+Do not re-run the failed command or start another.
+
+#### Step 2 — Read both lifetimes
+
+In the operator's normal shell, read both lifetimes without printing any credential. First the SSO
+token expiry, reading only `expiresAt` from the AWS CLI's SSO token cache, `<sso-cache-dir>`
+([Values you supply](#values-you-supply)).
 
 ```
 python3 -I -S - <sso-cache-dir> <<'PY'
@@ -1266,25 +1456,38 @@ for path in sorted(glob.glob(os.path.join(sys.argv[1], "*.json"))):
 PY
 ```
 
-   Then the role credential expiry, as in step 2 of
-   [Check session headroom before long operations](#check-session-headroom-before-long-operations),
-   or `$AWS_CREDENTIAL_EXPIRATION` in the shell that failed.
+Then the role credential expiry, as in step 2 of
+[Check session headroom before long operations](#check-session-headroom-before-long-operations),
+or `$AWS_CREDENTIAL_EXPIRATION` in the shell that failed.
 
-   With more than one cached SSO session, for example another organization's, this step prints
-   one expiry per session, and its output cannot tie a line to the project session. Telling them
-   apart means reading each entry's start URL locally, without recording it.
-3. [Sign in](#sign-in) again. If the run used an exported shell, exit it and
-   [export again](#export-role-credentials-once).
-4. Run [Verify the resolved identity](#verify-the-resolved-identity) and the
-   [Account check](#check-the-account-before-aws-commands).
-5. If the interrupted command wrote state (an apply, a destroy or a state change), follow
-   [Stop after a failed or interrupted apply](terraform-operations.md#stop-after-a-failed-or-interrupted-apply).
-   A read-only command can simply be re-run.
+**Expected:** one `SSO token expiresAt` line per cached session. The role credential's expiry is
+held in `expiry` (or in `$AWS_CREDENTIAL_EXPIRATION`), not printed.
+
+With more than one cached SSO session, for example another organization's, the output cannot tie
+a line to the project session. Telling them apart means reading each entry's start URL locally,
+without recording it.
+
+#### Step 3 — Sign in again
+
+[Sign in](#sign-in) again. If the run used an exported shell, exit it and
+[export again](#export-role-credentials-once).
+
+#### Step 4 — Verify the identity and the account
+
+Run [Verify the resolved identity](#verify-the-resolved-identity) and the
+[Account check](#check-the-account-before-aws-commands).
+
+**Expected:** both verification values `True` and `ACCOUNT_MATCH=PASS`.
+**If not:** STOP. Nothing further runs.
+
+#### Step 5 — Hand an interrupted write to the interrupted-apply procedure
+
+If the interrupted command wrote state (an apply, a destroy or a state change), follow
+[Stop after a failed or interrupted apply](terraform-operations.md#stop-after-a-failed-or-interrupted-apply).
+A read-only command can simply be re-run.
 
 > **Warning:** Do not re-run a command that wrote state: a lock or a partially applied change may
 > remain.
-
-**Expected result.** After step 4, both verification values `True` and `ACCOUNT_MATCH=PASS`.
 
 **PASS when.**
 
@@ -1321,8 +1524,7 @@ through the profile kept working on the cached role credential while Terraform's
 with `InvalidGrantException`. That failure was recorded without raw output, and the recorded
 interpretation is that the backend tried to refresh the token.
 
-**Known limitations.** The response has never run as a whole, and it was never demonstrated that a
-new sign-in restores the backend.
+**Known limitations.** The response has never run as a whole.
 
 <a id="wrong-account-response"></a>
 
@@ -1330,9 +1532,9 @@ new sign-in restores the backend.
 
 **Validation:** DESIGNED-NOT-EXECUTED (part A); EXECUTED — RECORDED ONLY; RETAINED EXECUTION EVIDENCE NOT AVAILABLE (part B) · **Published command form:** not executed as written
 
-**What this does.** Handles two cases. In part A, the identity or account check failed before any
-mutating command ran, so nothing changed: find the cause and fix it. In part B, a mutating command
-already ran against another account: stop, find and remove what it created, and prove the removal.
+Handles two cases. In part A, the identity or account check failed before any mutating command
+ran, so nothing changed: find the cause and fix it. In part B, a mutating command already ran
+against another account: stop, find and remove what it created, and prove the removal.
 
 **Before you start.**
 
@@ -1344,11 +1546,9 @@ expected; it depends on what the command created.
 
 > **Warning:** Resolve the account and the role before any mutating command, never probe a
 > profile's permissions with a mutating command, and never put a mutating command in the same
-> block as an unresolved account or role check. This is the lesson the recorded case carries.
+> block as an unresolved account or role check.
 
-**Steps.**
-
-**Part A. The identity or account check failed before any mutating command ran.**
+#### Part A: the identity or account check failed before any mutating command ran
 
 1. Stop. No mutating command ran.
 2. Exit any exported shell.
@@ -1370,7 +1570,9 @@ expected; it depends on what the command created.
    [Account check](#check-the-account-before-aws-commands). Both must pass before anything else
    runs.
 
-**Part B. A mutating command already ran against another account.**
+**Expected (part A):** after step 4, both identity values `True` and `ACCOUNT_MATCH=PASS`.
+
+#### Part B: a mutating command already ran against another account
 
 1. Stop every further command.
 2. From the same profile, list what the command created or changed, rather than relying on the
@@ -1379,17 +1581,16 @@ expected; it depends on what the command created.
    account ([Not yet exercised](#not-yet-exercised)).
 3. Remove what it created, under the grant above.
 
-> **Warning:** Before deleting an IAM principal, confirm that no access keys, policies or groups
-> remain attached to it.
+   > **Warning:** Before deleting an IAM principal, confirm that no access keys, policies or groups
+   > remain attached to it.
 
 4. Re-query each removed resource and confirm it is absent, a not-found error rather than an
    access-denied one, instead of trusting the delete call.
 5. Record what happened without the other account's identifier.
 6. Continue with part A, steps 3 and 4.
 
-**Expected result.** Part A: after step 4, both identity values `True` and `ACCOUNT_MATCH=PASS`.
-Part B: each removed resource returns a not-found error, not an access-denied one, when
-re-queried.
+**Expected (part B):** each removed resource returns a not-found error, not an access-denied one,
+when re-queried.
 
 **PASS when.**
 
@@ -1428,6 +1629,7 @@ resolved an administrative role in an account other than the project account, cr
 there. The user was deleted with nothing attached, its absence was re-queried, nothing billable
 was created and the project account was not affected. No output was retained. Part A has never
 run; the refusal it depends on has fired only in offline qualification of the private helper.
+The warning at the top of this procedure is the lesson this case carries.
 
 ## Not yet exercised
 

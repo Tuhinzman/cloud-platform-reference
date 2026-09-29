@@ -1,20 +1,60 @@
 # Public DNS and Certificate Runbook
 
-This runbook operates the public hosted zone, its delegation from the registrar, and the ACM
-certificate validated through that zone. `terraform/foundation` declares the zone and the
-certificate, in [`dns.tf`](../../terraform/foundation/dns.tf) and
-[`certificate.tf`](../../terraform/foundation/certificate.tf); the delegation is a registrar-side
-setting, outside Terraform and outside AWS. It does not cover environment DNS records, the record
-controller or binding the certificate to a load balancer. Those belong to runtime windows, the
-periods that create the EKS cluster and its runtime resources, exercise them and destroy them at
-close, which this suite does not cover ([runtime validation](../validation/runtime-validation.md)).
+This runbook builds and operates the public hosted zone, the registrar's delegation of the domain
+to that zone, and the ACM certificate validated through the zone. `terraform/foundation` declares
+the zone and the certificate, in [`dns.tf`](../../terraform/foundation/dns.tf) and
+[`certificate.tf`](../../terraform/foundation/certificate.tf). The delegation is a registrar-side
+setting, outside Terraform and outside AWS.
+
+It does not cover environment DNS records, the record controller or binding the certificate to a
+load balancer. Those belong to runtime windows, the periods that create the EKS cluster and its
+runtime resources, exercise them and destroy them at close, which this suite does not cover
+([runtime validation](../validation/runtime-validation.md)).
 [ADR-0018](../decisions/0018-define-the-public-entry-implementation-dns-and-certificate-model.md)
 is the decision, [ADR-0013](../decisions/0013-define-operations-and-cost-guardrails.md) sets the
 persistent-foundation obligations and the cost rules, and
 [Public DNS](../../terraform/foundation/README.md#public-dns) says what the root creates and why.
 Validation labels and the published-form rule are defined in the [runbook index](README.md).
 
+## When to use this runbook
+
+| If you need to | Go to |
+|---|---|
+| Build the zone, delegate the domain and issue the certificate: a first build, a rebuild from nothing, or a rebuild that creates a new zone | [Normal path](#normal-path), from step 1 |
+| Confirm the zone matches this root, or read its four name servers | [Read back the hosted zone](#read-back-the-hosted-zone) |
+| See what the parent delegates to before the registrar change | [Pre-cutover checks](#pre-cutover-checks) |
+| Prove that the parent delegates to Route 53 after the change | [Verify delegation](#verify-delegation) |
+| Confirm the issued certificate | [Read back the certificate](#read-back-the-certificate) |
+| Undo the registrar change after a failed cutover | [Roll back the delegation](#roll-back-the-delegation), on its named triggers only |
+| Decommission the zone at project end | [Retire the hosted zone](#retire-the-hosted-zone) |
+| Recover the zone after a deletion outside Terraform | No published procedure: stop and take it to the owner ([Build the zone on its own](#build-the-zone-on-its-own)) |
+
+**Rule for links.** When a step or checklist item sends you to another procedure or runbook, run
+the steps it names, confirm the PASS it states, then return to the step or checklist that sent
+you. Where you must continue somewhere else instead, the step says so.
+
+**Rule for stops.** Where this page says work stays stopped, it stays stopped until a reviewed
+decision is taken under explicit approval ([When to stop](README.md#when-to-stop)).
+
 ## Normal path
+
+> **Warning: current public boundary.** On a build from nothing, this path stops before any
+> certificate exists, at one of two points:
+>
+> - **Step 1, at its binding check, before any zone exists.** Step 1 is then the foundation
+>   root's first apply, and what that check's state read prints against a state object never yet
+>   written has not been recorded
+>   ([Bind the saved plan](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state)).
+> - **Step 7, at step 2 of [Plan and apply the certificate](#plan-and-apply-the-certificate).**
+>   The certificate-stage plan also adds the evidence store, the registry repositories and the CI
+>   identity. That combined plan has never run and has no reviewed shape, and no published
+>   procedure builds those resources first
+>   ([persistent-foundations.md](persistent-foundations.md#reproducibility-gaps)). By then the
+>   zone exists and bills, and the domain is delegated to it.
+>
+> Work stays stopped at either point. Step 1 creates the billable zone, so on a build from nothing
+> the owner accepts in writing, before step 1 starts, where the path then ends; that acceptance
+> covers either stop point ([Build the zone on its own](#build-the-zone-on-its-own)).
 
 Run these in order. The zone comes first because the certificate's DNS validation depends on the
 registrar delegating to the zone.
@@ -33,95 +73,78 @@ registrar delegating to the zone.
    certificate authority. It has no reviewed procedure. It comes after delegation, not before the
    registrar change, because until then the previous provider still answers for `<apex>`.
 7. [Plan and apply the certificate](#plan-and-apply-the-certificate): plan the whole root, verify
-   delegation again, then apply, with approval. Its plan shape assumes the rest of the foundation
-   is already applied; on a build from nothing no reviewed shape exists, and the plan stops at
-   its step 2.
+   delegation again, then apply, with approval. On a build from nothing it stops at its step 2
+   (see the boundary above).
 8. [Read back the certificate](#read-back-the-certificate): confirm the issued certificate.
-
-> **Warning:** On a build from nothing, this path currently ends at step 7, before any
-> certificate exists. The certificate-stage plan also adds the evidence store, the registry
-> repositories and the CI identity. That combined plan has never run and has no reviewed shape, so
-> [Plan and apply the certificate](#plan-and-apply-the-certificate) stops at its step 2, and no
-> published procedure builds those resources first
-> ([persistent-foundations.md](persistent-foundations.md#reproducibility-gaps)). By then the zone
-> exists and bills, and the domain is delegated to it. Work stays stopped there until a reviewed
-> decision is taken under explicit approval. Know this before step 1, which creates the billable
-> zone: on a build from nothing, the owner accepts it in writing before step 1 starts
-> ([Build the zone on its own](#build-the-zone-on-its-own)).
-> On a build from nothing, step 1 is also the foundation root's first apply, and it can stop
-> earlier, at its binding check, before any zone exists: what that check's state read prints
-> against a state object never yet written has not been recorded
-> ([Bind the saved plan](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state)). The owner's acceptance covers either stop point.
 
 Run these only when their trigger occurs:
 
 - [Roll back the delegation](#roll-back-the-delegation): only on its named triggers after the
-  registrar change. Designed, never executed.
-- [Retire the hosted zone](#retire-the-hosted-zone): at project end only. The order is designed
-  and has never run; the destroy step is not designed.
-
-> **Warning:** The rollback depends on a private export of the zone the previous provider serves,
-> kept with its sha256, and on the previous name-server set. Have both before step 4.
-
-> **Warning:** Retirement runs in a fixed order: the registrar first, then the wait, the
-> certificate before the zone, and `prevent_destroy` lifted only in a reviewed change
-> ([Public DNS](../../terraform/foundation/README.md#public-dns)).
+  registrar change. Designed, never executed. It needs the private export of the previous zone,
+  with its sha256, and the previous name-server set, both taken before step 4.
+- [Retire the hosted zone](#retire-the-hosted-zone): at project end only, in the fixed order in
+  [Public DNS](../../terraform/foundation/README.md#public-dns). The order is designed and has
+  never run; the destroy step is not designed.
 
 ## Before you start
 
-- [ ] A registered apex domain at an external registrar, controlled by the operator, with a known
-  renewal posture. Registration and renewal sit outside AWS and outside the AWS budget.
-- [ ] Registrar access, with multi-factor sign-in, that can replace the domain's name-server set,
-  plus knowledge of the domain's lock status and of whether the parent holds a DS record.
-- [ ] Before the registrar change: a private export of the zone the previous provider serves, kept
-  with its sha256, and the previous name-server set, both kept for rollback. Every record in that
-  export stops resolving once Route 53 answers: this runbook publishes no record migration, and
-  a record that must keep resolving is a STOP
+- [ ] **Domain.** A registered apex domain at an external registrar, controlled by the operator,
+  with a known renewal posture. Registration and renewal sit outside AWS and outside the AWS
+  budget.
+- [ ] **Registrar access**, with multi-factor sign-in, that can replace the domain's name-server
+  set, plus knowledge of the domain's lock status and of whether the parent holds a DS record.
+- [ ] **Rollback inputs, before the registrar change.** A private export of the zone the previous
+  provider serves, kept with its sha256, and the previous name-server set, both kept for
+  rollback. Every record in that export stops resolving once Route 53 answers: this runbook
+  publishes no record migration, and a record that must keep resolving is a STOP
   ([Change the name servers at the registrar](#change-the-name-servers-at-the-registrar)).
-- [ ] The dedicated AWS account and an administrative operator session:
+- [ ] **AWS session.** The dedicated AWS account and an administrative operator session:
   [Sign in](operator-access.md#sign-in), steps 1 and 2, with `<profile>` (PASS: both values
-  `True` and `ACCOUNT_MATCH=PASS`). Then return to this list. Where a procedure below asks for
-  the identity and account checks, run
-  [Verify the resolved identity](operator-access.md#verify-the-resolved-identity), steps 1 and 2,
-  in the shell that will run its AWS commands (PASS: both values `True`, and the step 2 account
-  check prints `ACCOUNT_MATCH=PASS`). Then return to that procedure's checklist.
-- [ ] Two shells. The budget read-back and the price re-check that the zone build requires run in
-  the exported shell of [cost-and-residue.md](cost-and-residue.md#before-you-start): a clean shell
-  that holds one role credential and no profile. Prepare it with
-  [Export role credentials once](operator-access.md#export-role-credentials-once), steps 1 to 4
-  (PASS: step 3 prints `ACCOUNT_MATCH=PASS` and no HOLD line, and step 4 prints the headroom line
-  and exits 0). This page's Terraform and AWS CLI commands name `<profile>`, which that shell does
-  not have, so run them, the applies included, in a shell where `<profile>` is signed in. No
-  published rule requires an exported shell for this page's own steps. If you run one of them in
-  an exported shell, as [terraform-operations.md](terraform-operations.md) does for a long or
-  sensitive operation, drop `AWS_PROFILE=<profile>` and `--profile <profile>` from it. Then return
-  to this list, or to the checklist that sent you here.
-- [ ] The four foundation inputs in an untracked `terraform.tfvars` and the state bucket in an
-  untracked `backend.hcl` ([Input](../../terraform/foundation/README.md#input)).
-- [ ] Tools: the workstation toolchain (Terraform, the AWS provider and the AWS CLI), prepared with
-  [Prepare the workstation toolchain](operator-access.md#prepare-the-workstation-toolchain),
+  `True` and `ACCOUNT_MATCH=PASS`). The **identity and account checks** that procedures below ask
+  for are [Verify the resolved identity](operator-access.md#verify-the-resolved-identity), steps 1
+  and 2, run in the shell that will run that procedure's AWS commands (PASS: both values `True`,
+  and the step 2 account check prints `ACCOUNT_MATCH=PASS`).
+- [ ] **Two shells.**
+  - The **profile shell**, where `<profile>` is signed in. Terraform commands run in
+    `terraform/foundation`, prefixed with `AWS_PROFILE=<profile>` as in
+    [terraform-operations.md](terraform-operations.md). This page's Terraform and AWS CLI
+    commands name `<profile>`, so they run there, the applies included.
+  - The **exported shell** of [cost-and-residue.md](cost-and-residue.md#before-you-start): a
+    clean shell that holds one role credential and no profile. The budget read-back and the price
+    re-check that the zone build requires run there. Prepare it with
+    [Export role credentials once](operator-access.md#export-role-credentials-once), steps 1 to 4
+    (PASS: step 3 prints `ACCOUNT_MATCH=PASS` and no HOLD line, and step 4 prints the headroom
+    line and exits 0).
+
+  No published rule requires an exported shell for this page's own steps. If you run one of them
+  in an exported shell, as [terraform-operations.md](terraform-operations.md) does for a long or
+  sensitive operation, drop `AWS_PROFILE=<profile>` and `--profile <profile>` from it.
+- [ ] **Inputs.** The four foundation inputs in an untracked `terraform.tfvars` and the state
+  bucket in an untracked `backend.hcl` ([Input](../../terraform/foundation/README.md#input)).
+- [ ] **Tools.** The workstation toolchain (Terraform, the AWS provider and the AWS CLI), prepared
+  with [Prepare the workstation toolchain](operator-access.md#prepare-the-workstation-toolchain),
   steps 1 to 5 (PASS: the published fingerprint and a good signature, `OK` for the archive, equal
-  hashes for the extracted and the installed binary, and Terraform v1.15.5); `jq`, `unzip` and
-  `shasum` (or `sha256sum`) for the plan review and binding in
-  [terraform-operations.md](terraform-operations.md); `dig`; and `curl` for the RDAP read, which
-  is optional in [Verify delegation](#verify-delegation) and is the source this page names for the
-  lock status the [Registrar lock check](#registrar-lock-check) needs. RDAP is the registry's
-  public registration-data service. Then return to this list.
-- [ ] A new private directory for each plan, outside every Git working tree and created under
-  `umask 077`, for saved plans.
-- [ ] The evidence tooling for this page's three campaigns
+  hashes for the extracted and the installed binary, and Terraform v1.15.5). Also `jq`, `unzip`
+  and `shasum` (or `sha256sum`) for the plan review and binding in
+  [terraform-operations.md](terraform-operations.md); `dig`; and `curl` for the RDAP read. RDAP is
+  the registry's public registration-data service. The read is optional in
+  [Verify delegation](#verify-delegation), and it is the source this page names for the lock
+  status the [Registrar lock check](#registrar-lock-check) needs.
+- [ ] **Plan directory.** A new private directory for each plan, outside every Git working tree
+  and created under `umask 077`, for saved plans.
+- [ ] **Evidence tooling** for this page's three campaigns
   ([evidence-handling.md](evidence-handling.md#before-you-start)): a private evidence root and a
   private run directory, a private literal list that holds the domain, the zone ID and the name
   servers, an address allowlist, and a redaction filter and a value-based, archive-aware sweep
   that fail closed. The project's own filter and sweep are not published, so you supply your own
   before the first campaign. Without them the evidence path stops at its step 2
   ([Normal path](evidence-handling.md#normal-path)).
-- [ ] An approver for each mutating step: the zone apply, the registrar change, the certificate
-  apply, and any rollback, retirement or destroy. This page calls the approver the owner (see
-  [Conventions](#conventions)). Before the zone build the owner also gives two more decisions: on
-  a build from nothing, written acceptance, before step 1, of where the normal path then ends;
-  and approval of a price re-estimate, because the Route 53 price re-check stops for a zone build
-  ([Build the zone on its own](#build-the-zone-on-its-own)).
+- [ ] **Approver.** An approver for each mutating step: the zone apply, the registrar change, the
+  certificate apply, and any rollback, retirement or destroy. This page calls the approver the
+  owner (see [Conventions](#conventions)). Before the zone build the owner also gives two more
+  decisions: on a build from nothing, written acceptance, before step 1, of where the normal path
+  then ends; and approval of a price re-estimate, because the Route 53 price re-check stops for a
+  zone build ([Build the zone on its own](#build-the-zone-on-its-own)).
 
 ### Shared steps this page links to
 
@@ -136,19 +159,23 @@ Run these only when their trigger occurs:
 
 ### Placeholders
 
-- `<profile>` is the administrative profile. Terraform commands run in `terraform/foundation`,
-  prefixed with `AWS_PROFILE=<profile>` as in [terraform-operations.md](terraform-operations.md).
-- `<plan-file>` and `<private-dir>` are defined in
-  [terraform-operations.md](terraform-operations.md): a saved plan lives outside every Git working
-  tree.
-- `<apex>` is the registered domain supplied as `public_domain`. `<parent>` is the zone that
-  delegates `<apex>`, and `<parent-server>` each of its authoritative servers. In the validated
-  deployment `<parent>` was the top-level domain; an apex under a multi-label public suffix, where
-  the delegating zone sits below the top-level domain, has never been exercised. `<tld>` is the
-  top-level domain, used only to find the registry's RDAP service.
-- `<route53-ns>` is each of the four name servers Route 53 assigned, `<previous-ns>` each name
-  server of the provider that served the domain before the cutover, and `<resolver>` a public
-  resolver. `<rdap-base>` is the registry's RDAP base URL without its trailing `/`.
+| Placeholder | What it is, and where it comes from |
+|---|---|
+| `<profile>` | The administrative profile ([Sign in](operator-access.md#sign-in)). |
+| `<plan-file>`, `<private-dir>` | Defined in [terraform-operations.md](terraform-operations.md): a saved plan lives outside every Git working tree. |
+| `<apex>` | The registered domain, supplied as `public_domain`. Private. |
+| `<parent>` | The zone that delegates `<apex>`. |
+| `<parent-server>` | Each authoritative server of `<parent>`, found at step 1 of [Pre-cutover checks](#pre-cutover-checks). |
+| `<tld>` | The top-level domain, used only to find the registry's RDAP service. |
+| `<route53-ns>` | Each of the four name servers Route 53 assigned, read at step 5 of [Read back the hosted zone](#read-back-the-hosted-zone). Private. |
+| `<previous-ns>` | Each name server of the provider that served the domain before the cutover, kept for rollback. Private. |
+| `<resolver>` | A public resolver, as each step names it. |
+| `<rdap-base>` | The registry's RDAP base URL without its trailing `/`, found as step 2 of [Verify delegation](#verify-delegation) says. |
+| `<required-minutes>` | The session time a long operation needs, set as step 1 of [Check session headroom before long operations](operator-access.md#check-session-headroom-before-long-operations) says. |
+
+In the validated deployment `<parent>` was the top-level domain; an apex under a multi-label public
+suffix, where the delegating zone sits below the top-level domain, has never been exercised.
+"Private" means the value stays out of shared records ([Conventions](#conventions)).
 
 ### Conventions
 
@@ -170,16 +197,20 @@ Run these only when their trigger occurs:
   shell variables and never written down, and the domain and the name servers stay out of shared
   records.
 - **Evidence campaigns.** A campaign is one bounded operation whose evidence set is kept together
-  ([evidence-handling.md](evidence-handling.md#normal-path)). This page uses three: the zone
-  build, from its plan to its read-back; the cutover, from the
-  [Pre-cutover checks](#pre-cutover-checks) through the registrar change to the
-  [Verify delegation](#verify-delegation) round that passes; and the certificate, from its plan,
-  through the delegation check before its apply, to its read-backs and convergence plan. Open each
-  set when its campaign starts: run steps 1 and 2 of
+  ([evidence-handling.md](evidence-handling.md#normal-path)). This page uses three:
+  - the zone build, from its plan to its read-back;
+  - the cutover, from the [Pre-cutover checks](#pre-cutover-checks) through the registrar change
+    to the [Verify delegation](#verify-delegation) round that passes;
+  - the certificate, from its plan, through the delegation check before its apply, to its
+    read-backs and convergence plan.
+
+  **Open** each set when its campaign starts: run steps 1 and 2 of
   [Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set),
   `umask 077` and then one directory for the campaign under the evidence root, with your redaction
   filter in place (PASS: the new directory is 0700). Then return to the procedure checklist that
-  sent you here. Sweep and seal each set when its campaign ends: steps 4 to 7 of the
+  sent you here.
+
+  **Sweep and seal** each set when its campaign ends: steps 4 to 7 of the
   [evidence-handling.md Normal path](evidence-handling.md#normal-path) (PASS: every manifest entry
   reports `OK`, the set holds no file the manifest does not list, and the manifest's full SHA-256
   is in the private record outside the set). Then return to where the procedure that sent you
@@ -199,145 +230,155 @@ Run these only when their trigger occurs:
 **Validation:** DESIGNED-NOT-EXECUTED (never) · **Published command form:** not executed as written
 
 **What this does.** It creates the hosted zone alone, so the certificate is not requested before
-the registrar delegates to the zone.
+the registrar delegates to the zone. Use it for a first build, for a rebuild from nothing, and for
+any rebuild that creates a new zone, because a new zone gets new name servers.
 
-Use it for a first build, for a rebuild from nothing, and for any rebuild that creates a new zone,
-because a new zone gets new name servers.
+It does not recover a zone deleted outside Terraform: no reviewed sequence exists, and
+re-delegation is urgent (see [Not yet exercised](#not-yet-exercised)). Stop and take it to the
+owner: work stays stopped.
 
-Recovering the zone after a deletion outside Terraform is not covered: no reviewed sequence
-exists, and re-delegation is urgent (see [Not yet exercised](#not-yet-exercised)). Stop and take
-it to the owner: work stays stopped until a reviewed decision is taken under explicit approval.
-
-**Before you start.**
+**Before you start.** Run the steps in the profile shell, in `terraform/foundation`, except the
+budget read-back and the price re-check in step 3, which run in the exported shell.
 
 - [ ] On a build from nothing: before step 1, the owner has accepted in writing that the normal
-  path then ends at step 2 of [Plan and apply the certificate](#plan-and-apply-the-certificate),
-  before any certificate exists, with this zone billing and the domain delegated to it, or
-  earlier, at this procedure's binding check, the root's first apply, before the zone exists (see
-  the warning under [Normal path](#normal-path)). Without that acceptance, do not start.
+  path then ends at one of the two stop points in the boundary warning under
+  [Normal path](#normal-path): this procedure's binding check, before the zone exists, or step 2
+  of [Plan and apply the certificate](#plan-and-apply-the-certificate), with this zone billing and
+  the domain delegated to it. Without that acceptance, do not start.
 - [ ] An administrative session with the caller verified: the identity and account checks in
-  [Before you start](#before-you-start). Then return to this list.
+  [Before you start](#before-you-start).
 - [ ] Enough session headroom:
   [Check session headroom before long operations](operator-access.md#check-session-headroom-before-long-operations),
   steps 1 to 3, with `<required-minutes>` set as its step 1 says (PASS: the headroom line is
-  printed and the exit status is 0). Then return to this list.
+  printed and the exit status is 0).
 - [ ] Steps 1 to 5 of the [terraform-operations.md Normal path](terraform-operations.md#normal-path)
-  done for `terraform/foundation` at the commit under review, each with its **PASS when** met: the
-  root's inputs and a new `<private-dir>` prepared; the
-  [static checks](terraform-operations.md#run-the-static-checks) run (`fmt`, `validate`, `tflint`
-  and every `trivy config` exit 0, `git status` prints nothing, and `diff` prints no line
-  beginning `>`); the root
-  [initialized against its backend](terraform-operations.md#initialize-a-root-against-the-state-backend)
-  (`git check-ignore` lists `backend.hcl` and `terraform.tfvars`, `init` reports the backend
-  configured and Terraform initialized, and `git status` prints nothing);
-  [state inspected](terraform-operations.md#inspect-state-without-writing-it), its listed
-  addresses equal to the expected set, with its serial, lineage and address digest recorded (the
-  expected set: none on a root never applied; otherwise the address list printed by step 2 of
-  Apply the reviewed saved plan after this root's last apply, kept in that campaign's evidence.
-  No address list is published for this root, so without that list PASS cannot be reached:
-  STOP); and
-  [debug logging kept off](terraform-operations.md#keep-terraform-debug-logging-off) (its check
-  prints nothing). Stop after step 5 and return to the checklist you came from: the procedure's
-  own steps replace that path's steps 6 onward. Every plan of this root needs all four
+  done for `terraform/foundation` at the commit under review, each with its **PASS when** met:
+  - the root's inputs and a new `<private-dir>` prepared;
+  - the [static checks](terraform-operations.md#run-the-static-checks) run (`fmt`, `validate`,
+    `tflint` and every `trivy config` exit 0, `git status` prints nothing, and `diff` prints no
+    line beginning `>`);
+  - the root
+    [initialized against its backend](terraform-operations.md#initialize-a-root-against-the-state-backend)
+    (`git check-ignore` lists `backend.hcl` and `terraform.tfvars`, `init` reports the backend
+    configured and Terraform initialized, and `git status` prints nothing);
+  - [state inspected](terraform-operations.md#inspect-state-without-writing-it), its listed
+    addresses equal to the expected set, with its serial, lineage and address digest recorded.
+    The expected set is none on a root never applied; otherwise it is the address list printed by
+    step 2 of Apply the reviewed saved plan after this root's last apply, kept in that campaign's
+    evidence. No address list is published for this root, so without that list PASS cannot be
+    reached: STOP;
+  - [debug logging kept off](terraform-operations.md#keep-terraform-debug-logging-off) (its check
+    prints nothing).
+
+  Stop after step 5 and return to the checklist you came from: the procedure's own steps replace
+  that path's steps 6 onward. Every plan of this root needs all four
   [inputs](../../terraform/foundation/README.md#input), DNS-only work included.
-- [ ] The campaign's evidence set opened ([Conventions](#conventions)). Then return to this list.
+- [ ] The campaign's evidence set opened ([Conventions](#conventions)).
 - [ ] The exported shell for the budget read-back and the price re-check in step 3, prepared as
-  [Before you start](#before-you-start) says. Then return to this list.
+  [Before you start](#before-you-start) says.
 - [ ] No hosted zone for `<apex>` exists: step 1 of
   [Read back the hosted zone](#read-back-the-hosted-zone) returns `0`.
 - [ ] The owner available to approve this apply: explicit written approval of the reviewed saved
-  plan, identified by its sha256, given after step 2 and before step 3. The order is: binding
-  steps 1 and 2 at review, the owner's approval, the budget read-back and the price re-check in
-  the exported shell, binding step 3, then the apply.
+  plan, identified by its sha256, given after step 2 and before step 3.
 
 **Safety and authority.** Mutating, billable, owner-authorized. The zone costs 0.50 USD a month
 from creation, not prorated, plus query charges. It is persistent; retiring it is
 [Retire the hosted zone](#retire-the-hosted-zone), which has never run.
 
-**Steps.**
+#### Step 1 — Plan the zone alone into a saved plan
 
-1. Plan the zone alone into a saved plan. Terraform warns that resource targeting is in effect;
-   that is expected for this step only. `-lock=false` is used because step 3 runs the binding
-   check immediately before the apply: a saved plan made with `-lock=false` is applied only after
-   that check passes.
+Terraform warns that resource targeting is in effect; that is expected for this step only.
+`-lock=false` is used because step 3 runs the binding check immediately before the apply: a saved
+plan made with `-lock=false` is applied only after that check passes.
 
-   ```
-   AWS_PROFILE=<profile> terraform plan -lock=false -input=false -no-color -detailed-exitcode -target=aws_route53_zone.public -out=<plan-file>
-   echo $?
-   ```
+```
+AWS_PROFILE=<profile> terraform plan -lock=false -input=false -no-color -detailed-exitcode -target=aws_route53_zone.public -out=<plan-file>
+echo $?
+```
 
-   Exit 2 means the plan has changes, as expected here; exit 0 or 1 is a STOP. Go on only if the
-   plan output also contains the summary line `Plan: 1 to add, 0 to change, 0 to destroy.` and
-   Terraform's warning that resource targeting is in effect.
+**Expected:** exit 2 (the plan has changes, as expected here), the summary line
+`Plan: 1 to add, 0 to change, 0 to destroy.`, and Terraform's warning that resource targeting is
+in effect.
+**If not:** exit 0 or 1 is a STOP. Go on only when all three hold.
 
-2. Review the saved plan with [Review the saved plan](terraform-operations.md#review-the-saved-plan),
-   steps 1 to 5, against this shape:
-   - exactly one resource to add, `aws_route53_zone.public`, and 0 to change, destroy or replace;
-   - the zone is public (no VPC association), named `<apex>`, with `force_destroy` false;
-   - the six mandatory tags in `tags_all`, with `Component` set to `dns`;
-   - no `aws_acm_*` and no `aws_route53_record` address;
-   - output changes: `public_zone_name_servers` created. What this targeted form shows for
-     `public_certificate_arn` is unmeasured (see the Engineering notes). If
-     `public_certificate_arn` appears among the output changes, the reviewed shape does not cover
-     it: that is a STOP.
+#### Step 2 — Review the saved plan, bind it, and get approval
 
-   Terraform marks a targeted plan incomplete, as the retained targeted plans of `terraform/dev`
-   show on Terraform 1.15.5 (Build only the retained baseline, in dev-network.md); this root's
-   targeted form has never run. So this plan is expected to show `complete` as `false`. That is
-   the one exception to the review's criteria: `applyable` must still be `true` and `errored`
-   `false`, and every other criterion applies.
+Review the saved plan with [Review the saved plan](terraform-operations.md#review-the-saved-plan),
+steps 1 to 5, against this shape:
 
-   Read the zone's attributes and tags in the plan text that step 1 of Review the saved plan
-   prints (`terraform show -no-color <plan-file>`).
+- exactly one resource to add, `aws_route53_zone.public`, and 0 to change, destroy or replace;
+- the zone is public (no VPC association), named `<apex>`, with `force_destroy` false;
+- the six mandatory tags in `tags_all`, with `Component` set to `dns`;
+- no `aws_acm_*` and no `aws_route53_record` address;
+- output changes: `public_zone_name_servers` created. What this targeted form shows for
+  `public_certificate_arn` is unmeasured (see the Engineering notes). If
+  `public_certificate_arn` appears among the output changes, the reviewed shape does not cover
+  it: that is a STOP.
 
-   > **Warning:** Any `aws_acm_*` address in this plan is a STOP. Design-review reasoning, not
-   > measurement: a certificate requested before delegation waits out Terraform's validation step
-   > and is left in `PENDING_VALIDATION`, a class ADR-0018 names for the orphan scan, the check
-   > for leftover resources that nothing owns (the orphan census in cost-and-residue.md, which
-   > has no ACM class yet).
+Read the zone's attributes and tags in the plan text that step 1 of Review the saved plan prints
+(`terraform show -no-color <plan-file>`).
 
-   Then run steps 1 and 2 of
-   [Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state)
-   to record the plan's sha256 and the serial and lineage it was made from. PASS: its step 2
-   prints `same` for every file and for the lock file, and its `diff` prints nothing. Obtain the
-   owner's written approval of this plan, identified by its sha256, then continue at step 3.
+Terraform marks a targeted plan incomplete, so this plan is expected to show `complete` as
+`false` (see the Engineering notes). That is the one exception to the review's criteria:
+`applyable` must still be `true` and `errored` `false`, and every other criterion applies.
 
-3. In the exported shell, not the shell that runs this procedure's commands
-   ([Before you start](#before-you-start)), read the budget back before this billable change:
-   [Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states),
-   steps 1 to 6. PASS: one budget row with `cloud-platform-reference`, `COST`, `MONTHLY`, `200.0`
-   and `USD`, exactly the five notifications, each `OK`, and at least 1 subscriber for each; on
-   an `ALARM`, follow that procedure's **Next step**. Then, also in the exported shell and
-   immediately before the apply, re-check Route 53 pricing:
-   [Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work),
-   steps 1 to 3. For a zone build that re-check always stops: its price table has the zone rate
-   but not the Route 53 query rate the zone also bills. So the owner approves a re-estimate before
-   the apply. No written re-estimation procedure exists.
+> **Warning:** Any `aws_acm_*` address in this plan is a STOP.
 
-   Then, in the shell that runs this procedure's commands, run step 3 of
-   [Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state)
-   (its steps 1 and 2 ran in step 2 here). Go on only if the hash equals the recorded one and the
-   serial and lineage equal the plan's. Then apply exactly that plan, without re-planning: steps 1
-   and 2 of [Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan)
-   (PASS: exit 0 and 1 added, 0 changed, 0 destroyed). Step 4 here is its read-back.
+Then run steps 1 and 2 of
+[Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state)
+to record the plan's sha256 and the serial and lineage it was made from. Obtain the owner's
+written approval of this plan, identified by its sha256, then continue at step 3.
 
-   > **Warning:** This apply creates the billable zone. Run it only with explicit approval of this
-   > plan, after the Route 53 price re-check, and with the owner's approval of its re-estimate.
+**Expected:** the plan matches the shape exactly; the review shows `applyable` `true`, `errored`
+`false` and `complete` `false`; binding step 2 prints `same` for every file and for the lock file,
+and its `diff` prints nothing.
+**If not:** STOP. A plan that differs from the shape is not approved (see **If it fails**).
 
-   After this apply, go to step 4, not to the apply procedure's next step, Confirm convergence.
-   Until [Plan and apply the certificate](#plan-and-apply-the-certificate) completes, a plain plan
-   of this root is expected to show the certificate's three addresses as pending, and on a build
-   from nothing the rest of the foundation as well, so the convergence check applies only after
-   the certificate apply.
+#### Step 3 — Check the budget and price, bind the plan to state, then apply
 
-4. Run [Read back the hosted zone](#read-back-the-hosted-zone).
+The order is: binding steps 1 and 2 at review (step 2), the owner's approval, the budget read-back
+and the price re-check in the exported shell, binding step 3, then the apply.
 
-**Expected result.** The plan prints `Plan: 1 to add, 0 to change, 0 to destroy.` with the
-targeting warning, and its review shows `applyable` `true`, `errored` `false` and `complete`
-`false`. The apply reports 1 added, 0 changed, 0 destroyed, matching the reviewed
-plan. One public hosted zone with four assigned name servers, and public DNS still answered by the
-previous provider. After the validated apply, the live delegation had no name server in common with
-the four assigned.
+In the exported shell, not the profile shell:
+
+- Read the budget back before this billable change:
+  [Read back the budget and its alert states](cost-and-residue.md#read-back-the-budget-and-its-alert-states),
+  steps 1 to 6. PASS: one budget row with `cloud-platform-reference`, `COST`, `MONTHLY`, `200.0`
+  and `USD`, exactly the five notifications, each `OK`, and at least 1 subscriber for each. On an
+  `ALARM`, follow that procedure's **Next step**.
+- Immediately before the apply, re-check Route 53 pricing:
+  [Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work),
+  steps 1 to 3. For a zone build that re-check always stops: its price table has the zone rate
+  but not the Route 53 query rate the zone also bills. So the owner approves a re-estimate before
+  the apply. No written re-estimation procedure exists.
+
+Then, in the profile shell:
+
+- Run step 3 of
+  [Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state)
+  (its steps 1 and 2 ran in step 2 here). Go on only if the hash equals the recorded one and the
+  serial and lineage equal the plan's.
+- Apply exactly that plan, without re-planning: steps 1 and 2 of
+  [Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan)
+  (PASS: exit 0 and 1 added, 0 changed, 0 destroyed). Step 4 here is its read-back: after the
+  apply, go to step 4, not to the apply procedure's next step, Confirm convergence. The
+  convergence check applies only after the certificate apply (see **Known limitations**).
+
+> **Warning:** This apply creates the billable zone. Run it only with explicit approval of this
+> plan, after the Route 53 price re-check, and with the owner's approval of its re-estimate.
+
+**Expected:** the budget read-back passes; the hash, serial and lineage match; the apply reports
+1 added, 0 changed, 0 destroyed, matching the reviewed plan.
+**If not:** a binding mismatch is a STOP, and so is a first-apply state read that prints nothing
+or `STATE READ FAILED OR EMPTY` (see **STOP if**). A failed or interrupted apply follows **If it
+fails**.
+
+#### Step 4 — Read back the zone
+
+Run [Read back the hosted zone](#read-back-the-hosted-zone).
+
+**Expected:** it passes. One public hosted zone with four assigned name servers, and public DNS
+still answered by the previous provider.
 
 **PASS when.**
 
@@ -357,9 +398,10 @@ the four assigned.
 - A hosted zone for `<apex>` already exists.
 - Any `aws_acm_*` address would be created.
 - On a build from nothing, the owner has not accepted in writing where the normal path then ends.
-- On a build from nothing, the binding check's state read prints nothing: this is the root's first
-  apply, and an empty result is a mismatch no published procedure resolves
-  ([Bind the saved plan](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state)).
+- On a build from nothing, the binding check's state read prints nothing or prints
+  `STATE READ FAILED OR EMPTY`: this is the root's first apply, and
+  [Bind the saved plan](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state)
+  defines that result as a mismatch no published procedure resolves.
 - The Route 53 price re-check stopped, and the owner has not approved a re-estimate.
 
 **If it fails.** A plan that differs from the shape is not approved; correct and plan again as in
@@ -385,6 +427,19 @@ its set then ([Conventions](#conventions)).
 | Authority | Explicit owner approval of the zone apply |
 | Cost | 0.50 USD a month from creation, not prorated, plus query charges ([Public DNS](../../terraform/foundation/README.md#public-dns)) |
 
+Why `complete` is `false` in step 2: Terraform marks a targeted plan incomplete, as the retained
+targeted plans of `terraform/dev` show on Terraform 1.15.5 (Build only the retained baseline, in
+dev-network.md); this root's targeted form has never run.
+
+Why an `aws_acm_*` address in the step 2 plan is a STOP, as design-review reasoning, not
+measurement: a certificate requested before delegation waits out Terraform's validation step and
+is left in `PENDING_VALIDATION`, a class ADR-0018 names for the orphan scan, the check for
+leftover resources that nothing owns (the orphan census in cost-and-residue.md, which has no ACM
+class yet).
+
+After the validated apply, the live delegation had no name server in common with the four
+assigned.
+
 **Known limitations.**
 
 - The `-target` form has never run. Until
@@ -407,67 +462,69 @@ retirement.
 
 **Before you start.**
 
-- [ ] A session with the identity and account checks passed, as
-  [Before you start](#before-you-start) states them. Then return to step 1 here.
+- [ ] The identity and account checks passed in the profile shell, as
+  [Before you start](#before-you-start) states them.
 
 **Safety and authority.** Read-only; no approval needed.
 
 > **Warning:** Nothing else checks the account for these AWS CLI calls, and a `0` at step 1 says
 > nothing about the intended account without that check.
 
-**Steps.**
+#### Step 1 — Count the hosted zones named `<apex>`
 
-1. Count the hosted zones named `<apex>`:
+```
+aws route53 list-hosted-zones --profile <profile> \
+  --query "length(HostedZones[?Name=='<apex>.'])"
+```
 
-   ```
-   aws route53 list-hosted-zones --profile <profile> \
-     --query "length(HostedZones[?Name=='<apex>.'])"
-   ```
+**Expected:** `1`. (Before a zone build, [Build the zone on its own](#build-the-zone-on-its-own)
+requires `0`.)
 
-2. Hold the zone ID in a variable:
+#### Step 2 — Hold the zone ID in a variable
 
-   ```
-   zone_id=$(aws route53 list-hosted-zones --profile <profile> \
-     --query "HostedZones[?Name=='<apex>.'].Id" --output text)
-   zone_id=${zone_id##*/}
-   ```
+```
+zone_id=$(aws route53 list-hosted-zones --profile <profile> \
+  --query "HostedZones[?Name=='<apex>.'].Id" --output text)
+zone_id=${zone_id##*/}
+```
 
-3. Read the zone type, the name-server count and the tags:
+#### Step 3 — Read the zone type, the name-server count and the tags
 
-   ```
-   aws route53 get-hosted-zone --profile <profile> --id "$zone_id" \
-     --query '{Private: HostedZone.Config.PrivateZone, NameServers: length(DelegationSet.NameServers)}'
-   aws route53 list-tags-for-resource --profile <profile> --resource-type hostedzone \
-     --resource-id "$zone_id" --query 'ResourceTagSet.Tags[].[Key,Value]' --output text
-   ```
+```
+aws route53 get-hosted-zone --profile <profile> --id "$zone_id" \
+  --query '{Private: HostedZone.Config.PrivateZone, NameServers: length(DelegationSet.NameServers)}'
+aws route53 list-tags-for-resource --profile <profile> --resource-type hostedzone \
+  --resource-id "$zone_id" --query 'ResourceTagSet.Tags[].[Key,Value]' --output text
+```
 
-4. List the record sets:
+**Expected:** `Private` is `false` and `NameServers` is `4`; the six mandatory tags, with
+`Component` set to `dns`.
 
-   ```
-   aws route53 list-resource-record-sets --profile <profile> --hosted-zone-id "$zone_id" \
-     --query 'ResourceRecordSets[].[Type,TTL,Name,ResourceRecords[0].Value]' --output text
-   ```
+#### Step 4 — List the record sets
 
-5. When the name servers are needed, for the pre-cutover checks or the registrar, read them from
-   the zone's delegation set:
+```
+aws route53 list-resource-record-sets --profile <profile> --hosted-zone-id "$zone_id" \
+  --query 'ResourceRecordSets[].[Type,TTL,Name,ResourceRecords[0].Value]' --output text
+```
 
-   ```
-   aws route53 get-hosted-zone --profile <profile> --id "$zone_id" \
-     --query 'DelegationSet.NameServers' --output text
-   ```
+**Expected:** before the certificate, record types `NS` and `SOA` only. After it, `NS`, `SOA` and
+exactly one `CNAME`, the certificate's validation record, with TTL 300. The observed TTLs of `NS`
+and `SOA` were 172800 and 900.
 
-**Expected result.**
+#### Step 5 — Read the name servers, when they are needed
 
-- Step 1 returns `1`.
-- `Private` is `false` and `NameServers` is `4`.
-- The six mandatory tags, with `Component` set to `dns`.
-- Before the certificate, record types `NS` and `SOA` only. After it, `NS`, `SOA` and exactly
-  one `CNAME`, the certificate's validation record, with TTL 300. The observed TTLs of `NS` and
-  `SOA` were 172800 and 900.
+For the pre-cutover checks or the registrar, read them from the zone's delegation set:
+
+```
+aws route53 get-hosted-zone --profile <profile> --id "$zone_id" \
+  --query 'DelegationSet.NameServers' --output text
+```
+
+**Expected:** the four `<route53-ns>` values. Keep them out of shared records.
 
 **PASS when.**
 
-- [ ] Every expected value above holds.
+- [ ] Every **Expected** value in steps 1, 3 and 4 holds.
 
 **STOP if.**
 
@@ -478,8 +535,7 @@ retirement.
 - Any record type or count other than those above.
 
 **If it fails.** This runbook has no corrective procedure for a zone that differs. Work stays
-stopped until a reviewed decision is taken under explicit approval
-([When to stop](README.md#when-to-stop)).
+stopped ([When to stop](README.md#when-to-stop)).
 
 **Evidence to keep.** The result of each expected value, never the zone ID or the name servers.
 
@@ -510,62 +566,68 @@ domain is delegated to. [Verify delegation](#verify-delegation) and
 [Roll back the delegation](#roll-back-the-delegation) reuse these commands.
 
 Here and in [Verify delegation](#verify-delegation), a parent server **refers to Route 53** when
-its referral names any of the four assigned `<route53-ns>`. Name servers of any other Route 53
-hosted zone, such as an earlier zone for `<apex>` in another account, do not count: if the parent
-refers to those, they are the `<previous-ns>` set, and that zone is the one to export before the
-change. A zone that no longer exists cannot be exported, which stops the change
-([Change the name servers at the registrar](#change-the-name-servers-at-the-registrar)). For this
-root's own zone deleted outside Terraform, see [Build the zone on its own](#build-the-zone-on-its-own).
+its referral names any of the four assigned `<route53-ns>`.
 
 **Before you start.**
 
 - [ ] [Read back the hosted zone](#read-back-the-hosted-zone) passed, and its step 5 supplied the
   four `<route53-ns>` values.
 - [ ] The cutover campaign's evidence set opened ([Conventions](#conventions)); it runs to the
-  [Verify delegation](#verify-delegation) round that passes. Then return to step 1 here.
+  [Verify delegation](#verify-delegation) round that passes.
 
 **Safety and authority.** Read-only; no approval needed.
 
-**Steps.**
+#### Step 1 — Find the parent's authoritative servers
 
-1. Find the parent's authoritative servers. Each `NS` answer is a `<parent-server>`:
+```
+dig +time=5 +tries=2 <parent> NS
+```
 
-   ```
-   dig +time=5 +tries=2 <parent> NS
-   ```
+**Expected:** the `NS` answers; each is a `<parent-server>`.
 
-2. At each `<parent-server>`, read the referral and check for a DS record:
+#### Step 2 — Read the referral and check for a DS record at each parent server
 
-   ```
-   dig +norecurse +time=5 +tries=2 @<parent-server> <apex> NS
-   dig +norecurse +time=5 +tries=2 @<parent-server> <apex> DS
-   ```
+```
+dig +norecurse +time=5 +tries=2 @<parent-server> <apex> NS
+dig +norecurse +time=5 +tries=2 @<parent-server> <apex> DS
+```
 
-   The referral is in the AUTHORITY section, not the ANSWER section, so do not use `+short`
-   here. Note the referral's TTL: it is the parent's NS TTL, which the rollback and retirement
-   waits depend on.
+The referral is in the AUTHORITY section, not the ANSWER section, so do not use `+short` here.
+Note the referral's TTL: it is the parent's NS TTL, which the rollback and retirement waits depend
+on.
 
-3. At each `<route53-ns>`, confirm the zone is served:
+**Expected:** every parent server refers to the same `<previous-ns>` set and none refers to Route
+53 yet, and the parent's NS TTL is noted. The DS query returns `NOERROR` with no answer.
 
-   ```
-   dig +norecurse +time=5 +tries=2 @<route53-ns> <apex> SOA
-   dig +norecurse +time=5 +tries=2 @<route53-ns> <apex> NS
-   ```
+Name servers of any other Route 53 hosted zone, such as an earlier zone for `<apex>` in another
+account, do not count as Route 53 here: if the parent refers to those, they are the
+`<previous-ns>` set, and that zone is the one to export before the change. A zone that no longer
+exists cannot be exported, which stops the change
+([Change the name servers at the registrar](#change-the-name-servers-at-the-registrar)). For this
+root's own zone deleted outside Terraform, see [Build the zone on its own](#build-the-zone-on-its-own).
 
-4. At the public resolvers 1.1.1.1 and 8.8.8.8, read what clients currently see:
+#### Step 3 — Confirm each Route 53 server serves the zone
 
-   ```
-   dig +time=5 +tries=2 @<resolver> <apex> NS
-   dig +time=5 +tries=2 @<resolver> <apex> DS
-   ```
+At each `<route53-ns>`:
 
-**Expected result.**
+```
+dig +norecurse +time=5 +tries=2 @<route53-ns> <apex> SOA
+dig +norecurse +time=5 +tries=2 @<route53-ns> <apex> NS
+```
 
-- Step 2: every parent server refers to the same `<previous-ns>` set and none refers to Route
-  53 yet. The DS query returns `NOERROR` with no answer.
-- Step 3: every Route 53 server answers `NOERROR` with the `aa` flag, all four report the same
-  SOA serial, and the NS answer is exactly the four assigned name servers.
-- Step 4: both resolvers return the `<previous-ns>` set and no DS record.
+**Expected:** every Route 53 server answers `NOERROR` with the `aa` flag, all four report the same
+SOA serial, and the NS answer is exactly the four assigned name servers.
+
+#### Step 4 — Read what clients see now
+
+At the public resolvers 1.1.1.1 and 8.8.8.8:
+
+```
+dig +time=5 +tries=2 @<resolver> <apex> NS
+dig +time=5 +tries=2 @<resolver> <apex> DS
+```
+
+**Expected:** both resolvers return the `<previous-ns>` set and no DS record.
 
 **PASS when.**
 
@@ -641,29 +703,30 @@ so the steps are registrar-neutral. The outcome is proven separately, on public 
 whoever holds registrar access carries it out. No AWS cost; registrar charges sit outside the AWS
 budget.
 
-**Steps.**
+#### Step 1 — Replace the name-server set
 
-1. At the registrar, replace the domain's complete name-server set with exactly the four assigned
-   name servers.
+At the registrar, replace the domain's complete name-server set with exactly the four assigned
+name servers.
 
-   > **Warning:** Once Route 53 answers, every record in the export that was not migrated stops
-   > resolving. The rollback, [Roll back the delegation](#roll-back-the-delegation), is designed
-   > and has never been executed, and it depends on the export and the previous name-server set.
+> **Warning:** Once Route 53 answers, every record in the export that was not migrated stops
+> resolving. The rollback, [Roll back the delegation](#roll-back-the-delegation), is designed
+> and has never been executed, and it depends on the export and the previous name-server set.
 
-2. Change nothing else: no DNSSEC setting, no record, no contact or lock setting.
+**Expected:** the registrar accepts a change of the name servers only, with exactly the four
+assigned values.
 
-   > **Warning:** If the registrar asks to change DNSSEC or anything besides the name servers,
-   > STOP.
+#### Step 2 — Change nothing else
 
-3. Record the UTC time of the change.
-4. Start [Verify delegation](#verify-delegation).
+No DNSSEC setting, no record, no contact or lock setting.
 
-**Expected result.** The registry's RDAP record lists the new name servers before the parent
-servers return them. Measured on
-2026-09-23, from the RDAP `last changed` time: the one RDAP read, about 12 minutes after it,
-already listed the four new name servers while the parent servers still returned the previous
-set. The parent servers returned the previous set at four checks up to about 23 minutes after the
-change, and the new set at the check 31 minutes after it.
+> **Warning:** If the registrar asks to change DNSSEC or anything besides the name servers,
+> STOP.
+
+#### Step 3 — Record the UTC time of the change
+
+#### Step 4 — Start Verify delegation
+
+Go to [Verify delegation](#verify-delegation).
 
 **PASS when.**
 
@@ -674,8 +737,8 @@ change, and the new set at the check 31 minutes after it.
 **STOP if.**
 
 - Before the change: any record in the export must keep resolving, or the lock status shows an
-  update lock. No procedure in this runbook resolves either; work stays stopped until a reviewed
-  decision is taken under explicit approval ([When to stop](README.md#when-to-stop)).
+  update lock. No procedure in this runbook resolves either; work stays stopped
+  ([When to stop](README.md#when-to-stop)).
 - Before the change: the lock status is not known. Do not make the change until it is.
 - Before the change: no export of the zone the previous provider serves, or no record of the
   previous name-server set. The rollback depends on both.
@@ -704,6 +767,11 @@ and stay private, outside the set ([Conventions](#conventions)).
 | Authority | Explicit owner approval of the registrar change, carried out by whoever holds registrar access |
 | Cost | None in AWS. Registrar charges sit outside the AWS budget ([ADR-0013](../decisions/0013-define-operations-and-cost-guardrails.md)) |
 
+- The registry's RDAP record lists the new name servers before the parent servers return them.
+  Measured on 2026-09-23, from the RDAP `last changed` time: the one RDAP read, about 12
+  minutes after it, already listed the four new name servers while the parent servers still
+  returned the previous set. The parent servers returned the previous set at four checks up to
+  about 23 minutes after the change, and the new set at the check 31 minutes after it.
 - In the validated run the export was taken at the registrar on 2026-09-23 and retained
   privately. It is a registrar-side action, outside the AWS labels.
 - The root's `public_zone_name_servers` output carries the same values as step 5 of
@@ -728,73 +796,78 @@ apply.
 
 **Safety and authority.** Read-only; no approval needed.
 
-**Steps.**
+#### Step 1 — Repeat the NS and SOA queries of the pre-cutover checks
 
-1. Run the NS and SOA queries of steps 1 to 4 of [Pre-cutover checks](#pre-cutover-checks)
-   again, without the two DS queries:
-   - the `<parent>` NS query:
+Run the NS and SOA queries of steps 1 to 4 of [Pre-cutover checks](#pre-cutover-checks) again,
+without the two DS queries.
 
-     ```
-     dig +time=5 +tries=2 <parent> NS
-     ```
+The `<parent>` NS query:
 
-   - the NS query at each `<parent-server>`; the referral is in the AUTHORITY section, so do not
-     use `+short`:
+```
+dig +time=5 +tries=2 <parent> NS
+```
 
-     ```
-     dig +norecurse +time=5 +tries=2 @<parent-server> <apex> NS
-     ```
+The NS query at each `<parent-server>`. The referral is in the AUTHORITY section, so do not use
+`+short`:
 
-   - the SOA and NS queries at each `<route53-ns>`:
+```
+dig +norecurse +time=5 +tries=2 @<parent-server> <apex> NS
+```
 
-     ```
-     dig +norecurse +time=5 +tries=2 @<route53-ns> <apex> SOA
-     dig +norecurse +time=5 +tries=2 @<route53-ns> <apex> NS
-     ```
+The SOA and NS queries at each `<route53-ns>`:
 
-   - the NS query at 1.1.1.1 and 8.8.8.8:
+```
+dig +norecurse +time=5 +tries=2 @<route53-ns> <apex> SOA
+dig +norecurse +time=5 +tries=2 @<route53-ns> <apex> NS
+```
 
-     ```
-     dig +time=5 +tries=2 @<resolver> <apex> NS
-     ```
+The NS query at 1.1.1.1 and 8.8.8.8:
 
-2. Optionally, read the registry's RDAP record. `<rdap-base>` is the base URL that IANA's RDAP
-   bootstrap file for DNS, `https://data.iana.org/rdap/dns.json`, lists for `<tld>`, with its
-   trailing `/` removed.
+```
+dig +time=5 +tries=2 @<resolver> <apex> NS
+```
 
-   ```
-   curl -q -s --max-time 20 <rdap-base>/domain/<apex>
-   ```
+**Expected:** every Route 53 server still answers with `aa`, one SOA serial and the four-server NS
+set, and 1.1.1.1 and 8.8.8.8 return the Route 53 set. A resolver still returning the previous set
+means propagation is in progress, until the parent's NS TTL has passed since the change; after
+that it is a STOP and a rollback trigger (step 4).
 
-   Read `nameservers`, `status`, `secureDNS.delegationSigned` and the `last changed` event.
+#### Step 2 — Optionally, read the registry's RDAP record
 
-3. Classify each parent server's referral:
+`<rdap-base>` is the base URL that IANA's RDAP bootstrap file for DNS,
+`https://data.iana.org/rdap/dns.json`, lists for `<tld>`, with its trailing `/` removed.
 
-   | Class | Referral | Action |
-   |---|---|---|
-   | OLD | the `<previous-ns>` set | Wait and repeat |
-   | NEW | exactly the four Route 53 name servers | Pass for that server |
-   | MIXED | some of each | STOP |
-   | WRONG | anything else, including an incomplete set | STOP |
+```
+curl -q -s --max-time 20 <rdap-base>/domain/<apex>
+```
 
-4. If the parent's NS TTL has passed since the recorded change time, also run the resolver query
-   at 1.1.1.1, 8.8.8.8 and 9.9.9.9. This is the resolver trigger of
-   [Roll back the delegation](#roll-back-the-delegation); 9.9.9.9 is checked only for that
-   trigger and is not a pass criterion.
+Read `nameservers`, `status`, `secureDNS.delegationSigned` and the `last changed` event.
 
-   ```
-   dig +time=5 +tries=2 @<resolver> <apex> NS
-   ```
+**Expected:** RDAP lists the four name servers and `delegationSigned` false.
 
-**Expected result.** Pass when every parent server is NEW, every Route 53 server still answers
-with `aa`, one SOA serial and the four-server NS set, and 1.1.1.1 and 8.8.8.8 return the Route
-53 set. A resolver still returning the previous set means propagation is in progress, until the
-parent's NS TTL has passed since the change; after that it is a STOP and a rollback trigger
-(step 4). RDAP lists the four name servers and `delegationSigned` false.
+#### Step 3 — Classify each parent server's referral
 
-Measured on 2026-09-23: every parent server was NEW 31 minutes after the change, and 1.1.1.1
-and 8.8.8.8 returned the Route 53 set when checked 55 minutes after it, with cached NS TTLs of
-172800 s and 21600 s. The final check, immediately before the certificate apply, also passed.
+| Class | Referral | Action |
+|---|---|---|
+| OLD | the `<previous-ns>` set | Wait and repeat |
+| NEW | exactly the four Route 53 name servers | Pass for that server |
+| MIXED | some of each | STOP |
+| WRONG | anything else, including an incomplete set | STOP |
+
+**Expected:** every parent server is NEW.
+
+#### Step 4 — After the parent's NS TTL, check the resolvers for the rollback trigger
+
+If the parent's NS TTL has passed since the recorded change time, also run the resolver query at
+1.1.1.1, 8.8.8.8 and 9.9.9.9. This is the resolver trigger of
+[Roll back the delegation](#roll-back-the-delegation); 9.9.9.9 is checked only for that trigger
+and is not a pass criterion.
+
+```
+dig +time=5 +tries=2 @<resolver> <apex> NS
+```
+
+**Expected:** each resolver returns the Route 53 set.
 
 **PASS when.**
 
@@ -848,6 +921,10 @@ immediately before its apply.
 | Authority | None (read-only) |
 | Cost | None beyond negligible Route 53 query charges |
 
+Measured on 2026-09-23: every parent server was NEW 31 minutes after the change, and 1.1.1.1
+and 8.8.8.8 returned the Route 53 set when checked 55 minutes after it, with cached NS TTLs of
+172800 s and 21600 s. The final check, immediately before the certificate apply, also passed.
+
 Step 4 carries the resolver trigger of [Roll back the delegation](#roll-back-the-delegation) into
 this procedure. Its 9.9.9.9 query never ran after the parent returned the new set (see below).
 
@@ -878,11 +955,9 @@ completes its DNS validation once the zone is delegated. The plan covers the who
 `-target`, and adds the certificate, its validation record in the zone and Terraform's validation
 step.
 
-**Before you start.**
+**Before you start.** Run the steps in the profile shell, in `terraform/foundation`.
 
-- [ ] [Verify delegation](#verify-delegation) passes at step 3, immediately before the apply. The
-  reviewed design also required it to pass before the plan; the validated run planned first (see
-  the Engineering notes).
+- [ ] [Verify delegation](#verify-delegation) is run at step 3, immediately before the apply.
 - [ ] The [CAA check](#caa-check) passes for `<apex>`, after [Verify delegation](#verify-delegation)
   has passed: no CAA record at `<apex>` or its parent stops Amazon's certificate authority. It
   was never exercised as a step.
@@ -891,13 +966,12 @@ step.
   plan, and step 2 stops (see [Reproducibility gaps](#reproducibility-gaps)).
 - [ ] Steps 1 to 5 of the terraform-operations.md Normal path done for `terraform/foundation` at
   the reviewed commit, each with its **PASS when** met, as the checklist of
-  [Build the zone on its own](#build-the-zone-on-its-own) states them. Then return to this list.
-- [ ] The campaign's evidence set opened ([Conventions](#conventions)). Then return to this list.
+  [Build the zone on its own](#build-the-zone-on-its-own) states them.
+- [ ] The campaign's evidence set opened ([Conventions](#conventions)).
 - [ ] The session outlasts Terraform's validation step, which can wait up to the AWS provider's
   default create timeout of 75 minutes. Set `<required-minutes>` to at least those 75 minutes,
   plus the step 5 read-backs and convergence plan, plus a margin. This runbook publishes no
-  measured duration for step 5, and no margin rule exists. The check runs at step 4; only a
-  re-read expiry decides, so signing in again is not a substitute.
+  measured duration for step 5, and no margin rule exists.
 - [ ] The owner available to approve the apply: explicit written approval of the reviewed saved
   plan, identified by its sha256, given after the plan review and the shape check of step 2 and
   before step 4.
@@ -906,84 +980,105 @@ step.
 saved plan. The certificate is non-exportable and carries no charge; the zone's charge is
 unchanged.
 
-**Steps.**
+#### Step 1 — Plan the whole root, review the plan, and bind it
 
-1. From the reviewed commit, produce a saved plan of the whole root, without `-target`.
-   `-lock=false` is used because step 4 runs the binding check immediately before the apply: a
-   saved plan made with `-lock=false` is applied only after that check passes.
+- **Plan.** From the reviewed commit, produce a saved plan of the whole root, without `-target`:
 
-   ```
-   AWS_PROFILE=<profile> terraform plan -lock=false -input=false -no-color -detailed-exitcode -out=<plan-file>
-   echo $?
-   ```
+  ```
+  AWS_PROFILE=<profile> terraform plan -lock=false -input=false -no-color -detailed-exitcode -out=<plan-file>
+  echo $?
+  ```
 
-   Exit 2 means the plan has changes; exit 1, or exit 0 when a change is expected, is a STOP, as
-   in Plan to a saved file. Review the plan with
-   [Review the saved plan](terraform-operations.md#review-the-saved-plan), steps 1 to 5, against
-   the shape in step 2 below (PASS: its step 2 shows `applyable` and `complete` `true`, `errored`
-   `false` and the validated version; its step 3 lists exactly the three creates; every step 4
-   line has a written cause on a `no-op` address; its step 5 shows only `public_certificate_arn`
-   created), then return here and run steps 1 and 2 of
-   [Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state):
-   they record the plan's sha256 and the state serial and lineage it was made from, and confirm
-   the plan carries the reviewed configuration and lock file. PASS: its step 2 prints `same` for
-   every file and for the lock file, and its `diff` prints nothing. Then continue at step 2.
+  `-lock=false` is used because step 4 runs the binding check immediately before the apply: a
+  saved plan made with `-lock=false` is applied only after that check passes. Exit 2 means the
+  plan has changes; exit 1, or exit 0 when a change is expected, is a STOP, as in
+  [Plan to a saved file](terraform-operations.md#plan-to-a-saved-file).
+- **Review.** Review the plan with
+  [Review the saved plan](terraform-operations.md#review-the-saved-plan), steps 1 to 5, against
+  the shape in step 2 below. PASS: its step 2 shows `applyable` and `complete` `true`, `errored`
+  `false` and the validated version; its step 3 lists exactly the three creates listed in step 2;
+  every step 4 line has a written cause on a `no-op` address; its step 5 shows only
+  `public_certificate_arn` created.
+- **Bind.** Run steps 1 and 2 of
+  [Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state):
+  they record the plan's sha256 and the state serial and lineage it was made from, and confirm
+  the plan carries the reviewed configuration and lock file. PASS: its step 2 prints `same` for
+  every file and for the lock file, and its `diff` prints nothing. Then continue at step 2.
 
-2. Check the plan against this shape, which assumes the rest of the foundation is already
-   applied, as it was in the validated run:
-   - exactly three to add: `aws_acm_certificate.public`,
-     `aws_route53_record.certificate_validation` and `aws_acm_certificate_validation.public`;
-     0 to change and 0 to destroy; every other address, `aws_route53_zone.public` included, is a
-     no-op;
-   - the certificate's domain is `<apex>`, and its subject alternative names are exactly
-     `<apex>` and `*.<apex>`, because ACM lists the apex among them;
-   - validation method `DNS`, export `DISABLED`, and the six mandatory tags in `tags_all` with
-     `Component` set to `dns`;
-   - the validation record goes into this zone with TTL 300; its name and value are known only
-     after apply;
-   - the output `public_certificate_arn` is created.
+**Expected:** exit 2, the review PASS and the binding PASS above.
 
-   Read these attributes and tags in the plan text that step 1 of Review the saved plan prints
-   (`terraform show -no-color <plan-file>`). The validated run checked the shape with a private
-   checker, which is not published (see the Engineering notes).
+#### Step 2 — Check the plan against the reviewed shape
 
-   > **Warning:** On a build from nothing, this full plan also adds the rest of the foundation.
-   > That combined plan has never run, and the three-address shape above does not describe it.
-   > That is a STOP: no reviewed shape exists for it.
+The shape assumes the rest of the foundation is already applied, as it was in the validated run:
 
-3. Immediately before the apply, run [Verify delegation](#verify-delegation) again. It must pass
-   in full, as in the validated run: every parent server NEW, every Route 53 server
-   authoritative, and 1.1.1.1 and 8.8.8.8 returning the Route 53 set.
+- exactly three to add: `aws_acm_certificate.public`,
+  `aws_route53_record.certificate_validation` and `aws_acm_certificate_validation.public`;
+  0 to change and 0 to destroy; every other address, `aws_route53_zone.public` included, is a
+  no-op;
+- the certificate's domain is `<apex>`, and its subject alternative names are exactly
+  `<apex>` and `*.<apex>`, because ACM lists the apex among them;
+- validation method `DNS`, export `DISABLED`, and the six mandatory tags in `tags_all` with
+  `Component` set to `dns`;
+- the validation record goes into this zone with TTL 300; its name and value are known only
+  after apply;
+- the output `public_certificate_arn` is created.
 
-   > **Warning:** Never apply the certificate before [Verify delegation](#verify-delegation)
-   > passes.
+Read these attributes and tags in the plan text that step 1 of Review the saved plan prints
+(`terraform show -no-color <plan-file>`). The validated run checked the shape with a private
+checker, which is not published (see the Engineering notes).
 
-4. Run [Check session headroom before long operations](operator-access.md#check-session-headroom-before-long-operations)
-   with `<required-minutes>`, in the shell that will run the apply. Go on only if it exits 0; if
-   not, follow its failure handling. Then run step 3 of
-   [Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state)
-   (its steps 1 and 2 ran in step 1 here). Go on only if the hash equals the recorded one and the
-   serial and lineage equal the plan's. Then apply exactly that plan, without re-planning: steps 1
-   and 2 of [Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan)
-   (PASS: exit 0 and 3 added, 0 changed, 0 destroyed). Step 5 here is its read-back, so skip its
-   step 3. After the apply, continue at step 5 here, not at the apply procedure's Next step.
+> **Warning:** On a build from nothing, this full plan also adds the rest of the foundation.
+> That combined plan has never run, and the three-address shape above does not describe it.
+> That is a STOP: no reviewed shape exists for it.
 
-   > **Warning:** Apply only with the owner's explicit written approval of this saved plan,
-   > identified by its sha256.
+**Expected:** the plan matches every line of the shape.
+**If not:** STOP. The plan is not approved (see **If it fails**).
 
-   > **Warning:** A validation step that does not complete is a failed apply. Stop and inspect,
-   > and apply nothing further, from this plan or a new one.
+#### Step 3 — Verify delegation again, immediately before the apply
 
-5. Run [Read back the certificate](#read-back-the-certificate) and
-   [Read back the hosted zone](#read-back-the-hosted-zone), then the convergence plan in
-   [Confirm convergence](terraform-operations.md#confirm-convergence), step 1, which must exit 0
-   with `No changes. Your infrastructure matches the configuration.` Then return here, sweep and
-   seal the certificate campaign's set ([Conventions](#conventions)), and check the **PASS when**
-   list below.
+Run [Verify delegation](#verify-delegation) again.
 
-**Expected result.** 3 added, 0 changed, 0 destroyed. In the validated run the certificate was
-issued during the apply, less than a minute after it started, and the convergence plan then
-reported no changes.
+**Expected:** Verify delegation passes in full, as in the validated run: every parent server NEW,
+every Route 53 server authoritative, and 1.1.1.1 and 8.8.8.8 returning the Route 53 set.
+**If not:** STOP; do not apply (see **STOP if**).
+
+> **Warning:** Never apply the certificate before [Verify delegation](#verify-delegation)
+> passes.
+
+#### Step 4 — Check headroom, bind the plan to state, then apply
+
+In the shell that will run the apply:
+
+- Run [Check session headroom before long operations](operator-access.md#check-session-headroom-before-long-operations)
+  with `<required-minutes>`. Go on only if it exits 0; if not, follow its failure handling. Only
+  the expiry that check re-reads decides, so signing in again is not a substitute.
+- Run step 3 of
+  [Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state)
+  (its steps 1 and 2 ran in step 1 here). Go on only if the hash equals the recorded one and the
+  serial and lineage equal the plan's.
+- Apply exactly that plan, without re-planning: steps 1 and 2 of
+  [Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan)
+  (PASS: exit 0 and 3 added, 0 changed, 0 destroyed). Step 5 here is its read-back, so skip its
+  step 3. After the apply, continue at step 5 here, not at the apply procedure's Next step.
+
+> **Warning:** Apply only with the owner's explicit written approval of this saved plan,
+> identified by its sha256.
+
+> **Warning:** A validation step that does not complete is a failed apply. Stop and inspect,
+> and apply nothing further, from this plan or a new one.
+
+**Expected:** 3 added, 0 changed, 0 destroyed.
+
+#### Step 5 — Read back the certificate and the zone, then confirm convergence
+
+Run [Read back the certificate](#read-back-the-certificate) and
+[Read back the hosted zone](#read-back-the-hosted-zone), then the convergence plan in
+[Confirm convergence](terraform-operations.md#confirm-convergence), step 1. Then return here,
+sweep and seal the certificate campaign's set ([Conventions](#conventions)), and check the
+**PASS when** list below.
+
+**Expected:** both read-backs pass, and the convergence plan exits 0 with
+`No changes. Your infrastructure matches the configuration.`
 
 **PASS when.**
 
@@ -1011,9 +1106,8 @@ reported no changes.
   ([Review the saved plan](terraform-operations.md#review-the-saved-plan)). A binding mismatch
   follows
   [Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state).
-- The combined plan of a build from nothing has no published route. Work stays stopped until a
-  reviewed decision is taken under explicit approval ([When to stop](README.md#when-to-stop)).
-  Meanwhile the zone keeps billing and the domain stays delegated to it.
+- The combined plan of a build from nothing has no published route. Work stays stopped
+  ([When to stop](README.md#when-to-stop)). Meanwhile the zone keeps billing and the domain stays delegated to it.
 - A validation step that does not complete is a failed apply. Follow the stop-and-inspect
   procedure for a failed or interrupted apply in
   [Stop after a failed or interrupted apply](terraform-operations.md#stop-after-a-failed-or-interrupted-apply):
@@ -1049,7 +1143,9 @@ that showed the new set, about two minutes after the plan finished. The delegati
 between plan and apply. Design-review reasoning, not measurement: the plan does not depend on
 delegation; the apply's validation step does.
 
-Headroom was not recorded for the validated certificate apply.
+In the validated run the certificate was issued during the apply, less than a minute after it
+started, and the convergence plan then reported no changes. Headroom was not recorded for the
+validated certificate apply.
 
 **Known limitations.**
 
@@ -1067,82 +1163,80 @@ Headroom was not recorded for the validated certificate apply.
 
 **What this does.** It confirms that the issued certificate matches what this root declares.
 
-**Before you start.**
+**Before you start.** Run the steps in the profile shell, in `terraform/foundation`.
 
-- [ ] A session with the identity and account checks passed, as
-  [Before you start](#before-you-start) states them. `terraform output` reads only state and the
-  AWS CLI calls are outside Terraform, so nothing else checks the account. Then return to this
-  list.
+- [ ] The identity and account checks passed, as [Before you start](#before-you-start) states
+  them. `terraform output` reads only state and the AWS CLI calls are outside Terraform, so
+  nothing else checks the account.
 - [ ] `terraform/foundation` initialized against its backend. When
   [Plan and apply the certificate](#plan-and-apply-the-certificate) sent you here, this is already
   done. Otherwise run
   [Initialize a root against the state backend](terraform-operations.md#initialize-a-root-against-the-state-backend),
   steps 1 to 3 (PASS: `git check-ignore` lists `backend.hcl` and `terraform.tfvars`, `init`
   reports the backend configured and Terraform initialized, and `git status` prints nothing).
-  Then return to step 1 here.
 
 **Safety and authority.** Read-only; no approval needed. The ARN stays in a shell variable and is
 never written down.
 
-**Steps.**
+#### Step 1 — Hold the certificate ARN in a variable
 
-1. Hold the certificate ARN in a variable:
+```
+cert_arn=$(AWS_PROFILE=<profile> terraform output -raw public_certificate_arn)
+```
 
-   ```
-   cert_arn=$(AWS_PROFILE=<profile> terraform output -raw public_certificate_arn)
-   ```
+#### Step 2 — Read the certificate and its tags
 
-2. Read the certificate and its tags:
+```
+aws acm describe-certificate --profile <profile> --region us-east-1 --certificate-arn "$cert_arn" \
+  --query 'Certificate.{Status:Status,Type:Type,Domain:DomainName,SANs:SubjectAlternativeNames,Validation:DomainValidationOptions[].[DomainName,ValidationMethod,ValidationStatus,ResourceRecord.Name,ResourceRecord.Value],Export:Options.Export,Key:KeyAlgorithm,InUseBy:length(InUseBy || `[]`),Renewal:RenewalEligibility,NotAfter:NotAfter}'
+aws acm list-tags-for-certificate --profile <profile> --region us-east-1 \
+  --certificate-arn "$cert_arn" --query 'Tags[].[Key,Value]' --output text
+```
 
-   ```
-   aws acm describe-certificate --profile <profile> --region us-east-1 --certificate-arn "$cert_arn" \
-     --query 'Certificate.{Status:Status,Type:Type,Domain:DomainName,SANs:SubjectAlternativeNames,Validation:DomainValidationOptions[].[DomainName,ValidationMethod,ValidationStatus,ResourceRecord.Name,ResourceRecord.Value],Export:Options.Export,Key:KeyAlgorithm,InUseBy:length(InUseBy || `[]`),Renewal:RenewalEligibility,NotAfter:NotAfter}'
-   aws acm list-tags-for-certificate --profile <profile> --region us-east-1 \
-     --certificate-arn "$cert_arn" --query 'Tags[].[Key,Value]' --output text
-   ```
-
-3. List the zone's record sets with steps 2 and 4 of
-   [Read back the hosted zone](#read-back-the-hosted-zone); step 2 sets `$zone_id`.
-
-**Expected result.** These are the checks the validated read-back asserted:
+**Expected** (asserted checks):
 
 - `Status` is `ISSUED` and `Type` is `AMAZON_ISSUED`;
 - `Domain` is `<apex>`, and `SANs` are exactly `<apex>` and `*.<apex>`;
 - both names show `DNS` and `SUCCESS` and share one validation record;
 - `Export` is `DISABLED`;
-- the six mandatory tags, with `Component` set to `dns`;
-- the zone holds `NS`, `SOA` and exactly one `CNAME`, and that `CNAME` is the validation record,
-  with the same name and value and TTL 300.
+- the six mandatory tags, with `Component` set to `dns`.
 
 Observed on 2026-09-23 but not asserted: key `RSA-2048`, `InUseBy` 0 and `Renewal`
 `INELIGIBLE`. The last two describe a certificate nothing uses yet, so they are not pass
 criteria.
 
+#### Step 3 — List the zone's record sets
+
+Run steps 2 and 4 of [Read back the hosted zone](#read-back-the-hosted-zone); step 2 sets
+`$zone_id`.
+
+**Expected:** also asserted: the zone holds `NS`, `SOA` and exactly one `CNAME`, and that `CNAME`
+is the validation record from step 2, with the same name and value and TTL 300.
+
 **PASS when.**
 
-- [ ] Every asserted check above holds.
+- [ ] Every asserted check in steps 2 and 3 holds.
 
 **STOP if.**
 
 - Any asserted check fails.
 
 **If it fails.** This runbook has no corrective procedure; replacing or reissuing the certificate
-is listed under [Not yet exercised](#not-yet-exercised). Work stays stopped until a reviewed
-decision is taken under explicit approval ([When to stop](README.md#when-to-stop)).
+is listed under [Not yet exercised](#not-yet-exercised). Work stays stopped
+([When to stop](README.md#when-to-stop)).
 
 **Evidence to keep.** The result of each asserted check and the observed values, never the ARN.
 
 **Next step.** If [Plan and apply the certificate](#plan-and-apply-the-certificate) sent you here,
 return to its step 5 for the rest of that step, the convergence plan included, and then its PASS
-checklist. Otherwise the normal path ends here. Nothing detects an approaching expiry; `NotAfter`
-in step 2 is the date that matters (see the Engineering notes).
+checklist. Otherwise the normal path ends here.
 
 #### Engineering notes
 
 | Field | Value |
 |---|---|
 | Validation status | AWS-VALIDATED (2026-09-23) |
-| Published form | not executed as written (the validated read-back made the same calls with full JSON output into a private checker and took the ARN from `terraform output`; the published form holds the ARN in a variable and adds `--query` projections) |
+| Published form | not executed as written (the validated read-back made the same calls with full JSON output into a private checker and took the ARN from `terraform output`, and it asserted the checks listed as asserted in steps 2 and 3; the published form holds the ARN in a variable and adds `--query` projections) |
 | Evidence basis | [Status](../../terraform/foundation/README.md#status), certificate paragraph; retained private evidence of the read-back on 2026-09-23, 12 of 12 checks passed, by a checker qualified offline against eight failing cases |
 | Authority | None (read-only) |
 | Cost | None |
@@ -1178,9 +1272,8 @@ measurement: a transfer lock does not block a name-server change, and an update 
 
 **Safety and authority.** Read-only.
 
-**Steps.** None published. `dig` cannot read registry lock status. The registry's RDAP record
-lists it, in `status`, through the query in step 2 of [Verify delegation](#verify-delegation).
-This page does not list which `status` values are update locks.
+**Steps.** None published. `dig` cannot read registry lock status. This page does not list which
+`status` values are update locks.
 
 **Expected result.** None is published; the check has never run. For reference only: the one
 RDAP read of the validated deployment, taken after the change, showed only a transfer-prohibited
@@ -1201,8 +1294,8 @@ status (see the Engineering notes).
 - The lock status is not known, or you cannot tell whether it includes an update lock.
 
 **If it fails.** No reviewed procedure exists. Do not make the registrar change until the lock
-status is known. An update lock has no published route: work stays stopped until a reviewed
-decision is taken under explicit approval ([When to stop](README.md#when-to-stop)).
+status is known. An update lock has no published route: work stays stopped
+([When to stop](README.md#when-to-stop)).
 
 **Evidence to keep.** None is specified for this never-exercised check. Raw RDAP output names the
 domain, so any copy you keep stays in the private run directory, with only its sha256 in the
@@ -1221,12 +1314,9 @@ cutover campaign's set ([Conventions](#conventions)).
 | Cost | None |
 
 **Known limitations.** No lock check ran before the validated change, and no reviewed procedure
-exists. `dig` cannot read registry lock status; the registry's RDAP record lists it, through
-the query in [Verify delegation](#verify-delegation). The one RDAP read, taken after the change
-on 2026-09-23, showed only a transfer-prohibited status. Design-review reasoning, not
-measurement: a transfer lock does not block a name-server change, an update lock would, and a
-refused change leaves the parent's referral unchanged, which
-[Verify delegation](#verify-delegation) would show.
+exists. The one RDAP read, taken after the change on 2026-09-23, showed only a transfer-prohibited
+status. Design-review reasoning, not measurement: a refused change leaves the parent's referral
+unchanged, which [Verify delegation](#verify-delegation) would show.
 
 ### CAA check
 
@@ -1275,18 +1365,14 @@ procedure for that.
 
 **Known limitations.** No CAA check ran as a step of the validated build. A read-only lookup
 during the design review on 2026-09-21 found no CAA record at the apex or at the parent. Its
-output was not retained, and the lookup was not repeated before the certificate apply. A
-reproducer whose apex or parent publishes CAA records has to confirm that they authorize
-Amazon's certificate authority before
-[Plan and apply the certificate](#plan-and-apply-the-certificate); this repository has no
-reviewed procedure for that.
+output was not retained, and the lookup was not repeated before the certificate apply.
 
 ### Roll back the delegation
 
 **Validation:** DESIGNED-NOT-EXECUTED (never) · **Published command form:** not executed as written
 
-**What this does.** It returns the delegation to the previous provider if the cutover fails. The
-Route 53 zone is kept.
+**What this does.** It returns the delegation to the previous provider if the cutover fails, and
+only after the previous name servers are shown to answer for `<apex>`. The Route 53 zone is kept.
 
 **Before you start.**
 
@@ -1304,40 +1390,64 @@ Route 53 zone is kept.
 **Safety and authority.** Mutating, owner-authorized. No AWS cost; the zone is kept and keeps its
 monthly charge.
 
-**Steps.**
+#### Step 1 — Check that each previous name server answers for the zone
 
-1. At the registrar, restore the `<previous-ns>` set, changing nothing else.
+Run step 3 of [Pre-cutover checks](#pre-cutover-checks) against each `<previous-ns>`, in place of
+`<route53-ns>`: the same `+norecurse` SOA and NS queries. If the previous provider no longer holds
+the zone's records, re-create them there from the private export first, then repeat the check.
 
-   > **Warning:** This procedure has never been executed. Steps 1 and 2 change live DNS; the
-   > owner's explicit approval of the rollback covers them.
+> **Warning:** This procedure has never been executed. Re-creating records here changes live
+> DNS; the owner's explicit approval of the rollback covers it.
 
-2. If the previous provider no longer holds the zone's records, re-create them there from the
-   private export.
-3. Keep the Route 53 zone. Retiring it is a separate step
-   ([Retire the hosted zone](#retire-the-hosted-zone)).
+**Expected:** each `<previous-ns>` answers `NOERROR` with the `aa` flag, and its NS answer is the
+`<previous-ns>` set.
 
-   > **Warning:** Do not retire the zone as part of the rollback. Design-review reasoning, not
-   > measurement: a resolver holding the Route 53 NS set keeps querying Route 53 after a rollback
-   > until its entry expires. The zone is kept until the retirement wait in
-   > [Public DNS](../../terraform/foundation/README.md#public-dns) has passed: the longer of the
-   > parent's NS TTL, noted in the [Pre-cutover checks](#pre-cutover-checks), and the zone's NS
-   > TTL of 172800 s.
+#### Step 2 — STOP unless every previous name server answers authoritatively
 
-4. Repeat step 2 of [Pre-cutover checks](#pre-cutover-checks), and step 3 against each
-   `<previous-ns>` in place of `<route53-ns>`.
+If any `<previous-ns>` does not answer authoritatively for `<apex>`, STOP and do not change the
+registrar: the delegation stays with Route 53. Work stays stopped
+([When to stop](README.md#when-to-stop)).
 
-**Expected result.** Every parent server returns the `<previous-ns>` set, and each previous name
-server answers `SOA` with the `aa` flag.
+#### Step 3 — Restore the previous name servers at the registrar
+
+At the registrar, restore the `<previous-ns>` set, changing nothing else.
+
+> **Warning:** This changes live DNS and has never been executed. The owner's explicit approval of
+> the rollback covers it. Make the change only after step 1 passed for every `<previous-ns>`.
+
+#### Step 4 — Keep the Route 53 zone
+
+Keep the Route 53 zone. Retiring it is a separate step
+([Retire the hosted zone](#retire-the-hosted-zone)).
+
+> **Warning:** Do not retire the zone as part of the rollback. Design-review reasoning, not
+> measurement: a resolver holding the Route 53 NS set keeps querying Route 53 after a rollback
+> until its entry expires. The zone is kept until the retirement wait in
+> [Public DNS](../../terraform/foundation/README.md#public-dns) has passed: the longer of the
+> parent's NS TTL, noted in the [Pre-cutover checks](#pre-cutover-checks), and the zone's NS
+> TTL of 172800 s.
+
+#### Step 5 — Verify the rollback
+
+Repeat step 2 of [Pre-cutover checks](#pre-cutover-checks), and step 3 against each
+`<previous-ns>` in place of `<route53-ns>`.
+
+**Expected:** every parent server returns the `<previous-ns>` set, and each previous name server
+answers `SOA` with the `aa` flag.
 
 **PASS when.**
 
 - [ ] Every parent server returns the `<previous-ns>` set.
 - [ ] Each previous name server answers `SOA` with the `aa` flag.
 
-**STOP if.** None are published for the rollback itself; it has never run.
+**STOP if.**
 
-**If it fails.** No further procedure exists. Work stays stopped until a reviewed decision is taken
-under explicit approval ([When to stop](README.md#when-to-stop)).
+- At step 2, any previous name server does not answer authoritatively for `<apex>`. Do not change
+  the registrar; the delegation stays with Route 53.
+
+**If it fails.** If the step 5 check fails, or step 3 cannot be completed, no further procedure
+exists. Work stays stopped until a reviewed decision is taken under explicit approval
+([When to stop](README.md#when-to-stop)).
 
 **Evidence to keep.** None is specified for this never-executed procedure. Registrar screenshots
 and exports carry the domain and stay private.
@@ -1352,7 +1462,7 @@ retired, and only after the retirement wait: the longer of the parent's NS TTL, 
 | Field | Value |
 |---|---|
 | Validation status | DESIGNED-NOT-EXECUTED (never) |
-| Published form | not executed as written (a registrar-neutral form of the rollback reviewed before the cutover) |
+| Published form | not executed as written (a registrar-neutral form of the rollback reviewed before the cutover; this form adds the authoritative check of each previous name server before the registrar change, and its STOP, which have not been run) |
 | Evidence basis | None. The design review is private, and no rollback trigger occurred during the validated cutover |
 | Authority | Explicit owner approval of the rollback |
 | Cost | None in AWS. The zone is kept and keeps its monthly charge |
@@ -1393,25 +1503,31 @@ designed, and no command sheet exists.
 > certificate's retirement, which comes first, has no mechanism (see
 > [Not yet exercised](#not-yet-exercised)).
 
-**Steps.** These are the reviewed checks before any destroy:
+These are the reviewed checks before any destroy. No destroy step is published: it is not
+designed (see the Engineering notes).
 
-1. Step 2 of [Pre-cutover checks](#pre-cutover-checks): no parent server lists a Route 53 name
-   server.
-2. Step 4 of [Pre-cutover checks](#pre-cutover-checks) at 1.1.1.1, 8.8.8.8 and 9.9.9.9: none
-   returns the Route 53 set.
-3. Steps 2 and 4 of [Read back the hosted zone](#read-back-the-hosted-zone): no record remains
-   other than `NS`, `SOA` and the certificate's validation record.
+#### Step 1 — Check the parent
 
-   > **Warning:** Route 53 deletes a zone only when its `NS` and `SOA` records alone remain
-   > ([Public DNS](../../terraform/foundation/README.md#public-dns)), so the validation record has
-   > to go first. Reviewed design, not measurement: the validation record depends on both the
-   > certificate and the zone, so Terraform removes it before either.
+Step 2 of [Pre-cutover checks](#pre-cutover-checks).
 
-No destroy step is published: it is not designed (see the Engineering notes).
+**Expected:** no parent server lists a Route 53 name server.
 
-**Expected result.** No parent server lists a Route 53 name server; none of 1.1.1.1, 8.8.8.8 and
-9.9.9.9 returns the Route 53 set; and the zone holds only `NS`, `SOA` and the certificate's
-validation record.
+#### Step 2 — Check the resolvers
+
+Step 4 of [Pre-cutover checks](#pre-cutover-checks) at 1.1.1.1, 8.8.8.8 and 9.9.9.9.
+
+**Expected:** none returns the Route 53 set.
+
+#### Step 3 — Check the zone's records
+
+Steps 2 and 4 of [Read back the hosted zone](#read-back-the-hosted-zone).
+
+**Expected:** no record remains other than `NS`, `SOA` and the certificate's validation record.
+
+> **Warning:** Route 53 deletes a zone only when its `NS` and `SOA` records alone remain
+> ([Public DNS](../../terraform/foundation/README.md#public-dns)), so the validation record has
+> to go first. Reviewed design, not measurement: the validation record depends on both the
+> certificate and the zone, so Terraform removes it before either.
 
 **PASS when.**
 
@@ -1445,8 +1561,6 @@ validation record.
   removes it, and neither is written or reviewed.
 - The certificate's retirement, which comes first, has no mechanism either (see
   [Not yet exercised](#not-yet-exercised)).
-- The orphan and cost checks that close a decommission follow
-  [cost-and-residue.md](cost-and-residue.md).
 
 ## Not yet exercised
 

@@ -21,20 +21,21 @@ with their counts are in
 [Lifecycle and current state](../../terraform/dev/README.md#lifecycle-and-current-state). This
 runbook adds the measured address lists and the procedures around them.
 
-Covered elsewhere, and linked from the steps that need it:
+## When to use this runbook
 
-- [Runtime Validation](../validation/runtime-validation.md): a summary of the runtime windows that
-  ran, meaning runtime creation, targeted teardown and the post-teardown census. Runtime windows
-  are outside this suite, and no runtime creation or teardown procedure is published in it.
-- [terraform-operations.md](terraform-operations.md): the workflow every root shares, meaning
-  static checks, backend initialisation, saved plans, their review and binding, applies, locks,
-  drift detection and reconciliation, and interrupted applies.
-- [dev-datastore.md](dev-datastore.md) and its [README](../../terraform/dev-datastore/README.md):
-  the datastore root.
-- [cost-and-residue.md](cost-and-residue.md): the budget, pricing re-checks, the orphan census
-  and the weekly cost review.
-- [evidence-handling.md](evidence-handling.md): capturing and keeping evidence.
-- [operator-access.md](operator-access.md): sign-in and the account check.
+| If you need to | Go to |
+|---|---|
+| Check, before anything is built, that the two hard-coded zones suit EKS, the node type and the datastore engine | [Check the zone mapping before the first build](#check-the-zone-mapping-before-the-first-build) |
+| Build the network and the identity, secret and configuration resources, with no runtime | [Build only the retained baseline](#build-only-the-retained-baseline) |
+| Check an existing state: exactly the retained set in state, exactly the runtime set in a plan | [Confirm the retained and runtime split](#confirm-the-retained-and-runtime-split) |
+| Check the network in AWS, not in state | [Read back the retained network](#read-back-the-retained-network) |
+| Check the two Secrets Manager entries without reading a value | [Read back the two Secrets Manager entries](#read-back-the-two-secrets-manager-entries) |
+| Check the VPC once the datastore root is built | [Verify the retained side with the datastore present](#verify-the-retained-side-with-the-datastore-present) |
+
+Topics covered in other runbooks are listed at the end of [Before you start](#before-you-start).
+
+If another procedure, on this page or in another runbook, sent you to a procedure here, return to
+the step that sent you when it ends. Otherwise, follow its **Next step**.
 
 > **Warning: a plain `terraform apply` in `terraform/dev` creates billable runtime.** It creates
 > the runtime as well as the retained baseline: the EKS control plane, the NAT gateway with its
@@ -49,15 +50,12 @@ Covered elsewhere, and linked from the steps that need it:
 > VPC and subnets that the datastore's resources occupy. No reviewed command-level decommission
 > procedure exists ([Not yet exercised](#not-yet-exercised)).
 
-> **Warning: the Dev datastore sits inside this network.** The datastore root finds the Dev VPC
-> and the two private subnets by their `Name` tags, never through this root's state; its
-> security group admits TCP 5432 from the two private subnet ranges; and its subnet group,
-> security group and instance network interface sit inside this VPC. Renaming or re-addressing
-> those resources therefore changes or breaks the datastore root's plan, and the datastore root
+> **Warning: the Dev datastore sits inside this network.** Renaming or re-addressing the Dev VPC
+> or its two private subnets changes or breaks the datastore root's plan, and the datastore root
 > is destroyed before this network
-> ([datastore Decommission](../../terraform/dev-datastore/README.md#decommission)). While a
-> runtime window is open, every node and pod in the private subnets can reach the datastore on
-> TCP 5432 ([datastore Boundary](../../terraform/dev-datastore/README.md#boundary)).
+> ([datastore Decommission](../../terraform/dev-datastore/README.md#decommission)). How the
+> datastore uses this network is under
+> [Verify the retained side with the datastore present](#verify-the-retained-side-with-the-datastore-present).
 
 ## Normal path
 
@@ -78,47 +76,46 @@ Covered elsewhere, and linked from the steps that need it:
    Read-only. Tells the datastore's footprint in this VPC apart from runtime residue, and repeats
    the network read-back as its last step.
 
-Steps 3 and 4 are the last step of the build, so a first build runs them from inside step 2.
+Normal path steps 3 and 4 are step 6 of Build only the retained baseline, so a first build runs
+them from inside Normal path step 2.
 
-To find where to start, initialize the root: steps 1 to 3 of
-[Initialize a root against the state backend](terraform-operations.md#initialize-a-root-against-the-state-backend),
-with `<root>` set to `dev` (PASS: `git check-ignore` lists `backend.hcl` and `terraform.tfvars`,
-`init` reports the backend configured and Terraform initialized, and `git status` prints
-nothing). Then list state with step 1 of
-[Inspect state without writing it](terraform-operations.md#inspect-state-without-writing-it) and
-return here. If it lists nothing, start at step 1. If it lists addresses, skip steps 1 and 2 and
-start at step 3, which checks the listing against the 21 retained addresses. A build that stopped
-between its two stages leaves the 14 network addresses alone; no procedure resumes it, and step 3
-stops on it. So run both stages of step 2 in one sitting.
+**Where to start.** With every item of [Before you start](#before-you-start) in place:
+
+- Initialize the root: steps 1 to 3 of
+  [Initialize a root against the state backend](terraform-operations.md#initialize-a-root-against-the-state-backend),
+  with `<root>` set to `dev`. PASS: `git check-ignore` lists `backend.hcl` and
+  `terraform.tfvars`, `init` reports the backend configured and Terraform initialized, and
+  `git status` prints nothing.
+- List state with step 1 of
+  [Inspect state without writing it](terraform-operations.md#inspect-state-without-writing-it),
+  then return here. Choose your entry from the listing:
+  - Nothing: start at Normal path step 1.
+  - Only the 14 network addresses: a build stopped between its two stages. No procedure
+    resumes it. STOP and keep the listing ([When to stop](README.md#when-to-stop)).
+  - Anything else: start at Normal path step 3, which checks the listing against the 21
+    retained addresses.
+
+Run both stages of Normal path step 2 in one sitting.
 
 ## Before you start
 
 - [ ] **Account and access.** A dedicated AWS account, its 12-digit ID for `allowed_account_id`,
   and an Identity Center profile for it on the `AdministratorAccess` permission set, set up at
   step 1 of the runbook index's Build order.
-- [ ] **Shell.** This page's steps run in a **profile shell**, from the directories in the table
-  **Where each step runs** below: a shell with `AWS_PROFILE=<profile>` and `AWS_REGION=us-east-1`
-  exported, where `<profile>` is the `AdministratorAccess` profile. The account check confirms
-  that the shell is on the project account: run steps 1 and 2 of
+- [ ] **Shell.** Run this page's steps in a **profile shell**: a shell with
+  `AWS_PROFILE=<profile>` and `AWS_REGION=us-east-1` exported, where `<profile>` is the
+  `AdministratorAccess` profile. Run them from the directories in **Where each step runs** below.
+  The account check confirms that the shell is on the project account: run steps 1 and 2 of
   [Check the account before AWS commands](operator-access.md#check-the-account-before-aws-commands)
   in it, with `<root-tfvars>` set to the dev root's `<inputs-dir>/terraform.tfvars`, and continue
-  only on `ACCOUNT_MATCH=PASS`; then return to this list. Its AWS CLI commands therefore name no
-  profile: this page is an exception to the rule in
-  [operator-access.md](operator-access.md#before-you-start) that no command relies on an
-  inherited `AWS_PROFILE`. Commands taken from [dev-datastore.md](dev-datastore.md), such as
-  step 4 of the zone check, keep their `--profile <profile>`, which names the same profile.
+  only on `ACCOUNT_MATCH=PASS`; then return to this list.
 - [ ] **Exported shell.** The budget read and the price re-check that the build requires run in
   an exported shell: a clean shell that holds one role credential and no profile. When
   [Build only the retained baseline](#build-only-the-retained-baseline) calls for them, prepare it
   with steps 1 to 4 of [Export role credentials once](operator-access.md#export-role-credentials-once)
   (PASS: `ACCOUNT_MATCH=PASS` with no HOLD line, and the headroom line with exit 0). Then return
   to that procedure's **Before you start** and run the two reads in the shell, as step 5 of the
-  export procedure; exit the shell afterwards, as its step 6. No published rule requires one for
-  this page's own steps. If you run one of them in an exported shell, as
-  [terraform-operations.md](terraform-operations.md) does for a long or sensitive operation, leave
-  `AWS_PROFILE` unset there, drop `AWS_PROFILE=<profile>` from the Terraform commands and
-  `--profile <profile>` from any command that carries it, and define the target arrays and
-  `VPC_ID` inside it.
+  export procedure; exit the shell afterwards, as its step 6.
 - [ ] **State backend.** The name of the state bucket the bootstrap root created, in an untracked
   `backend.hcl`.
 - [ ] **Root inputs.** An untracked `terraform.tfvars` with `allowed_account_id` and
@@ -152,9 +149,40 @@ stops on it. So run both stages of step 2 in one sitting.
 | Terraform: initialize, list state, plan, review, bind and apply, as in [terraform-operations.md](terraform-operations.md) | Profile shell. The commands keep their `AWS_PROFILE=<profile>` prefix, which names the same profile. The build's target arrays are defined in this same shell | `<work-dir>/terraform/dev`, the working tree that [Initialize a root against the state backend](terraform-operations.md#initialize-a-root-against-the-state-backend) creates, except where a step there names another directory |
 | AWS CLI: the zone check, the read-backs and the check with the datastore present | Profile shell. `VPC_ID` stays set only in the shell that resolved it | Any: these commands read no local file |
 
-`<inputs-dir>`, `<work-dir>`, `<private-dir>`, `<plan-file>` and `<plan-json>` are as defined in
-[terraform-operations.md](terraform-operations.md). Dates are UTC. No command here reads a secret
-value.
+Because the profile shell exports the profile, this page's AWS CLI commands name no profile: this
+page is an exception to the rule in [operator-access.md](operator-access.md#before-you-start) that
+no command relies on an inherited `AWS_PROFILE`. Commands taken from
+[dev-datastore.md](dev-datastore.md), such as step 4 of the zone check, keep their
+`--profile <profile>`, which names the same profile.
+
+No published rule requires an exported shell for this page's own steps. If you run one of them in
+an exported shell, as [terraform-operations.md](terraform-operations.md) does for a long or
+sensitive operation, leave `AWS_PROFILE` unset there, drop `AWS_PROFILE=<profile>` from the
+Terraform commands and `--profile <profile>` from any command that carries it, and define the
+target arrays and `VPC_ID` inside it.
+
+**Values you set.**
+
+| Placeholder | Meaning |
+|---|---|
+| `<profile>` | The Identity Center profile on the `AdministratorAccess` permission set (**Account and access** above) |
+| `<root-tfvars>` | For the account check: the dev root's `<inputs-dir>/terraform.tfvars`; an absolute path in the exported shell |
+| `<zone-id-a>`, `<zone-id-b>` | The two zone IDs that step 1 of the zone check prints |
+| `<inputs-dir>`, `<work-dir>`, `<private-dir>`, `<plan-file>`, `<plan-json>` | As defined in [terraform-operations.md](terraform-operations.md). Saved plans, plan JSON, plan text and read-back output go in `<private-dir>` (**Private working location** above) |
+| `<commit>`, `<main-commit>`, `<required-minutes>` | As the procedure that uses them defines: [Run the static checks](terraform-operations.md#run-the-static-checks) and [Check session headroom before long operations](operator-access.md#check-session-headroom-before-long-operations) |
+
+Dates are UTC. No command here reads a secret value.
+
+**Covered elsewhere.** These are linked from the steps that need them.
+
+| Topic | Go to |
+|---|---|
+| A summary of the runtime windows that ran: runtime creation, targeted teardown and the post-teardown census. Runtime windows are outside this suite, and no runtime creation or teardown procedure is published in it | [Runtime Validation](../validation/runtime-validation.md) |
+| The workflow every root shares: static checks, backend initialisation, saved plans, their review and binding, applies, locks, drift detection and reconciliation, and interrupted applies | [terraform-operations.md](terraform-operations.md) |
+| The datastore root | [dev-datastore.md](dev-datastore.md) and its [README](../../terraform/dev-datastore/README.md) |
+| The budget, pricing re-checks, the orphan census and the weekly cost review | [cost-and-residue.md](cost-and-residue.md) |
+| Capturing and keeping evidence | [evidence-handling.md](evidence-handling.md) |
+| Sign-in and the account check | [operator-access.md](operator-access.md) |
 
 ## Procedures
 
@@ -165,52 +193,63 @@ value.
 **What this does.** [`networking.tf`](../../terraform/dev/networking.tf) hard-codes the zone
 names `us-east-1a` and `us-east-1b`. A zone name maps to a physical zone per account, so the same
 names can land in different physical zones in your account. EKS, the node instance type and the
-datastore engine all have to be available in the zones you actually get.
-
-This check maps the two names to zone IDs and tests all three before the first build. The
-datastore reuses the two private subnets, so the zones chosen here are its zones too.
+datastore engine all have to be available in the zones you actually get. This check maps the two
+names to zone IDs and tests all three before the first build. The datastore reuses the two
+private subnets, so the zones chosen here are its zones too.
 
 **Before you start.**
 
-- [ ] A session on the project account, confirmed with the account check as the **Shell** item of
-  [Before you start](#before-you-start) describes; continue only on `ACCOUNT_MATCH=PASS`, then
-  return to this list.
+- [ ] A session on the project account: the account check has passed (`ACCOUNT_MATCH=PASS`), as
+  the **Shell** item of [Before you start](#before-you-start) describes.
 - [ ] The network has not been built yet. After the first apply, a zone change replaces subnets
   (see [Not yet exercised](#not-yet-exercised)).
 
 **Safety and authority.** Read-only. No approval and no cost.
 
-**Steps.**
+#### Step 1 — Map the two zone names to zone IDs
 
-1. Map the two names to zone IDs:
+```
+aws ec2 describe-availability-zones --zone-names us-east-1a us-east-1b \
+  --query 'AvailabilityZones[].{name:ZoneName,zoneId:ZoneId,state:State}' --output table
+```
 
-   ```
-   aws ec2 describe-availability-zones --zone-names us-east-1a us-east-1b \
-     --query 'AvailabilityZones[].{name:ZoneName,zoneId:ZoneId,state:State}' --output table
-   ```
+**Expected:** two rows, both `available`.
+**If not:** STOP; see **If it fails**.
 
-2. Check both zone IDs against the current Amazon EKS documentation on zone IDs that cannot
-   hold cluster subnets. AWS maintains that list; this step has no command.
-3. Check that the node instance type is offered in both zone IDs. Put the two zone IDs from
-   step 1 in place of `<zone-id-a>` and `<zone-id-b>`:
+#### Step 2 — Check the zone IDs against the EKS documentation
 
-   ```
-   aws ec2 describe-instance-type-offerings --location-type availability-zone-id \
-     --filters Name=instance-type,Values=m6a.large Name=location,Values=<zone-id-a>,<zone-id-b> \
-     --query 'sort(InstanceTypeOfferings[].Location)' --output text
-   ```
+Check both zone IDs against the current Amazon EKS documentation on zone IDs that cannot hold
+cluster subnets. AWS maintains that list; this step has no command.
 
-4. Check that the datastore engine can be ordered in both zone names. The command names the
-   profile this shell already exports; inside an exported shell, drop `--profile <profile>`:
+**Expected:** neither zone ID is excluded.
+**If not:** STOP; see **If it fails**.
 
-   ```
-   aws rds describe-orderable-db-instance-options --profile <profile> --region us-east-1 \
-     --engine postgres --engine-version 17.11 --db-instance-class db.t4g.micro \
-     --query 'OrderableDBInstanceOptions[?StorageType==`"gp3"`].AvailabilityZones[].Name'
-   ```
+#### Step 3 — Check the node instance type in both zone IDs
 
-**Expected result.** Two rows in step 1, both `available`; neither zone ID is excluded by the
-EKS documentation; step 3 prints both zone IDs; step 4 lists both zone names.
+Put the two zone IDs from step 1 in place of `<zone-id-a>` and `<zone-id-b>`:
+
+```
+aws ec2 describe-instance-type-offerings --location-type availability-zone-id \
+  --filters Name=instance-type,Values=m6a.large Name=location,Values=<zone-id-a>,<zone-id-b> \
+  --query 'sort(InstanceTypeOfferings[].Location)' --output text
+```
+
+**Expected:** both zone IDs printed.
+**If not:** STOP; see **If it fails**.
+
+#### Step 4 — Check the datastore engine in both zone names
+
+The command names the profile this shell already exports; inside an exported shell, drop
+`--profile <profile>`:
+
+```
+aws rds describe-orderable-db-instance-options --profile <profile> --region us-east-1 \
+  --engine postgres --engine-version 17.11 --db-instance-class db.t4g.micro \
+  --query 'OrderableDBInstanceOptions[?StorageType==`"gp3"`].AvailabilityZones[].Name'
+```
+
+**Expected:** both zone names listed.
+**If not:** STOP; see **If it fails**.
 
 **PASS when.**
 
@@ -236,8 +275,7 @@ your build. This path has never been exercised.
 **Evidence to keep.** The name-to-ID mapping. Later read-backs compare the subnets' zone IDs
 against it.
 
-**Next step.** If another runbook sent you here, return to the step that sent you.
-[Build only the retained baseline](#build-only-the-retained-baseline).
+**Next step.** [Build only the retained baseline](#build-only-the-retained-baseline).
 
 #### Engineering notes
 
@@ -261,37 +299,32 @@ belong to the datastore apply.
 that builds only them, so the build is two reviewed, targeted stages: the network (14
 addresses), then the identity, secret and configuration resources (7). Each stage's plan passes
 every address of that stage with `-target`, and must contain exactly one `create` for each
-target. The order repeats how the set was first created and keeps each saved plan to one class;
-neither stage depends on the other.
+target. Both Secrets Manager entries are created empty.
 
 Each stage uses a **saved plan**: a plan written to a file, reviewed, bound to its hash and to
 the state it was made from, approved, and then applied exactly as reviewed
-([terraform-operations.md](terraform-operations.md)). Both Secrets Manager entries are created
-empty.
+([terraform-operations.md](terraform-operations.md)).
 
-**Before you start.**
+**Before you start.** Where an item sends you to another procedure, run it, then return to this
+list.
 
 - [ ] The bootstrap root has created the state bucket. Nothing runs here:
   [Build the state backend and migrate into it](terraform-operations.md#build-the-state-backend-and-migrate-into-it)
   runs once per project, at step 3 of the runbook index's Build order (PASS: state lists exactly
   the five bootstrap resources, and Confirm convergence returns 0). If it has not passed, run it
-  first, then return to this list.
+  first.
 - [ ] The root passes [Run the static checks](terraform-operations.md#run-the-static-checks),
   steps 1 to 3, on `terraform/dev` at `<commit>`; for a first build, `<main-commit>` is that same
   commit. PASS: `fmt`, `validate`, `tflint` and every `trivy config` exit 0, `git status` prints
-  nothing, and `diff` prints no line beginning `>`. Then return to this list.
+  nothing, and `diff` prints no line beginning `>`.
 - [ ] The root is
   [initialized against the backend](terraform-operations.md#initialize-a-root-against-the-state-backend),
   steps 1 to 3 with `<root>` set to `dev`, at the reviewed commit. PASS: `git check-ignore` lists
   `backend.hcl` and `terraform.tfvars`, `init` reports the backend configured and Terraform
-  initialized, and `git status` prints nothing. Then return to this list.
+  initialized, and `git status` prints nothing.
 - [ ] No state exists yet under `dev/terraform.tfstate`: run step 1 of
   [Inspect state without writing it](terraform-operations.md#inspect-state-without-writing-it)
-  (PASS: it lists nothing, the expected set for a root never applied), then return to this list.
-  This build is therefore the root's first apply: if the binding check's state read in step 4
-  prints nothing, the network stage stops before its apply, and no published procedure resolves
-  that ([Bind the saved plan](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state),
-  **If it fails**). For an existing state, use
+  (PASS: it lists nothing, the expected set for a root never applied). For an existing state, use
   [Confirm the retained and runtime split](#confirm-the-retained-and-runtime-split) instead.
 - [ ] [Check the zone mapping before the first build](#check-the-zone-mapping-before-the-first-build)
   has passed.
@@ -306,26 +339,19 @@ empty.
   follow its **Next step**); then
   [Re-check prices before billable work](cost-and-residue.md#re-check-prices-before-billable-work),
   steps 1 to 3, with only the `price AWSSecretsManager` line of step 2 (PASS: its values equal
-  the price table, 0.40 USD per secret-month for the secret). Then exit that shell and return to
-  this list.
-- [ ] The campaign's evidence set opened before step 2: steps 1 and 2 of
+  the price table, 0.40 USD per secret-month for the secret). Then exit that shell.
+- [ ] The whole build, both stages and the step 6 checks, is one evidence campaign, closed after
+  step 6. Open its evidence set before step 2: steps 1 and 2 of
   [Capture a campaign evidence set](evidence-handling.md#capture-a-campaign-evidence-set) (PASS: one
-  campaign directory under the evidence root, mode 0700), with your own redaction filter. The whole
-  build, both stages and the step 6 checks, is one campaign, closed after step 6. Then return to
-  this list.
+  campaign directory under the evidence root, mode 0700), with your own redaction filter.
 - [ ] Inputs: `backend.hcl`; `terraform.tfvars` with `allowed_account_id` and `operator_cidr` and
   the alerting inputs unset; a new `<private-dir>` for each stage's plan.
 - [ ] Time to run both stages in one sitting: the approver available for both saved plans, and a
   session that outlasts both applies
   ([Check session headroom before long operations](operator-access.md#check-session-headroom-before-long-operations)).
-  This runbook states no minimum session time and publishes no measured duration for either
-  stage, and neither has run with these target lists. Set `<required-minutes>` as step 1 of
-  that procedure describes; no margin rule has been established.
-  A build that stops after the network stage leaves state with the 14 network addresses alone; no
-  procedure resumes it, and
-  [Confirm the retained and runtime split](#confirm-the-retained-and-runtime-split) stops on it.
-  Run steps 1 to 3 of the headroom check (PASS: the headroom line, exit 0), then return to this
-  list.
+  Set `<required-minutes>` as step 1 of that procedure describes; no margin rule has been
+  established. Then run steps 1 to 3 of the headroom check (PASS: the headroom line, exit 0). A
+  build stopped between its stages cannot be resumed ([Normal path](#normal-path)).
 
 **Safety and authority.** Mutating, billable, owner-authorized. The account owner explicitly
 approves each reviewed saved plan before it is applied. The two Secrets Manager entries cost about
@@ -335,124 +361,137 @@ approves each reviewed saved plan before it is applied. The two Secrets Manager 
 > the whole root, and applying it creates the billable runtime (see the warning at the top of
 > this page).
 
-**Steps.**
+#### Step 1 — Define the two target lists
 
-1. Define the two target lists. An array keeps every target in the command; a broken line
-   continuation once dropped the targets from a plan of this root (Engineering notes).
+An array keeps every target in the command; a broken line continuation once dropped the targets
+from a plan of this root (Engineering notes).
 
-   ```
-   network_targets=(
-     -target=aws_vpc.dev
-     -target=aws_subnet.private_a -target=aws_subnet.private_b
-     -target=aws_subnet.public_a -target=aws_subnet.public_b
-     -target=aws_internet_gateway.dev
-     -target=aws_route_table.public -target=aws_route.public_default
-     -target=aws_route_table.private
-     -target=aws_route_table_association.public_a -target=aws_route_table_association.public_b
-     -target=aws_route_table_association.private_a -target=aws_route_table_association.private_b
-     -target=aws_vpc_endpoint.s3
-   )
-   identity_targets=(
-     -target=aws_secretsmanager_secret.workload
-     -target=aws_secretsmanager_secret.argocd_gitops_deploy_key
-     -target=aws_ssm_parameter.workload
-     -target=aws_iam_role.workload -target=aws_iam_role_policy.workload
-     -target=aws_iam_role.external_secrets -target=aws_iam_role_policy.external_secrets
-   )
-   ```
+```
+network_targets=(
+  -target=aws_vpc.dev
+  -target=aws_subnet.private_a -target=aws_subnet.private_b
+  -target=aws_subnet.public_a -target=aws_subnet.public_b
+  -target=aws_internet_gateway.dev
+  -target=aws_route_table.public -target=aws_route.public_default
+  -target=aws_route_table.private
+  -target=aws_route_table_association.public_a -target=aws_route_table_association.public_b
+  -target=aws_route_table_association.private_a -target=aws_route_table_association.private_b
+  -target=aws_vpc_endpoint.s3
+)
+identity_targets=(
+  -target=aws_secretsmanager_secret.workload
+  -target=aws_secretsmanager_secret.argocd_gitops_deploy_key
+  -target=aws_ssm_parameter.workload
+  -target=aws_iam_role.workload -target=aws_iam_role_policy.workload
+  -target=aws_iam_role.external_secrets -target=aws_iam_role_policy.external_secrets
+)
+```
 
-   The arrays exist only in the shell that defined them. Define them again in any new shell, an
-   exported shell included: an undefined array expands to nothing, and the plan then covers the
-   whole root.
+> **Warning:** The arrays exist only in the shell that defined them. Define them again in any new
+> shell, an exported shell included: an undefined array expands to nothing, and the plan then
+> covers the whole root.
 
-2. Record the reviewed list first, as the campaign record's **Expected** field: one `create` line
-   for each network target. Then plan the network stage with step 1 of
-   [Plan to a saved file](terraform-operations.md#plan-to-a-saved-file), once every item of its
-   **Before you start** holds, debug logging off included, with `"${network_targets[@]}"`
-   appended on the same line:
+#### Step 2 — Plan the network stage
 
-   ```
-   AWS_PROFILE=<profile> terraform plan -lock=false -input=false -no-color -detailed-exitcode -out=<plan-file> "${network_targets[@]}"
-   echo $?
-   ```
+Record the reviewed list first, as the campaign record's **Expected** field: one `create` line
+for each network target. Then plan with step 1 of
+[Plan to a saved file](terraform-operations.md#plan-to-a-saved-file), once every item of its
+**Before you start** holds, debug logging off included, with `"${network_targets[@]}"` appended
+on the same line:
 
-   > **Warning:** Go on only if the plan output contains the summary line
-   > `Plan: 14 to add, 0 to change, 0 to destroy.` and Terraform's warning that resource
-   > targeting is in effect.
+```
+AWS_PROFILE=<profile> terraform plan -lock=false -input=false -no-color -detailed-exitcode -out=<plan-file> "${network_targets[@]}"
+echo $?
+```
 
-   PASS: exit 2 and the saved plan at `<plan-file>`. Then continue at step 3.
+> **Warning:** Go on only if the plan output contains the summary line
+> `Plan: 14 to add, 0 to change, 0 to destroy.` and Terraform's warning that resource
+> targeting is in effect.
 
-3. Run steps 1 to 5 of [Review the saved plan](terraform-operations.md#review-the-saved-plan)
-   against the reviewed list from step 2. Then confirm that the alerting inputs are off. This
-   prints two booleans and no input value:
+**Expected:** exit 2, the saved plan at `<plan-file>`, and both lines the warning names.
+**If not:** do not go on; see **STOP if**.
 
-   ```
-   jq -r '.variables | "alerting_campaign_enabled=\(.alerting_campaign_enabled.value) alerting_email_subscription_enabled=\(.alerting_email_subscription_enabled.value)"' <plan-json>
-   ```
+#### Step 3 — Review the network plan and check the alerting inputs
 
-   This targeted plan shows `complete` as `false`. That is expected here, and it is the one
-   exception to the review's criteria; every other criterion applies. PASS: `applyable` `true`
-   and `errored` `false` on the validated Terraform version, exactly the 14 network `create`
-   lines, no drift line and no output change, and both alerting variables `false`. Then continue
-   at step 4.
+Run steps 1 to 5 of [Review the saved plan](terraform-operations.md#review-the-saved-plan)
+against the reviewed list from step 2. Then confirm that the alerting inputs are off. This
+prints two booleans and no input value:
 
-4. Run steps 1 and 2 of
-   [Bind the plan](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state) now, have
-   the plan approved, and run its step 3 immediately before the apply. PASS: `same` for every
-   file and the lock file with no `diff` output, and in step 3 the recorded hash and the plan's
-   serial and lineage; on the network stage, the root's first apply, steps 1 and 3 both show
-   serial 0 and no lineage. Then apply exactly that plan with steps 1 and 2 of
-   [Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan). Its
-   **Before you start** is already met by this procedure's **Before you start** and steps 2 to 4,
-   and its step 3, the read-back, is step 6 here.
+```
+jq -r '.variables | "alerting_campaign_enabled=\(.alerting_campaign_enabled.value) alerting_email_subscription_enabled=\(.alerting_email_subscription_enabled.value)"' <plan-json>
+```
 
-   After this apply, the check is the state listing in step 2 of that procedure: exactly the 14
-   network addresses. Do not go on to its next step, Confirm convergence: while no runtime exists,
-   an untargeted plan here shows the runtime still to add and exits 2. Do not run
-   [Confirm the retained and runtime split](#confirm-the-retained-and-runtime-split) yet either:
-   it expects all 21 addresses and stops on the 14. Step 6 runs it and the read-backs after both
-   stages. Continue at step 5.
-5. Plan the identity, secret and configuration stage the same way, with
-   `"${identity_targets[@]}"` appended, in a new `<private-dir>` with its own `<plan-file>`:
+**Expected:** `applyable` `true`, `errored` `false` and `complete` `false` on the validated
+Terraform version (Terraform marks a targeted plan incomplete; this is the one exception to the
+review's criteria, and every other criterion applies); the action list is exactly 14 `create`
+lines, one for each network target; the drift list and the output changes are empty; the
+alerting check prints `alerting_campaign_enabled=false alerting_email_subscription_enabled=false`.
+**If not:** do not go on; see **STOP if**.
 
-   ```
-   AWS_PROFILE=<profile> terraform plan -lock=false -input=false -no-color -detailed-exitcode -out=<plan-file> "${identity_targets[@]}"
-   echo $?
-   ```
+#### Step 4 — Bind, approve and apply the network plan
 
-   > **Warning:** Go on only if the plan output contains the summary line
-   > `Plan: 7 to add, 0 to change, 0 to destroy.` and Terraform's warning that resource targeting
-   > is in effect.
+**Bind and approve.** Run steps 1 and 2 of
+[Bind the saved plan](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state) now,
+have the plan approved, and run its step 3 immediately before the apply.
 
-   Then review it with the same checks, bind it, have it approved and apply it, as in steps 3
-   and 4. After this apply, too, do not run Confirm convergence; continue at step 6, where
-   Confirm the retained and runtime split is the check for the whole build.
-6. Run [Confirm the retained and runtime split](#confirm-the-retained-and-runtime-split),
-   [Read back the retained network](#read-back-the-retained-network) and
-   [Read back the two Secrets Manager entries](#read-back-the-two-secrets-manager-entries). Then
-   close the campaign: steps 4 to 7 of the [Normal path](evidence-handling.md#normal-path) of
-   evidence-handling.md (PASS: every manifest entry reports `OK`, the set holds no file the
-   manifest does not list, and the manifest's full SHA-256 is in the private record outside the
-   set). Then return here for **Expected result** and the **Next step**; the export steps that
-   follow in that path run only around a teardown.
+**Expected:** `same` for every file and the lock file with no `diff` output, and in step 3 the
+recorded hash and the plan's serial and lineage. On the network stage, the root's first apply,
+steps 1 and 3 both show serial 0 and no lineage.
+**If not:** do not apply; see **If it fails** in
+[Bind the saved plan](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state). A
+state read that prints nothing or `STATE READ FAILED OR EMPTY` is a STOP here (see **STOP if**).
 
-**Expected result.**
+**Apply.** Apply exactly that plan with steps 1 and 2 of
+[Apply the reviewed saved plan](terraform-operations.md#apply-the-reviewed-saved-plan). Its
+**Before you start** is already met by this procedure's **Before you start** and steps 2 to 4,
+and its step 3, the read-back, is step 6 here.
 
-- Step 2 exits 2 and the plan text contains the summary line
-  `Plan: 14 to add, 0 to change, 0 to destroy.`, with Terraform's warning that resource targeting
-  is in effect.
-- Step 3: the action list is exactly 14 `create` lines, one for each network target; the drift
-  list and the output changes are empty; the alerting check prints
-  `alerting_campaign_enabled=false alerting_email_subscription_enabled=false`. `applyable` is
-  `true` and `errored` is `false`, but `complete` is `false`: Terraform marks a targeted plan
-  incomplete, as the retained targeted plans of this root show on Terraform 1.15.5. That is the
-  one expected difference from the review's criteria.
-- Step 5: `Plan: 7 to add, 0 to change, 0 to destroy.`, with seven `create` lines and the same
-  checks.
-- Each apply reports the same counts as its plan.
-- After the network apply, the state listing taken in step 4 holds exactly the 14 network
-  addresses. After the second apply, state holds the 21 that
-  [Confirm the retained and runtime split](#confirm-the-retained-and-runtime-split) lists.
+**Expected:** the apply reports the same counts as its plan, and the state listing in step 2 of
+that procedure holds exactly the 14 network addresses.
+**If not:** STOP; see **STOP if** and **If it fails**. An apply that errors or is interrupted
+goes to **Failed or interrupted apply** there.
+
+> **Warning:** Do not go on to that procedure's next step, Confirm convergence: while no runtime
+> exists, an untargeted plan here shows the runtime still to add and exits 2. Do not run
+> [Confirm the retained and runtime split](#confirm-the-retained-and-runtime-split) yet either:
+> it expects all 21 addresses and stops on the 14. Step 6 runs it and the read-backs after both
+> stages. Continue at step 5.
+
+#### Step 5 — Plan, review, bind and apply the identity stage
+
+Plan the identity, secret and configuration stage the same way, with `"${identity_targets[@]}"`
+appended, in a new `<private-dir>` with its own `<plan-file>`:
+
+```
+AWS_PROFILE=<profile> terraform plan -lock=false -input=false -no-color -detailed-exitcode -out=<plan-file> "${identity_targets[@]}"
+echo $?
+```
+
+> **Warning:** Go on only if the plan output contains the summary line
+> `Plan: 7 to add, 0 to change, 0 to destroy.` and Terraform's warning that resource targeting
+> is in effect.
+
+Then review it with the same checks, bind it, have it approved and apply it, as in steps 3
+and 4. After this apply, too, do not run Confirm convergence; continue at step 6, where
+Confirm the retained and runtime split is the check for the whole build.
+
+**Expected:** both lines the warning above names, seven `create` lines and the same checks as
+step 3; the apply reports the same counts as its plan; state then holds the 21 that
+[Confirm the retained and runtime split](#confirm-the-retained-and-runtime-split) lists.
+**If not:** STOP; see **STOP if** and **If it fails**.
+
+#### Step 6 — Verify the build and close the campaign
+
+Run [Confirm the retained and runtime split](#confirm-the-retained-and-runtime-split),
+[Read back the retained network](#read-back-the-retained-network) and
+[Read back the two Secrets Manager entries](#read-back-the-two-secrets-manager-entries). Then
+close the campaign: steps 4 to 7 of the [Normal path](evidence-handling.md#normal-path) of
+evidence-handling.md. Then return here for **PASS when** and the **Next step**; the export steps
+that follow in that path run only around a teardown.
+
+**Expected:** the three procedures pass; in the campaign close, every manifest entry reports
+`OK`, the set holds no file the manifest does not list, and the manifest's full SHA-256 is in the
+private record outside the set.
 
 **PASS when.**
 
@@ -473,9 +512,9 @@ approves each reviewed saved plan before it is applied. The two Secrets Manager 
   **If it fails**, not by going to
   [Handle a held state lock](terraform-operations.md#handle-a-held-state-lock) first.
 - An apply that errors or is interrupted.
-- The binding check's state read prints nothing before the first stage's apply. On a root never
-  applied, what that read prints has not been recorded, so an empty result is a mismatch no
-  published procedure resolves ([Bind the saved plan](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state)).
+- The binding check's state read prints nothing or `STATE READ FAILED OR EMPTY` before the first
+  stage's apply. On a root never applied, what that read prints has not been recorded, so either
+  result is a mismatch no published procedure resolves ([Bind the saved plan](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state)).
 
 **If it fails.**
 
@@ -528,6 +567,12 @@ values are needed before a runtime window uses them.
 | Authority | Explicit approval of each reviewed saved plan by the account owner before it is applied |
 | Cost | About 0.80 USD a month for the two Secrets Manager entries (0.40 USD per secret-month, the us-east-1 list price last read from the AWS Price List on 2026-09-24), prorated from creation. The network, the parameter and the IAM resources carry no charge |
 
+The stage order repeats how the set was first created and keeps each saved plan to one class;
+neither stage depends on the other.
+
+The retained targeted plans of this root show `complete` as `false` on Terraform 1.15.5, the
+expected difference from the review's criteria in step 3.
+
 The broken line continuation that step 1 guards against is recorded under **Known limitations**
 in [Stop after a failed or interrupted apply](terraform-operations.md#stop-after-a-failed-or-interrupted-apply).
 
@@ -535,7 +580,8 @@ in [Stop after a failed or interrupted apply](terraform-operations.md#stop-after
 
 - Both Secrets Manager entries are created empty, and placing their values has no public
   procedure (see [Background prerequisites](#background-prerequisites)).
-- Neither stage has run with these target lists. The network stage has never run against a
+- Neither stage has run with these target lists, and this runbook states no minimum session time
+  and publishes no measured duration for either stage. The network stage has never run against a
   root that declares the runtime. The identity resources were created by three smaller targeted
   applies against such a root, and those are EXECUTED — RECORDED ONLY; RETAINED EXECUTION
   EVIDENCE NOT AVAILABLE (2026-08-12 to 2026-08-17).
@@ -559,7 +605,7 @@ from AWS. It lists state, then makes an ordinary saved plan without targets that
 When state already exists, start here instead of building.
 
 The **runtime set** is 17 addresses: 10 created only when `worker_capacity_enabled` is true, and
-7 created by every apply that is not targeted. The expected result lists both.
+7 created by every apply that is not targeted. The table under step 3 lists both.
 
 **Before you start.**
 
@@ -569,10 +615,9 @@ The **runtime set** is 17 addresses: 10 created only when `worker_capacity_enabl
   `worker_capacity_enabled` unset or `true`, its default. Arriving from step 6 of
   [Build only the retained baseline](#build-only-the-retained-baseline), it already is. Then
   return to this list.
-- [ ] The account is confirmed first with the account check, as the **Shell** item of
-  [Before you start](#before-you-start) describes; continue only on `ACCOUNT_MATCH=PASS`, then
-  return to this list. `terraform state list` reads only the backend, so the provider's account
-  check does not guard it.
+- [ ] The account check has passed first (`ACCOUNT_MATCH=PASS`), as the **Shell** item of
+  [Before you start](#before-you-start) describes. `terraform state list` reads only the backend,
+  so the provider's account check does not guard it.
 
 **Safety and authority.** Read-only. The plan writes no state and is never applied. No approval
 and no cost.
@@ -581,49 +626,44 @@ and no cost.
 > runtime addresses below, the billable runtime. A saved plan applies without a confirmation
 > prompt.
 
-**Steps.**
+#### Step 1 — List state
 
-1. List state:
+```
+terraform state list
+```
 
-   ```
-   terraform state list
-   ```
-
-2. Plan with step 1 of
-   [Plan to a saved file](terraform-operations.md#plan-to-a-saved-file), in a new `<private-dir>`,
-   without targets, following the rule of Plan without taking the state lock for plans that are
-   only read: leave out `-lock=false` unless no other writer can be active on the root. This plan
-   is never applied. Name `<plan-file>` so that it cannot be mistaken for a plan to apply, for
-   example `<private-dir>/never-apply.tfplan`.
-
-   ```
-   AWS_PROFILE=<profile> terraform plan -lock=false -input=false -no-color -detailed-exitcode -out=<plan-file>
-   echo $?
-   ```
-
-   PASS: exit 2 and the saved plan at `<plan-file>`. Then continue at step 3.
-
-3. Run steps 1 to 4 of [Review the saved plan](terraform-operations.md#review-the-saved-plan);
-   the runtime table under **Expected result** is the reviewed list, each address a `create`.
-   PASS: `applyable` and `complete` `true`, `errored` `false`, exactly the 17 `create` lines, and
-   an empty drift list. Then run the alerting check here:
-
-   ```
-   jq -r '.variables | "alerting_campaign_enabled=\(.alerting_campaign_enabled.value) alerting_email_subscription_enabled=\(.alerting_email_subscription_enabled.value)"' <plan-json>
-   ```
-
-**Expected result.** Step 1 prints exactly these 21 addresses:
+**Expected:** exactly these 21 addresses:
 
 | Retained class | Addresses |
 |---|---|
 | Network (14) | `aws_vpc.dev`, `aws_subnet.private_a`, `aws_subnet.private_b`, `aws_subnet.public_a`, `aws_subnet.public_b`, `aws_internet_gateway.dev`, `aws_route_table.public`, `aws_route.public_default`, `aws_route_table.private`, `aws_route_table_association.public_a`, `aws_route_table_association.public_b`, `aws_route_table_association.private_a`, `aws_route_table_association.private_b`, `aws_vpc_endpoint.s3` |
 | Identity, secrets and configuration (7) | `aws_secretsmanager_secret.workload`, `aws_secretsmanager_secret.argocd_gitops_deploy_key`, `aws_ssm_parameter.workload`, `aws_iam_role.workload`, `aws_iam_role_policy.workload`, `aws_iam_role.external_secrets`, `aws_iam_role_policy.external_secrets` |
 
-Step 2 exits 2 and the plan text contains the summary line
-`Plan: 17 to add, 0 to change, 0 to destroy.`. In step 3, `applyable` and `complete` are `true`
-and `errored` is `false`; the action list is exactly
-17 `create` lines, one for each runtime address below; the drift list is empty; and the alerting
-check prints `alerting_campaign_enabled=false alerting_email_subscription_enabled=false`.
+**If not:** STOP; see **If it fails**.
+
+#### Step 2 — Make a saved plan that is never applied
+
+Plan with step 1 of [Plan to a saved file](terraform-operations.md#plan-to-a-saved-file), in a
+new `<private-dir>`, without targets. Name `<plan-file>` so that it cannot be mistaken for a plan
+to apply, for example `<private-dir>/never-apply.tfplan`.
+
+The command carries `-lock=false`; keep it only when no other writer can be active on the root,
+as [Plan without taking the state lock](terraform-operations.md#plan-without-taking-the-state-lock)
+rules for plans that are only read. Otherwise leave it out.
+
+```
+AWS_PROFILE=<profile> terraform plan -lock=false -input=false -no-color -detailed-exitcode -out=<plan-file>
+echo $?
+```
+
+**Expected:** exit 2, the saved plan at `<plan-file>`, and the summary line
+`Plan: 17 to add, 0 to change, 0 to destroy.` in the plan text.
+**If not:** do not go on; see **STOP if** and **If it fails**.
+
+#### Step 3 — Review the plan and check the alerting inputs
+
+Run steps 1 to 4 of [Review the saved plan](terraform-operations.md#review-the-saved-plan); the
+runtime table below is the reviewed list, each address a `create`.
 
 | Runtime class | Addresses |
 |---|---|
@@ -633,6 +673,18 @@ check prints `alerting_campaign_enabled=false alerting_email_subscription_enable
 With `worker_capacity_enabled = false`, the plan shows 7 to add: the second row only. The
 five alerting-campaign addresses ([Alerting](../../terraform/dev/README.md#alerting)) appear
 in neither list while their inputs are unset.
+
+Then run the alerting check:
+
+```
+jq -r '.variables | "alerting_campaign_enabled=\(.alerting_campaign_enabled.value) alerting_email_subscription_enabled=\(.alerting_email_subscription_enabled.value)"' <plan-json>
+```
+
+**Expected:** `applyable` and `complete` `true`, `errored` `false`; the action list is exactly
+17 `create` lines, one for each runtime address in the table above; the drift list is empty; and
+the alerting check prints
+`alerting_campaign_enabled=false alerting_email_subscription_enabled=false`.
+**If not:** do not go on; see **STOP if** and **If it fails**.
 
 **PASS when.**
 
@@ -653,18 +705,16 @@ in neither list while their inputs are unset.
 
 - **Route-table drift.** If the drift list is exactly `aws_route_table.private` with the
   attribute `route`, and that address has a `no-op` action, state still holds the `0.0.0.0/0`
-  NAT route that a targeted runtime teardown removed from AWS. The plan text does not show it: on
-  2026-09-22 the ordinary plan printed 17 to add and no `Objects have changed outside of
-  Terraform` note while its JSON carried the entry. Detect and reconcile it with the refresh-only
-  procedures [Detect state drift](terraform-operations.md#detect-state-drift) and
+  NAT route that a targeted runtime teardown removed from AWS. The plan text does not show it;
+  the plan JSON carries the entry (Engineering notes). Detect and reconcile it with the
+  refresh-only procedures [Detect state drift](terraform-operations.md#detect-state-drift) and
   [Reconcile explained state-only drift](terraform-operations.md#reconcile-explained-state-only-drift),
   then repeat this procedure. The reconciliation writes state, so its refresh-only plan needs the
   owner's approval.
 - **An alerting variable is `true`.** Correct the private `terraform.tfvars`, both the copy in
   `<inputs-dir>` and the copy that
   [initialization](terraform-operations.md#initialize-a-root-against-the-state-backend) installed
-  in `terraform/dev`, and repeat from step 2 in a new `<private-dir>`. A stale subscription flag
-  and endpoint left from an alerting window were found this way on 2026-09-22.
+  in `terraform/dev`, and repeat from step 2 in a new `<private-dir>`.
 - **7 to add, the second runtime row only.** `worker_capacity_enabled` is `false`, so the
   prerequisite above is not met. Unset it in both copies of `terraform.tfvars`, or set it to
   `true`, and repeat from step 2 in a new `<private-dir>`.
@@ -692,7 +742,12 @@ carries resource identifiers and ARNs.
 | Cost | none |
 
 In the Evidence basis, "Failure handling" is this procedure's **If it fails**, and the 17 runtime
-addresses are those in the runtime table under **Expected result**.
+addresses are those in the runtime table under step 3.
+
+On 2026-09-22 the ordinary plan printed 17 to add and no `Objects have changed outside of
+Terraform` note while its JSON carried the route-table drift entry. On 2026-09-22 a stale
+subscription flag and endpoint left from an alerting window were found this way (the
+**An alerting variable is `true`** case under **If it fails**).
 
 **Known limitations.** Not re-measured since the datastore instance was created on 2026-09-24.
 No resource in this root reads the datastore, so the result is expected to be unchanged, but
@@ -709,69 +764,90 @@ gateway, the route tables and the S3 gateway endpoint.
 
 **Before you start.**
 
-- [ ] A session on the project account, confirmed with the account check as the **Shell** item of
-  [Before you start](#before-you-start) describes; continue only on `ACCOUNT_MATCH=PASS`, then
-  return to this list.
+- [ ] A session on the project account: the account check has passed (`ACCOUNT_MATCH=PASS`), as
+  the **Shell** item of [Before you start](#before-you-start) describes.
 - [ ] No runtime window open: during a window the private route table also carries the NAT route.
 
 **Safety and authority.** Read-only. No approval and no cost.
 
-**Steps.**
+#### Step 1 — Resolve and read the VPC
 
-1. Resolve the VPC, confirm it is unique, and read it. `VPC_ID` stays set for the later steps:
+Resolve the VPC, confirm it is unique, and read it. `VPC_ID` stays set for the later steps:
 
-   ```
-   VPC_ID=$(aws ec2 describe-vpcs --filters Name=tag:Name,Values=cloud-platform-reference-dev-vpc \
-     --query 'Vpcs[].VpcId' --output text)
-   echo "$VPC_ID" | wc -w
-   aws ec2 describe-vpcs --vpc-ids "$VPC_ID" \
-     --query 'Vpcs[].{cidr:CidrBlock,state:State,isDefault:IsDefault,tags:sort_by(Tags,&Key)[].join(`"="`,[Key,Value])}' --output json
-   aws ec2 describe-vpc-attribute --vpc-id "$VPC_ID" --attribute enableDnsSupport --query 'EnableDnsSupport.Value'
-   aws ec2 describe-vpc-attribute --vpc-id "$VPC_ID" --attribute enableDnsHostnames --query 'EnableDnsHostnames.Value'
-   ```
+```
+VPC_ID=$(aws ec2 describe-vpcs --filters Name=tag:Name,Values=cloud-platform-reference-dev-vpc \
+  --query 'Vpcs[].VpcId' --output text)
+echo "$VPC_ID" | wc -w
+aws ec2 describe-vpcs --vpc-ids "$VPC_ID" \
+  --query 'Vpcs[].{cidr:CidrBlock,state:State,isDefault:IsDefault,tags:sort_by(Tags,&Key)[].join(`"="`,[Key,Value])}' --output json
+aws ec2 describe-vpc-attribute --vpc-id "$VPC_ID" --attribute enableDnsSupport --query 'EnableDnsSupport.Value'
+aws ec2 describe-vpc-attribute --vpc-id "$VPC_ID" --attribute enableDnsHostnames --query 'EnableDnsHostnames.Value'
+```
 
-2. Subnets:
+**Expected:** the count is exactly one; `10.20.0.0/16`, `available`, not the default VPC; both
+DNS attributes `true`; the tags under **Expected result**.
+**If not:** STOP; see **STOP if** and **If it fails**.
 
-   ```
-   aws ec2 describe-subnets --filters Name=vpc-id,Values="$VPC_ID" \
-     --query 'sort_by(Subnets,&CidrBlock)[].{name:Tags[?Key==`Name`]|[0].Value,cidr:CidrBlock,zone:AvailabilityZone,zoneId:AvailabilityZoneId,publicIpOnLaunch:MapPublicIpOnLaunch,roleTag:Tags[?starts_with(Key,`"kubernetes.io/role/"`)]|[0].Key,tags:sort_by(Tags,&Key)[].join(`"="`,[Key,Value])}' --output json
-   ```
+#### Step 2 — Read the subnets
 
-3. Internet gateway:
+```
+aws ec2 describe-subnets --filters Name=vpc-id,Values="$VPC_ID" \
+  --query 'sort_by(Subnets,&CidrBlock)[].{name:Tags[?Key==`Name`]|[0].Value,cidr:CidrBlock,zone:AvailabilityZone,zoneId:AvailabilityZoneId,publicIpOnLaunch:MapPublicIpOnLaunch,roleTag:Tags[?starts_with(Key,`"kubernetes.io/role/"`)]|[0].Key,tags:sort_by(Tags,&Key)[].join(`"="`,[Key,Value])}' --output json
+```
 
-   ```
-   aws ec2 describe-internet-gateways --filters Name=attachment.vpc-id,Values="$VPC_ID" \
-     --query 'InternetGateways[].{name:Tags[?Key==`Name`]|[0].Value,attachment:Attachments[0].State}' --output table
-   ```
+**Expected:** exactly four, matching the address plan in CIDR and zone name; `publicIpOnLaunch`
+false on all four; `kubernetes.io/role/internal-elb` on the two private subnets and
+`kubernetes.io/role/elb` on the two public ones; zone IDs as recorded at the zone check; the tags
+under **Expected result**.
+**If not:** STOP; see **STOP if** and **If it fails**.
 
-4. Route tables:
+#### Step 3 — Read the internet gateway
 
-   ```
-   aws ec2 describe-route-tables --filters Name=vpc-id,Values="$VPC_ID" \
-     --query 'RouteTables[].{name:Tags[?Key==`Name`]|[0].Value,main:length(Associations[?Main]),subnets:length(Associations[?SubnetId]),routes:Routes[].join(`" "`,[DestinationCidrBlock || DestinationPrefixListId,GatewayId || NatGatewayId || `"none"`,State])}' --output json
-   ```
+```
+aws ec2 describe-internet-gateways --filters Name=attachment.vpc-id,Values="$VPC_ID" \
+  --query 'InternetGateways[].{name:Tags[?Key==`Name`]|[0].Value,attachment:Attachments[0].State}' --output table
+```
 
-5. S3 gateway endpoint:
+**Expected:** exactly one, `cloud-platform-reference-dev-igw`, attachment `available`.
+**If not:** STOP; see **STOP if** and **If it fails**.
 
-   ```
-   aws ec2 describe-vpc-endpoints --filters Name=vpc-id,Values="$VPC_ID" \
-     --query 'VpcEndpoints[].{service:ServiceName,type:VpcEndpointType,state:State,routeTables:length(RouteTableIds)}' --output table
-   ```
+#### Step 4 — Read the route tables
 
-**Expected result.**
+```
+aws ec2 describe-route-tables --filters Name=vpc-id,Values="$VPC_ID" \
+  --query 'RouteTables[].{name:Tags[?Key==`Name`]|[0].Value,main:length(Associations[?Main]),subnets:length(Associations[?SubnetId]),routes:Routes[].join(`" "`,[DestinationCidrBlock || DestinationPrefixListId,GatewayId || NatGatewayId || `"none"`,State])}' --output json
+```
 
-| Object | Expected |
-|---|---|
-| VPC | Step 1 counts exactly one. `10.20.0.0/16`, `available`, not the default VPC; both DNS attributes `true` |
-| Subnets | Exactly four, matching the address plan in CIDR and zone name; `publicIpOnLaunch` false on all four; `kubernetes.io/role/internal-elb` on the two private subnets and `kubernetes.io/role/elb` on the two public ones; zone IDs as recorded at the zone check |
-| Internet gateway | Exactly one, `cloud-platform-reference-dev-igw`, attachment `available` |
-| Route tables | Three. `cloud-platform-reference-dev-public-rt`: two subnets, `10.20.0.0/16 local active` and `0.0.0.0/0 igw-… active`. `cloud-platform-reference-dev-private-rt`: two subnets, `10.20.0.0/16 local active` and a prefix-list route `pl-… vpce-… active`, and no `0.0.0.0/0` route. The unnamed table AWS created with the VPC: `main` 1, no subnets, the local route only |
-| Endpoint | One: `com.amazonaws.us-east-1.s3`, `Gateway`, `available`, one route table, which step 4 shows is the private table |
-| Tags | On the VPC and each subnet: `Component=network`, `Environment=dev`, `Lifecycle=ephemeral`, `ManagedBy=terraform`, `Owner=platform-engineer`, `Project=cloud-platform-reference` and `Name`, plus the role tag on each subnet. `Lifecycle=ephemeral` is the environment-lifecycle default; it does not mean the network is destroyed at the end of each working session ([Tagging](../../terraform/dev/README.md#tagging)) |
+**Expected:** three tables.
+
+- `cloud-platform-reference-dev-public-rt`: two subnets, `10.20.0.0/16 local active` and
+  `0.0.0.0/0 igw-… active`.
+- `cloud-platform-reference-dev-private-rt`: two subnets, `10.20.0.0/16 local active` and a
+  prefix-list route `pl-… vpce-… active`, and no `0.0.0.0/0` route.
+- The unnamed table AWS created with the VPC: `main` 1, no subnets, the local route only.
+
+**If not:** STOP; see **STOP if** and **If it fails**.
+
+#### Step 5 — Read the S3 gateway endpoint
+
+```
+aws ec2 describe-vpc-endpoints --filters Name=vpc-id,Values="$VPC_ID" \
+  --query 'VpcEndpoints[].{service:ServiceName,type:VpcEndpointType,state:State,routeTables:length(RouteTableIds)}' --output table
+```
+
+**Expected:** one: `com.amazonaws.us-east-1.s3`, `Gateway`, `available`, one route table, which
+step 4 shows is the private table.
+**If not:** STOP; see **STOP if** and **If it fails**.
+
+**Expected result.** Tags on the VPC (step 1) and each subnet (step 2): `Component=network`,
+`Environment=dev`, `Lifecycle=ephemeral`, `ManagedBy=terraform`, `Owner=platform-engineer`,
+`Project=cloud-platform-reference` and `Name`, plus the role tag on each subnet.
+`Lifecycle=ephemeral` is the environment-lifecycle default; it does not mean the network is
+destroyed at the end of each working session ([Tagging](../../terraform/dev/README.md#tagging)).
 
 **PASS when.**
 
-- [ ] Every row of the expected-result table matches.
+- [ ] Every step's **Expected** line and the tags under **Expected result** match.
 
 **STOP if.**
 
@@ -779,10 +855,12 @@ gateway, the route tables and the S3 gateway endpoint.
 - A fifth subnet.
 - A subnet associated with the main table.
 - A `0.0.0.0/0` route in the private table outside a runtime window, whatever its state.
-- Any other value that differs from the table.
+- Any other value that differs from the expected values above.
 
-**If it fails.** A difference from the README is a change made outside Terraform. Record it and
-stop. Only a difference whose cause is an explained class of
+**If it fails.** The cause of a difference from the README is unknown until it is established.
+Record the difference and stop. Before attributing a cause, compare the reviewed configuration at
+the applied commit, the current inputs, Terraform state and AWS; a change made outside Terraform
+is one possible cause. Only a difference whose cause is an explained class of
 [Reconcile explained state-only drift](terraform-operations.md#reconcile-explained-state-only-drift)
 has a published path, which records it in state under its own approval and changes nothing in AWS;
 on this root that is the route-table drift. For any other difference no procedure exists, and work
@@ -791,8 +869,7 @@ stays stopped until a reviewed decision is taken under explicit approval
 
 **Evidence to keep.** The command output, privately; it carries resource identifiers.
 
-**Next step.** [Read back the two Secrets Manager entries](#read-back-the-two-secrets-manager-entries),
-unless another procedure sent you here: then return to it.
+**Next step.** [Read back the two Secrets Manager entries](#read-back-the-two-secrets-manager-entries).
 
 #### Engineering notes
 
@@ -833,24 +910,21 @@ its failure handling.
 **Safety and authority.** Read-only, metadata only: no secret value is read. Negligible cost: two
 Secrets Manager API requests.
 
-**Steps.**
+#### Step 1 — Read the metadata of both entries
 
-1. Read the metadata of both entries:
+```
+for s in cloud-platform-reference-dev-workload-secret cloud-platform-reference-dev-argocd-gitops-deploy-key; do
+  aws secretsmanager describe-secret --secret-id "$s" \
+    --query '{name:Name,deletedDate:DeletedDate,rotation:RotationEnabled,versions:length(keys(VersionIdsToStages || `{}`)),stages:sort(values(VersionIdsToStages || `{}`)[]),tags:sort_by(Tags,&Key)[].join(`"="`,[Key,Value])}' --output json
+done
+```
 
-   ```
-   for s in cloud-platform-reference-dev-workload-secret cloud-platform-reference-dev-argocd-gitops-deploy-key; do
-     aws secretsmanager describe-secret --secret-id "$s" \
-       --query '{name:Name,deletedDate:DeletedDate,rotation:RotationEnabled,versions:length(keys(VersionIdsToStages || `{}`)),stages:sort(values(VersionIdsToStages || `{}`)[]),tags:sort_by(Tags,&Key)[].join(`"="`,[Key,Value])}' --output json
-   done
-   ```
-
-**Expected result.** For each entry: `deletedDate` null; `rotation` null, meaning rotation is
-not configured; tags `Component=identity`, `Environment=dev`, `Lifecycle=persistent`,
-`ManagedBy=terraform`, `Owner=platform-engineer` and `Project=cloud-platform-reference`. After
-a fresh build, `versions` is 0 and `stages` is empty until a value is placed. In the reference
-environment on 2026-09-10, the workload secret held two labelled versions, `AWSCURRENT` and
-`AWSPREVIOUS` (synthetic validation material after one rotation), and the deploy key held one,
-`AWSCURRENT`; the 2026-09-22 listing gave the same counts.
+**Expected:** for each entry, `deletedDate` null; `rotation` null, meaning rotation is not
+configured; tags `Component=identity`, `Environment=dev`, `Lifecycle=persistent`,
+`ManagedBy=terraform`, `Owner=platform-engineer` and `Project=cloud-platform-reference`. After a
+fresh build, `versions` is 0 and `stages` is empty until a value is placed. The last recorded
+counts are in the Engineering notes.
+**If not:** see **PASS when**, **STOP if** and **If it fails**.
 
 **PASS when.**
 
@@ -874,9 +948,10 @@ further action; work stays stopped until a reviewed decision is taken under expl
 
 **Evidence to keep.** The output, privately.
 
-**Next step.** Return to the procedure that sent you here. After a build, that is building the
-datastore root ([dev-datastore.md](dev-datastore.md)). Otherwise, once the datastore root is
-built, [Verify the retained side with the datastore present](#verify-the-retained-side-with-the-datastore-present).
+**Next step.** After a build: build the datastore root
+([dev-datastore.md](dev-datastore.md)), as the build's **Next step** says. Otherwise, once the
+datastore root is built,
+[Verify the retained side with the datastore present](#verify-the-retained-side-with-the-datastore-present).
 
 #### Engineering notes
 
@@ -888,6 +963,10 @@ built, [Verify the retained side with the datastore present](#verify-the-retaine
 | Authority | none (read-only; metadata only) |
 | Cost | Negligible: two Secrets Manager API requests |
 
+In the reference environment on 2026-09-10, the workload secret held two labelled versions,
+`AWSCURRENT` and `AWSPREVIOUS` (synthetic validation material after one rotation), and the deploy
+key held one, `AWSCURRENT`; the 2026-09-22 listing gave the same counts.
+
 **Known limitations.** The seven-day recovery window is a Terraform deletion setting
 (`recovery_window_in_days`) that AWS does not return, so it cannot be read back before a
 deletion. Deletion and recovery have never been exercised. This projection counts only
@@ -897,71 +976,78 @@ versions that carry a staging label.
 
 **Validation:** DESIGNED-NOT-EXECUTED (never) · **Published command form:** not executed as written
 
-**What this does.** Since 2026-09-22 the datastore's security group, and since 2026-09-24 the
-instance's network interface in a private subnet, sit inside this VPC. The earlier
-retained-side expectations no longer hold: only the default security group held until
-2026-09-22, and no network interface held until 2026-09-24. A retained-side check now has to
-tell the datastore's footprint apart from runtime residue, meaning resources a runtime window
-left behind.
+**What this does.** The datastore's security group and the instance's network interface in a
+private subnet now sit inside this VPC, so a retained-side check has to tell the datastore's
+footprint apart from runtime residue, meaning resources a runtime window left behind. It lists
+the VPC's security groups and network interfaces, checks the datastore group's rules with the
+datastore runbook, and repeats the network read-back.
 
-It lists the VPC's security groups and network interfaces, checks the datastore group's rules
-with the datastore runbook, and repeats the network read-back.
+The datastore root finds the Dev VPC and the two private subnets by their `Name` tags, never
+through this root's state; its security group admits TCP 5432 from the two private subnet ranges;
+and its subnet group, security group and instance network interface sit inside this VPC. While a
+runtime window is open, every node and pod in the private subnets can reach the datastore on
+TCP 5432 ([datastore Boundary](../../terraform/dev-datastore/README.md#boundary)).
 
 **Before you start.**
 
 - [ ] The datastore's security group and instance exist ([dev-datastore.md](dev-datastore.md));
-  the expected result assumes both.
+  the expected values assume both.
 - [ ] No runtime window open.
 - [ ] `VPC_ID` resolved as in [Read back the retained network](#read-back-the-retained-network).
 
 **Safety and authority.** Read-only. No approval and no cost.
 
-**Steps.**
+#### Step 1 — List the security groups in the VPC
 
-1. Security groups in the VPC:
+```
+aws ec2 describe-security-groups --filters Name=vpc-id,Values="$VPC_ID" \
+  --query 'sort(SecurityGroups[].GroupName)' --output text
+```
 
-   ```
-   aws ec2 describe-security-groups --filters Name=vpc-id,Values="$VPC_ID" \
-     --query 'sort(SecurityGroups[].GroupName)' --output text
-   ```
+**Expected:** exactly two names, `cloud-platform-reference-dev-datastore` and `default`.
+**If not:** STOP; see **STOP if** and **If it fails**.
 
-2. The datastore group's rules: run
-   [Read back the network boundary](dev-datastore.md#read-back-the-network-boundary) in
-   [dev-datastore.md](dev-datastore.md).
-3. Network interfaces in the VPC:
+#### Step 2 — Check the datastore group's rules
 
-   ```
-   aws ec2 describe-network-interfaces --filters Name=vpc-id,Values="$VPC_ID" \
-     --query 'NetworkInterfaces[].{type:InterfaceType,requesterManaged:RequesterManaged,description:Description,zone:AvailabilityZone,ip:PrivateIpAddress,groups:Groups[].GroupName,status:Status}' --output json
-   ```
+Run [Read back the network boundary](dev-datastore.md#read-back-the-network-boundary) in
+[dev-datastore.md](dev-datastore.md).
 
-4. Run [Read back the retained network](#read-back-the-retained-network). The datastore
-   changes none of its expected values.
+**Expected:** it passes as [dev-datastore.md](dev-datastore.md) describes.
+**If not:** STOP; see **STOP if** and **If it fails**.
 
-**Expected result.**
+#### Step 3 — List the network interfaces in the VPC
 
-- Step 1 prints exactly two names, `cloud-platform-reference-dev-datastore` and `default`.
-- Step 2 passes as [dev-datastore.md](dev-datastore.md) describes.
-- Network interfaces: only the datastore's, one for the single-AZ instance, with an address
-  inside `10.20.0.0/20` or `10.20.16.0/20`, and matching the datastore-interface classification
-  that the [orphan census](cost-and-residue.md#run-the-orphan-census) asserts:
-  `requesterManaged` `true`, `description` `RDSNetworkInterface`, and exactly one group, the
-  datastore's security group `cloud-platform-reference-dev-datastore`. That classification has
-  passed offline controls only and has never run against a live instance. `type` is recorded,
-  not asserted.
-- Step 4 passes unchanged.
+```
+aws ec2 describe-network-interfaces --filters Name=vpc-id,Values="$VPC_ID" \
+  --query 'NetworkInterfaces[].{type:InterfaceType,requesterManaged:RequesterManaged,description:Description,zone:AvailabilityZone,ip:PrivateIpAddress,groups:Groups[].GroupName,status:Status}' --output json
+```
+
+**Expected:** only the datastore's, one for the single-AZ instance, with an address inside
+`10.20.0.0/20` or `10.20.16.0/20`, and matching the datastore-interface classification that the
+[orphan census](cost-and-residue.md#run-the-orphan-census) asserts: `requesterManaged` `true`,
+`description` `RDSNetworkInterface`, and exactly one group, the datastore's security group
+`cloud-platform-reference-dev-datastore`. `type` is recorded, not asserted.
+**If not:** STOP; see **STOP if** and **If it fails**.
+
+#### Step 4 — Repeat the network read-back
+
+Run [Read back the retained network](#read-back-the-retained-network). The datastore changes
+none of its expected values.
+
+**Expected:** it passes unchanged.
+**If not:** STOP, as that procedure's **STOP if** and **If it fails** say.
 
 **PASS when.**
 
 - [ ] Step 1 prints exactly the two expected security groups.
 - [ ] Step 2 passes.
-- [ ] The only network interface is the datastore's, as described above.
+- [ ] The only network interface is the datastore's, as step 3 describes.
 - [ ] Step 4 passes.
 
 **STOP if.**
 
 - Any other security group or network interface between windows.
-- A datastore interface with values other than those above, attached to any other group, or
+- A datastore interface with values other than those in step 3, attached to any other group, or
   with an address outside the private ranges.
 - A failure of the rule check in step 2.
 
@@ -977,9 +1063,8 @@ with the datastore runbook, and repeats the network read-back.
 the datastore interface, so later runs can assert them. The first run confirms the census
 classification or corrects it in [cost-and-residue.md](cost-and-residue.md).
 
-**Next step.** If another runbook sent you here, return to the step that sent you. None in this
-runbook. The first run of this procedure is due at the next retained-side check or at the
-teardown of the next runtime window.
+**Next step.** None in this runbook. The first run of this procedure is due at the next
+retained-side check or at the teardown of the next runtime window.
 
 #### Engineering notes
 
@@ -991,7 +1076,13 @@ teardown of the next runtime window.
 | Authority | none (read-only) |
 | Cost | none |
 
-**Known limitations.** Never run. The datastore interface is expected to carry no project tags,
+The datastore's security group has sat inside this VPC since 2026-09-22, and the instance's
+network interface since 2026-09-24. The earlier retained-side expectations no longer hold: only
+the default security group held until 2026-09-22, and no network interface held until
+2026-09-24.
+
+**Known limitations.** Never run. The census classification that step 3 matches has passed
+offline controls only and has never run against a live instance. The datastore interface is expected to carry no project tags,
 so a scan that selects by tag will not find it; this procedure identifies it by its security
 group instead. That expectation is unobserved too. The datastore root's own state is not
 planned here ([dev-datastore.md](dev-datastore.md)).
