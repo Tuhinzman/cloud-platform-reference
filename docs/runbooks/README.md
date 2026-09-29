@@ -1,101 +1,15 @@
 # Runbooks
 
-<a id="scope"></a>
+The operating procedures for the platform, written for an engineer who did not build it. Pick the
+path under [Where to start](#where-to-start) that matches your situation.
+[What these runbooks are](#scope) says what the suite covers and what you must supply before a
+build can finish.
 
-## What these runbooks are
-
-These runbooks are the operating procedures for the platform, written for an engineer who did not
-build it. They cover steps 1 to 4 of
-[Reproducing the Platform](../../README.md#reproducing-the-platform): the state backend, the
-persistent foundations with the public DNS zone and the certificate, the Dev network's retained
-baseline and the Dev datastore, and the operator access, cost and evidence operations around those
-steps. Following them ends at a built datastore, not a running cluster. Later areas are added one
-at a time ([Roadmap](#roadmap)).
-
-The public repositories alone do not get that far. This project has not published the items below.
-You supply each one yourself or, where a decision is missing, the owner takes it under explicit
-approval. Until then the [Build order](#build-order) stops at the step named:
-
-- **Cost setup, step 2.** The budget with its five notifications, Cost Explorer and the six
-  cost-allocation tags have no published creation, enabling or activation procedure. On a new
-  account the tag read-back passes only if resources carrying the six keys already exist, and no
-  order for a new account is published: until the owner decides one, the read-back's STOP holds.
-- **The bootstrap Stage 1 plan, step 3.** Stage 1 is published as step-level instructions without
-  commands, and review and binding of its plan on local state have no published form. The binding
-  check as written reports `backend.tf` missing from that plan, which is a STOP.
-- **Evidence tooling, from step 3.** A redaction filter and a value-based, archive-aware sweep that
-  fail closed. Every root change is a campaign whose evidence set is swept and sealed, and this
-  suite defines no reduced capture without them
-  ([Private working locations](#private-working-locations)).
-- **The foundation's first build, step 4.** On a build from nothing, the certificate-stage plan has
-  no reviewed shape and stops at its step 2. Steps 5 and 6 do not need step 4.
-- **Binding a root's first apply, steps 4, 5 and 6.** The binding check reads the remote serial and
-  lineage. What that read prints against a state object never yet written has not been recorded;
-  if it prints nothing, the first apply stops at binding until a reviewed decision is taken under
-  explicit approval ([Bind the saved plan](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state)).
-- **The datastore after its Stage 1, step 6.** A placement tool qualified offline, a tool that
-  implements the secret-absence proof, and a way to run the Stage 2 apply that closing or losing the
-  terminal cannot end. Even with everything above, the datastore build stops after its Stage 1
-  without these three.
-
-These are outside the suite:
-
-- Runtime windows. A runtime window is a bounded period that creates the EKS cluster, its nodes and
-  the NAT gateway on top of the retained baseline, exercises them and destroys them at close. The
-  retained baseline is what the Dev network root keeps in AWS between windows. The windows that
-  ran, their teardown and their residual checks are summarized in
-  [Runtime Validation](../validation/runtime-validation.md).
-- Creating, operating and tearing down a runtime window has no published procedure, so public
-  reproduction stops before README step 5, which needs a running cluster
-  ([Known reproducibility gaps](#known-reproducibility-gaps)).
-- Cluster bootstrap and GitOps reconciliation, README step 5:
-  [GitOps Delivery](../implementation/gitops-delivery.md). Mirroring the platform images it needs
-  has no published procedure ([Known reproducibility gaps](#known-reproducibility-gaps)).
-- Workload build and publication, README step 6:
-  [GitOps Delivery](../implementation/gitops-delivery.md#1-build-once-gitlab-ci-to-an-immutable-digest)
-  and the workload repository's pipelines.
-
-| Runbook | Covers |
-|---|---|
-| [operator-access.md](operator-access.md) | The workstation toolchain, Identity Center setup and CLI profiles, sign-in, the identity and account checks, session headroom and the exported shell, recovery from an expired session or a wrong account, legacy credential retirement |
-| [terraform-operations.md](terraform-operations.md) | The workflow every root shares: static checks, initialization, the saved plan with its review and binding, apply, convergence, drift, moved blocks, locks, failed or interrupted applies, debug logging; the state backend's first build |
-| [persistent-foundations.md](persistent-foundations.md) | Evidence-store read-back, registry repositories and the CI push scope, image verification by digest, the CI push identity and its GitLab side, a failed publication |
-| [public-dns-and-certificate.md](public-dns-and-certificate.md) | The zone-first build, zone read-back, the checks before and after the registrar change, the certificate, delegation rollback and zone retirement |
-| [dev-network.md](dev-network.md) | The zone check, the Dev retained baseline, the retained and runtime split, network and secret read-back, the network with the datastore inside it |
-| [dev-datastore.md](dev-datastore.md) | The two-stage datastore build, master-value placement, the pre-apply gate, secret verification and CloudTrail accounting, the secret-absence proof, read-back, failed placements and applies, exposure containment |
-| [cost-and-residue.md](cost-and-residue.md) | Budget, price and tag read-backs, the Cost Explorer breakdown, the CPU-credit check, the weekly review, the budget-level responses, the orphan census and cleanup |
-| [evidence-handling.md](evidence-handling.md) | Capture, redaction, the sweep and its positive control, sealing, export before teardown, read-back after destruction, remediation |
-
-Each procedure lives in exactly one runbook, and the others link to it. This index holds no
-procedure. The root READMEs under [terraform/](../../terraform/) remain the authority for what each
-root creates and why, its inputs, protections, lifecycle order, status and limitations, and the
-records in [docs/decisions](../decisions/) for the decisions. The runbooks link both and restate
-neither.
-
-## Where to start
-
-- **New to the project:** gather what [Before you start](#before-you-start) lists, then follow the
-  [Build order](#build-order) from step 1.
-- **Access already set up:** find the task in
-  [Find the procedure for a task](#find-the-procedure-for-a-task).
-- **Something failed or stopped:** go to [When something fails](#when-something-fails).
-
-Every runbook except [cost-and-residue.md](cost-and-residue.md) has the same shape: **Normal path**,
-the procedures in the order a normal run uses them; **Before you start**; **Procedures**, normal path
-first, then checks, then failure and recovery; **Not yet exercised**; **Reproducibility gaps**; and
-**Background prerequisites**. Every procedure opens with its validation label and then, where they
-apply, says what it does, what must already exist, whether it is safe and who approves it, the steps,
-the expected result, PASS and STOP, where to go on failure, the evidence to keep and the next step.
-Its **Engineering notes** hold the audit detail. cost-and-residue.md uses a compact operator layout: a
-trigger table, one precondition list, one pattern per procedure (validation line, steps, PASS, STOP
-or HOLD, evidence), one **Engineering notes** table for all its procedures, and **Known limitations**
-holding its **Not yet exercised** and **Reproducibility gaps** lists.
-
-Terms used across the suite:
+## Terms used across the suite
 
 - **Root:** a Terraform root directory under `terraform/`, not the AWS root user.
 - **Saved plan:** a plan written to a file, reviewed, bound to its hash and to the state it was made
-  from, and applied exactly as reviewed.
+  from (the binding), and applied exactly as reviewed.
 - **Account check:** compares the account the credentials resolve with the root's
   `allowed_account_id` and prints only `ACCOUNT_MATCH=PASS` or `ACCOUNT_MATCH=HOLD`
   ([Check the account before AWS commands](operator-access.md#check-the-account-before-aws-commands)).
@@ -107,11 +21,156 @@ Terms used across the suite:
   owner's written approval, given before the step it names ([Approvals](#approvals)).
 - **STOP** and **HOLD:** a STOP halts the procedure where it occurs; a HOLD is a check that failed
   or could not be read, and it applies nothing ([When something fails](#when-something-fails)).
+- **Runtime window:** a bounded period that creates the EKS cluster, its nodes and the NAT gateway
+  on top of the retained baseline, exercises them and destroys them at close.
+- **Retained baseline:** what the Dev network root keeps in AWS between windows.
+
+## Where to start
+
+If something already failed or stopped, go to [When something fails](#when-something-fails).
+
+### Validate locally, without AWS
+
+- **Prerequisites.** A clone of this repository and the [Toolchain](#toolchain): Terraform, TFLint,
+  Trivy, `git`, `jq` and network access to the Terraform registry. No AWS account, credentials or
+  state backend.
+- **Runbooks.** [Run the static checks](terraform-operations.md#run-the-static-checks) for each
+  root: `terraform/bootstrap`, `terraform/foundation`, `terraform/dev` and `terraform/dev-datastore`.
+  Each root passes when it meets that procedure's **PASS when**. Then, in `terraform/dev`, run
+  `terraform init -backend=false` followed by `terraform test`. That runs the `operator_cidr` rule
+  test, `tests/operator_cidr.tftest.hcl`, with a mocked AWS provider, no credentials and no AWS
+  call; [Dev root input](../../terraform/dev/README.md#input) describes it.
+- **What you can do today.** The whole path. It is local and read-only and needs no approval. Each
+  procedure's Validation line says whether it has run.
+- **Where it stops.** At the end of the local checks. It proves nothing about AWS.
+- **Known blockers.** The blocker list in [What these runbooks are](#scope) names Build order steps
+  only, and this path runs none of them. Platforms other than `darwin_arm64`, and platforms the
+  committed lock files do not cover, have not been exercised
+  ([Known reproducibility gaps](#known-reproducibility-gaps), Toolchain row).
+
+### Inspect or operate an existing environment
+
+- **Prerequisites.** An account where the roots are already built, your operator access
+  ([Account and identity](#account-and-identity)) and, for Terraform reads, each root's untracked
+  `backend.hcl` and `terraform.tfvars` ([Root inputs](#root-inputs)).
+- **Runbooks.** Before AWS work, [Sign in](operator-access.md#sign-in),
+  [Verify the resolved identity](operator-access.md#verify-the-resolved-identity) and
+  [Check the account before AWS commands](operator-access.md#check-the-account-before-aws-commands).
+  Then the read-only read-backs and checks of the area you need
+  ([Find the procedure for a task](#find-the-procedure-for-a-task)), and the
+  [Routine operations](#routine-operations) the occasion calls for.
+- **What you can do today.** Sign-in, the identity and account checks, and the read-only read-backs
+  and checks. Each procedure's Validation line says whether it has run.
+- **Where it stops.** From public material, a later change to a built root currently stops before
+  apply on every root ([Routine operations](#routine-operations), Every change to a root).
+- **Known blockers.**
+  - `terraform/bootstrap` has no published read-back, `terraform/foundation` has no published
+    expected address set, and `terraform/dev` and `terraform/dev-datastore` have no later-change
+    procedure or gate ([Known reproducibility gaps](#known-reproducibility-gaps), Later changes to
+    applied roots).
+  - A campaign needs the evidence tooling you supply yourself
+    ([Private working locations](#private-working-locations)).
+  - Inspection is meant for the ReadOnly profile, but every recorded plan and apply, and the
+    retained operator read-only checks, ran on the `AdministratorAccess` permission set. Running
+    them on the `ReadOnlyAccess` permission set has not been exercised
+    ([Conventions](#conventions), Permission sets).
+
+### Build from the beginning
+
+- **Prerequisites.** Everything in [Before you start](#before-you-start).
+- **Runbooks.** The [Build order](#build-order), its steps 1 to 6, with the
+  [Routine operations](#routine-operations) as they fall due.
+- **What you can do today.** Build order step 1, operator access. Its Identity Center enablement
+  has never been exercised in this project, and the operator setup and the published account check
+  have gaps ([Known reproducibility gaps](#known-reproducibility-gaps), Identity Center setup and
+  Access tooling rows). Every later step first needs at least one item that you supply or the owner
+  decides.
+- **Where it stops.** With every item supplied, at a built datastore, not a running cluster.
+  Runtime windows and [README](../../README.md#reproducing-the-platform) steps 5 and 6 are outside
+  the suite.
+- **Known blockers.** The six items listed in [What these runbooks are](#scope), each with the
+  Build order step it stops.
+
+### Find the right runbook
+
+| I want to... | Runbook | What it covers |
+|---|---|---|
+| Run Terraform on a root: checks, plans, applies, drift, locks and failed applies | [terraform-operations.md](terraform-operations.md) | The workflow every root shares: static checks, initialization, the saved plan with its review and binding, apply, convergence, drift, moved blocks, locks, failed or interrupted applies, debug logging; the state backend's first build |
+| Get AWS access, sign in and check the account | [operator-access.md](operator-access.md) | The workstation toolchain, Identity Center setup and CLI profiles, sign-in, the identity and account checks, session headroom and the exported shell, recovery from an expired session or a wrong account, legacy credential retirement |
+| Build or check the Dev network | [dev-network.md](dev-network.md) | The zone check, the Dev retained baseline, the retained and runtime split, network and secret read-back, the network with the datastore inside it |
+| Build or check the Dev datastore | [dev-datastore.md](dev-datastore.md) | The two-stage datastore build, master-value placement, the pre-apply gate, secret verification and CloudTrail accounting, the secret-absence proof, read-back, failed placements and applies, exposure containment |
+| Build the public zone, delegate the domain and issue the certificate | [public-dns-and-certificate.md](public-dns-and-certificate.md) | The zone-first build, zone read-back, the checks before and after the registrar change, the certificate, delegation rollback and zone retirement |
+| Check cost and find leftover resources | [cost-and-residue.md](cost-and-residue.md) | Budget, price and tag read-backs, the Cost Explorer breakdown, the CPU-credit check, the weekly review, the budget-level responses, the orphan census and cleanup |
+| Capture, sweep, seal and export evidence | [evidence-handling.md](evidence-handling.md) | Capture, redaction, the sweep and its positive control, sealing, export before teardown, read-back after destruction, remediation |
+| Add or check a registry repository, connect or check the CI push identity, or check the evidence store | [persistent-foundations.md](persistent-foundations.md) | Evidence-store read-back, registry repositories and the CI push scope, image verification by digest, the CI push identity and its GitLab side, a failed publication |
+
+Each procedure lives in exactly one runbook, and the others link to it. This index holds no
+procedure. The root READMEs under [terraform/](../../terraform/) remain the authority for what each
+root creates and why, its inputs, protections, lifecycle order, status and limitations, and the
+records in [docs/decisions](../decisions/) for the decisions. The runbooks link both and restate
+neither.
+
+<a id="scope"></a>
+
+## What these runbooks are
+
+These runbooks cover steps 1 to 4 of
+[Reproducing the Platform](../../README.md#reproducing-the-platform): the state backend, the
+persistent foundations with the public DNS zone and the certificate, the Dev network's retained
+baseline and the Dev datastore, and the operator access, cost and evidence operations around those
+steps. Following them ends at a built datastore, not a running cluster. Later areas are added one
+at a time ([Roadmap](#roadmap)).
+
+The public repositories alone do not get that far. This project has not published the items below.
+You supply each one yourself or, where a decision is missing, the owner takes it under explicit
+approval. Until then the [Build order](#build-order) stops at the step named:
+
+- **Cost setup, Build order step 2.** The budget with its five notifications, Cost Explorer and the
+  six cost-allocation tags have no published creation, enabling or activation procedure. On a new
+  account the tag read-back passes only if resources carrying the six keys already exist, and no
+  order for a new account is published: until the owner decides one, the read-back's STOP holds.
+- **The bootstrap Stage 1 plan, Build order step 3.** Stage 1 is published as step-level
+  instructions without commands, and review and binding of its plan on local state have no
+  published form. The binding check as written reports `backend.tf` missing from that plan, which is
+  a STOP.
+- **Evidence tooling, from Build order step 3.** A redaction filter and a value-based,
+  archive-aware sweep that fail closed. Every root change is a campaign whose evidence set is swept
+  and sealed, and this suite defines no reduced capture without them
+  ([Private working locations](#private-working-locations)).
+- **The foundation's first build, Build order step 4.** On a build from nothing, the
+  certificate-stage plan has no reviewed shape and stops at its step 2. Build order steps 5 and 6
+  do not need step 4.
+- **Binding a root's first apply, Build order steps 4, 5 and 6.** The binding check reads the remote
+  serial and lineage. What that read prints against a state object never yet written has not been
+  recorded; if it prints nothing or `STATE READ FAILED OR EMPTY`, the first apply stops at binding
+  until a reviewed decision is
+  taken under explicit approval
+  ([Bind the saved plan](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state)).
+- **The datastore after its Stage 1, Build order step 6.** A placement tool qualified offline, a
+  tool that implements the secret-absence proof, and a way to run the Stage 2 apply that closing or
+  losing the terminal cannot end. Even with everything above, the datastore build stops after its
+  Stage 1 without these three.
+
+These are outside the suite:
+
+- [Runtime windows](#terms-used-across-the-suite), which build on the retained baseline. The
+  windows that ran, their teardown and their residual checks are summarized in
+  [Runtime Validation](../validation/runtime-validation.md).
+- Creating, operating and tearing down a runtime window has no published procedure, so public
+  reproduction stops before README step 5, which needs a running cluster
+  ([Known reproducibility gaps](#known-reproducibility-gaps)).
+- Cluster bootstrap and GitOps reconciliation, README step 5:
+  [GitOps Delivery](../implementation/gitops-delivery.md). Mirroring the platform images it needs
+  has no published procedure ([Known reproducibility gaps](#known-reproducibility-gaps)).
+- Workload build and publication, README step 6:
+  [GitOps Delivery](../implementation/gitops-delivery.md#1-build-once-gitlab-ci-to-an-immutable-digest)
+  and the workload repository's pipelines.
 
 ## Before you start
 
 Everything below comes from outside these repositories and is listed by class, never by value. Each
-runbook's own **Before you start** says what its procedures need.
+runbook's own **Before you start** says what its procedures need. Commands are written for `bash`,
+and regional commands target `us-east-1` ([Conventions](#conventions)).
 
 ### Account and identity
 
@@ -238,85 +297,101 @@ runbook's own **Before you start** says what its procedures need.
 
 ## Build order
 
-Follow these steps in order to build the platform: README steps 1 to 4, with the access, cost and
-evidence steps placed where they first apply. Only steps 5 and 6 may run before step 4 (step 5 says
-why). The build ends at a built datastore, not a running cluster. Before step 1, read the list in
-[What these runbooks are](#scope) of what you supply or decide yourself: without it, the step it
-names stops.
+Follow these steps in order to build the platform:
+[README](../../README.md#reproducing-the-platform) steps 1 to 4, with the access, cost and evidence
+steps placed where they first apply. Only Build order steps 5 and 6 may run before Build order
+step 4 (step 5 says why). The build ends at a built datastore, not a running cluster. This path has
+not been run end to end from a fresh clone of the current configuration
+([Not yet exercised](#not-yet-exercised)).
 
-1. **Operator access**, once per workstation and operator. First create the file the account
-   check reads: copy the tracked `terraform/bootstrap/terraform.tfvars.example` to
-   `terraform.tfvars` in the bootstrap root's private `<inputs-dir>`
-   ([terraform-operations.md](terraform-operations.md#before-you-start)), set
-   `allowed_account_id` to the project account's ID, and give that file's path as
-   `<root-tfvars>`. The rest of the file is needed from step 3. Every root pins the same account,
-   so this file also serves the account check for work that targets no root, such as sign-in and
-   the step 2 read-backs. Then run, in order,
-   [Prepare the workstation toolchain](operator-access.md#prepare-the-workstation-toolchain),
-   [Enable Organizations and Identity Center](operator-access.md#enable-organizations-and-identity-center)
-   (a manual prerequisite, never exercised in this project),
-   [Set up an operator in Identity Center](operator-access.md#set-up-an-operator-in-identity-center)
-   and [Configure the local CLI profiles](operator-access.md#configure-the-local-cli-profiles),
-   whose step 2 runs the first account check against that file. When each has met its
-   **PASS when**, return here.
-   Before AWS work after that: [Sign in](operator-access.md#sign-in),
+Before step 1, read the list in [What these runbooks are](#scope) of what you supply or decide
+yourself: without it, the step it names stops. In this section, "step N" means Build order step N;
+README steps are always named as README steps.
+
+1. **Operator access**, once per workstation and operator.
+
+   First create the file the account check reads. Copy the tracked
+   `terraform/bootstrap/terraform.tfvars.example` to `terraform.tfvars` in the bootstrap root's
+   `<inputs-dir>`, a private directory per root, outside every working tree, that holds the root's
+   filled `backend.hcl` and `terraform.tfvars`
+   ([terraform-operations.md](terraform-operations.md#before-you-start)). Set `allowed_account_id`
+   to the project account's ID, and give that file's path as `<root-tfvars>`, the root's filled
+   `terraform.tfvars` that the account check reads. The rest of the file is needed from step 3.
+   Every root pins the same account, so this file also serves the account check for work that
+   targets no root, such as sign-in and the step 2 read-backs.
+
+   Then run these in order, and return here when each has met its **PASS when**:
+
+   - [Prepare the workstation toolchain](operator-access.md#prepare-the-workstation-toolchain)
+   - [Enable Organizations and Identity Center](operator-access.md#enable-organizations-and-identity-center),
+     a manual prerequisite, never exercised in this project
+   - [Set up an operator in Identity Center](operator-access.md#set-up-an-operator-in-identity-center)
+   - [Configure the local CLI profiles](operator-access.md#configure-the-local-cli-profiles), whose
+     step 2 runs the first account check against that file
+
+   Before AWS work after that, run [Sign in](operator-access.md#sign-in),
    [Verify the resolved identity](operator-access.md#verify-the-resolved-identity) and
    [Check the account before AWS commands](operator-access.md#check-the-account-before-aws-commands).
-   PASS: each linked procedure's **PASS when** holds; in particular the toolchain reports Terraform
-   v1.15.5 after its signature and hash checks, and on the profile the next work uses the identity
-   check prints `True` twice and the account check prints `ACCOUNT_MATCH=PASS`. Then continue at
-   step 2.
-2. **Cost controls, before the first billable resource.** Confirm the budget and its alerts
+
+   **PASS:** each linked procedure's **PASS when** holds; in particular the toolchain reports
+   Terraform v1.15.5 after its signature and hash checks, and on the profile the next work uses the
+   identity check prints `True` twice and the account check prints `ACCOUNT_MATCH=PASS`. Then
+   continue at step 2.
+
+2. **Cost controls, before the first billable resource.**
+
+   Confirm the budget and its alerts
    ([Budget check](cost-and-residue.md#read-back-the-budget-and-its-alert-states))
    and the six active cost-allocation tags
    ([Cost-allocation tags](cost-and-residue.md#read-back-the-cost-allocation-tags)).
    Neither the budget nor the tags have a published creation procedure. Before each later billable
    change, read the budget back again and
    [re-check the prices](cost-and-residue.md#re-check-prices-before-billable-work) the change bills.
-   PASS: one budget `cloud-platform-reference` of `200.0` `USD` with its five notifications, each
-   `OK` (an ACTUAL 100 `ALARM` alone follows the budget check's **Next step**) and each with at least
-   one subscriber, and the `UserDefined` cost-allocation keys exactly the six, each `Active`. Then
-   continue at step 3.
-   > **Warning:** On a new account the tag read-back passes only if resources carrying the six keys
-   > already exist, because AWS lists a key for activation only after a resource carries it. No
-   > order for a new account is published. Until the owner decides one, the read-back's STOP holds,
-   > and step 3, which creates the first billable resource, does not start
-   > ([Preconditions](cost-and-residue.md#background-prerequisites)).
+
+   > **Warning:** On a new account, the tag read-back's STOP holds until the owner decides the order
+   > for a new account, and step 3, which creates the first billable resource, does not start
+   > ([What these runbooks are](#scope),
+   > [Preconditions](cost-and-residue.md#background-prerequisites)).
+
+   **PASS:** one budget `cloud-platform-reference` of `200.0` `USD` with its five notifications,
+   each `OK` (an ACTUAL 100 `ALARM` alone follows the budget check's **Next step**) and each with at
+   least one subscriber, and the `UserDefined` cost-allocation keys exactly the six, each `Active`.
+   Then continue at step 3.
+
 3. **README step 1, the state backend.**
-   [Build the state backend and migrate into it](terraform-operations.md#build-the-state-backend-and-migrate-into-it):
+
+   Run [Build the state backend and migrate into it](terraform-operations.md#build-the-state-backend-and-migrate-into-it):
    Stage 1 on local state, then the migration, each under its own approval. The bucket is the
    first billable resource: before the Stage 1 apply, read the budget back and
    [re-check the prices](cost-and-residue.md#re-check-prices-before-billable-work) in the exported
    shell. The price table has no S3 storage rate, so that re-check stops, and the owner approves a
-   re-estimate before the apply; no written re-estimation procedure exists. PASS: state lists
-   exactly the five bootstrap resources, and Confirm convergence returns 0. Then continue at step 4,
-   or at step 5 for the Dev roots.
+   re-estimate before the apply; no written re-estimation procedure exists.
+
    > **Warning:** From a fresh clone, review and binding of the Stage 1 plan on local state have no
-   > published form ([Known reproducibility gaps](#known-reproducibility-gaps)). With `backend.tf`
-   > moved aside, step 2 of
+   > published form, and every root change in this order is bound before it is applied. With `backend.tf` moved aside, step 2
+   > of
    > [Bind the saved plan to its hash and to state](terraform-operations.md#bind-the-saved-plan-to-its-hash-and-to-state)
-   > as written reports `backend.tf` missing from the plan, and any mismatch is a STOP. Every root
-   > change in this order is bound before it is applied, so work stays stopped here until a
-   > reviewed decision is taken under explicit approval.
+   > as written reports `backend.tf` missing from the plan, and any mismatch is a STOP. Work stays
+   > stopped here until a reviewed decision is taken under explicit approval
+   > ([What these runbooks are](#scope), [Known reproducibility gaps](#known-reproducibility-gaps)).
    >
-   > **Warning:** From this step on, every root change is a campaign: its evidence set is redacted
-   > at capture, swept and sealed, with a redaction filter and sweep that you supply yourself
-   > ([Private working locations](#private-working-locations)).
-4. **README step 2, the foundation, in two steps around the registrar change.** Follow steps 1 to
-   8 of the [Normal path](public-dns-and-certificate.md#normal-path) of
+   > **Warning:** From this step on, every root change is a campaign, redacted at capture, swept and
+   > sealed with the evidence tooling you supply ([What these runbooks are](#scope),
+   > [Private working locations](#private-working-locations)).
+
+   **PASS:** state lists exactly the five bootstrap resources, and Confirm convergence returns 0.
+   Then continue at step 4, or at step 5 for the Dev roots.
+
+4. **README step 2, the foundation, in two steps around the registrar change.**
+
+   Follow steps 1 to 8 of the [Normal path](public-dns-and-certificate.md#normal-path) of
    public-dns-and-certificate.md: build the zone on its own and read it back, run the pre-cutover
    checks and the registrar lock check, change the name servers at the registrar, verify
    delegation, run the CAA check, then plan and apply the rest of the root with the certificate and
    read the certificate back. The CAA check comes after delegation because until then the previous
    provider still answers for `<apex>`. Neither the lock check nor the CAA check has a reviewed
-   procedure. PASS: the certificate apply reports 3 added, 0 changed, 0 destroyed, the certificate
-   and hosted-zone read-backs pass, and the convergence plan exits 0. Then follow steps 1 and 2 of
-   the [Normal path](persistent-foundations.md#normal-path) of persistent-foundations.md: read back
-   the evidence-store controls, and connect the GitLab project to the CI push identity, with its
-   trust and push-scope read-backs. PASS: all five evidence-store outputs equal their expected
-   result, the sub-claim read-back is `["project_id", "ref_type", "ref"]`, the trust and push-scope
-   read-backs pass, both masked variables exist, and no publish job declares `environment:`. Then
-   continue at step 5, if it has not run yet.
+   procedure.
+
    > **Warning:** On a build from nothing, the certificate-stage plan also creates the evidence
    > store, the registry repositories and the CI identity. That combined plan has never run and has
    > no reviewed shape, so Plan and apply the certificate stops at its step 2, and this step with
@@ -324,89 +399,93 @@ names stops.
    > ([What these runbooks are](#scope)). Steps 5 and 6 do not need step 4.
    >
    > **Warning:** The Public DNS section of the foundation README gives the rebuild order only:
-   > the zone, then the registrar change, then the rest of the root. Each stage runs through the
+   > the zone, then the registrar change, then the rest of the root. Run each stage through the
    > saved-plan procedures above, never as a direct `terraform apply`. The last stage is the
    > certificate stage, which on a build from nothing stops as the warning above says.
-5. **README step 3, the Dev retained baseline.** Follow steps 1 to 4 of the
-   [Normal path](dev-network.md#normal-path) of dev-network.md: check the zone mapping, build only
-   the retained baseline in two targeted applies, confirm the retained and runtime split, and read
-   back the network and the two Secrets Manager entries. PASS: state holds exactly the 21 retained
-   addresses, the plan that is never applied shows exactly the 17 runtime creates with an empty
-   drift list and both alerting variables `false`, and both read-backs pass. Then continue at
-   step 6. Steps 5 and 6 need steps 1 to 3 only: neither Dev root's configuration reads anything
-   from the foundation root, so they may run before step 4, or without it. The network stage is
-   `terraform/dev`'s first apply, so it can stop at its binding check ([What these runbooks are](#scope)).
+
+   **PASS:** the certificate apply reports 3 added, 0 changed, 0 destroyed, the certificate and
+   hosted-zone read-backs pass, and the convergence plan exits 0.
+
+   Then follow steps 1 and 2 of the [Normal path](persistent-foundations.md#normal-path) of
+   persistent-foundations.md: read back the evidence-store controls, and connect the GitLab project
+   to the CI push identity, with its trust and push-scope read-backs.
+
+   **PASS:** all five evidence-store outputs equal their expected result, the sub-claim read-back is
+   `["project_id", "ref_type", "ref"]`, the trust and push-scope read-backs pass, both masked
+   variables exist, and no publish job declares `environment:`. Then continue at step 5, if it has
+   not run yet.
+
+5. **README step 3, the Dev retained baseline.**
+
+   Follow steps 1 to 4 of the [Normal path](dev-network.md#normal-path) of dev-network.md: check
+   the zone mapping, build only the retained baseline in two targeted applies, confirm the retained
+   and runtime split, and read back the network and the two Secrets Manager entries. Steps 5 and 6
+   need steps 1 to 3 only: neither Dev root's configuration reads anything from the foundation
+   root, so they may run before step 4, or without it. The network stage is `terraform/dev`'s
+   first apply, so it can stop at its binding check ([What these runbooks are](#scope)).
+
    > **Warning:** A plain `terraform apply` in `terraform/dev` creates billable runtime, whatever
    > the reason for it, an `operator_cidr` update included. Build only with the targeted stages,
    > steps 1 to 6 of
    > [Build only the retained baseline](dev-network.md#build-only-the-retained-baseline), whose
-   > step 6 runs steps 3 and 4 of that Normal path (PASS: 14, then 7 `create` actions, each apply
-   > reporting its plan's counts, and the three checks of its step 6 passing). Then continue at
-   > step 6.
-6. **README step 4, the Dev datastore.** Follow steps 1 to 8 of the
-   [Normal path](dev-datastore.md#normal-path) of dev-datastore.md: Stage 1, the owner's one-time
-   master placement, the Stage 2 plan with its secret-absence proof, the pre-apply gate, the Stage
-   2 apply, read-back and convergence. PASS: its step 8, Confirm convergence, exits 0 with
-   `No changes.` and all eight managed resources refreshed, the master opened and closed once, and
-   the proof finds no occurrence. If you stop after Stage 1 and its read-backs, this step ends
-   there, and the two checks below do not run: both need the instance. Otherwise take the first
-   [CPU-credit reading](cost-and-residue.md#check-the-datastore-cpu-credits), steps 1 and 2 (PASS:
-   every metric prints lines, `CPUSurplusCreditsCharged` is 0 in every period and
-   `CPUSurplusCreditBalance` is 0 in the latest periods; a surplus balance with a documented cause,
-   such as the start-up burst after a create, and nothing charged, is recorded as an explained
-   review trigger, not a STOP). Then run
-   [Verify the retained side with the datastore present](dev-network.md#verify-the-retained-side-with-the-datastore-present),
-   steps 1 to 4 (PASS: exactly the security groups `cloud-platform-reference-dev-datastore` and
-   `default`, the boundary and network read-backs pass, and the only network interface is the
-   datastore's). Its PASS ends the Build order.
+   > step 6 runs steps 3 and 4 of that Normal path.
+
+   **PASS:** Build only the retained baseline shows 14, then 7 `create` actions, each apply
+   reporting its plan's counts, and the three checks of its step 6 pass; state holds exactly the 21 retained
+   addresses, the plan that is never applied shows exactly the 17 runtime creates with an empty
+   drift list and both alerting variables `false`, and both read-backs pass. Then continue at
+   step 6.
+
+6. **README step 4, the Dev datastore.**
+
+   Follow steps 1 to 8 of the [Normal path](dev-datastore.md#normal-path) of dev-datastore.md:
+   Stage 1, the owner's one-time master placement, the Stage 2 plan with its secret-absence proof,
+   the pre-apply gate, the Stage 2 apply, read-back and convergence.
+
    > **Warning:** Reaching Stage 1 already needs what steps 2 and 3 and every campaign need from
-   > you: the evidence tooling, the cost setup with, on a new account, the owner's decision on the
-   > tag order, and a reviewed decision on binding the bootstrap Stage 1 plan ([What these runbooks
-   > are](#scope)). Even with those, this step stops after Stage 1 and its read-backs, or earlier,
-   > at the binding check of Stage 1, this root's first apply. The rest needs three things this
-   > project has not published, which you supply yourself: a placement tool qualified offline,
-   > without which the master value cannot be placed; a tool that implements the secret-absence
-   > proof, without which the Stage 2 plan, the apply and the convergence plan do not start; and a
-   > way to run the Stage 2 apply that closing or losing the terminal cannot end, without which that
-   > apply does not run (dev-datastore.md, Reproducibility gaps).
+   > you ([What these runbooks are](#scope)). Even with those, it can stop at the binding check of
+   > Stage 1, this root's first apply, and it stops after Stage 1 and its read-backs unless you
+   > supply the three datastore items on that list. Without the placement tool the master value
+   > cannot be placed; without the secret-absence proof tool the Stage 2 plan, the apply and the
+   > convergence plan do not start; without a way to run the Stage 2 apply that closing or losing
+   > the terminal cannot end, that apply does not run
+   > ([dev-datastore.md](dev-datastore.md#reproducibility-gaps)).
 
-The root builds in steps 3 to 6 run the shared Terraform procedures of terraform-operations.md
-through their own runbook procedures, which name the steps to run, the PASS to reach and where to
-return. In step 4 the zone stage skips convergence until the certificate apply. A later change to
-a built root runs steps 1 to 13 of the [Normal path](terraform-operations.md#normal-path) of
-terraform-operations.md: static checks, initialization, state inspection, debug logging off, a
-saved plan with its review and binding, the owner's approval, one apply, the root's read-back,
-convergence and the sealed evidence set. PASS: the step 12 convergence plan exits 0 with
-`No changes.`, and step 13 has sealed the set. Then return to the work that needed the change.
-From public material a later change currently stops before apply on every root; see the Normal
-path's root table and [Known reproducibility gaps](#known-reproducibility-gaps). The targeted build
-of `terraform/dev` is the exception to convergence: while no runtime exists, an untargeted plan
-there shows the runtime still to add and exits 2, so Confirm convergence does not apply. Steps 4
-and 6 of Build only the retained baseline hold the checks that replace it.
+   **PASS:** its step 8, Confirm convergence, exits 0 with `No changes.` and all eight managed
+   resources refreshed, the master opened and closed once, and the proof finds no occurrence.
 
-Open the campaign's evidence set before the change and seal it at the end: steps 1 to 7 of the
-[Normal path](evidence-handling.md#normal-path) of evidence-handling.md, whose steps 4 to 7 seal
-it. PASS: step 7's manifest check reports every entry OK, the set holds no file the manifest does
-not list, and the manifest's full SHA-256 is in the private record outside the set. Then return to
-the step of this list that sent you. In step 4, public-dns-and-certificate.md runs three
-campaigns, the zone build, the cutover and the certificate, each sealed when it ends; in step 5,
-Build only the retained baseline is one campaign, opened before its step 2 and sealed after its
-step 6; in step 6, dev-datastore.md opens and closes its sets in its own steps. A long or
-sensitive operation first checks session headroom and runs in an exported shell, where the task
-runbook says so.
+   If you stop after Stage 1 and its read-backs, this step ends there, and the two checks below do
+   not run: both need the instance. Otherwise:
 
-This path has not been run end to end from a fresh clone of the current configuration. The first
-builds recorded for the bootstrap, foundation and Dev roots ran on earlier shapes of those roots.
-The first-build forms for the current configuration are listed under Not yet exercised in
-[terraform-operations.md](terraform-operations.md#not-yet-exercised),
-[persistent-foundations.md](persistent-foundations.md#not-yet-exercised),
-[public-dns-and-certificate.md](public-dns-and-certificate.md#not-yet-exercised) and
-[dev-network.md](dev-network.md#not-yet-exercised), and the datastore's build order is in its
-[README](../../terraform/dev-datastore/README.md#what-it-creates). That README's `-target` example
-has never run; the published
-[Stage 1](dev-datastore.md#stage-1-create-the-network-boundary-and-the-empty-secret-containers)
-plans the root at commit `aeb1622` instead
-([dev-datastore.md](dev-datastore.md#not-yet-exercised)).
+   - Take the first [CPU-credit reading](cost-and-residue.md#check-the-datastore-cpu-credits),
+     steps 1 and 2. PASS: every metric prints lines, `CPUSurplusCreditsCharged` is 0 in every
+     period and `CPUSurplusCreditBalance` is 0 in the latest periods. A surplus balance with a
+     documented cause, such as the start-up burst after a create, and nothing charged, is recorded
+     as an explained review trigger, not a STOP.
+   - Then run
+     [Verify the retained side with the datastore present](dev-network.md#verify-the-retained-side-with-the-datastore-present),
+     steps 1 to 4. PASS: exactly the security groups `cloud-platform-reference-dev-datastore` and
+     `default`, the boundary and network read-backs pass, and the only network interface is the
+     datastore's. Its PASS ends the Build order.
+
+**Terraform in steps 3 to 6.** The root builds run the shared Terraform procedures of
+terraform-operations.md through their own runbook procedures, which name the steps to run, the PASS
+to reach and where to return. In step 4 the zone stage skips convergence until the certificate
+apply. The targeted build of `terraform/dev` is the exception to convergence: while no runtime
+exists, an untargeted plan there shows the runtime still to add and exits 2, so Confirm convergence
+does not apply. Steps 4 and 6 of Build only the retained baseline hold the checks that replace it.
+
+**A later change to a built root** follows the Every change to a root row of
+[Routine operations](#routine-operations). From public material it currently stops before apply on
+every root.
+
+**Evidence for each campaign** follows the Every campaign row of
+[Routine operations](#routine-operations), whose steps 4 to 7 seal the set; then return to the step
+of this list that sent you. In step 4, public-dns-and-certificate.md runs three campaigns, the zone
+build, the cutover and the certificate, each sealed when it ends; in step 5, Build only the
+retained baseline is one campaign, opened before its step 2 and sealed after its step 6; in step 6,
+dev-datastore.md opens and closes its sets in its own steps. A long or sensitive operation first
+checks session headroom and runs in an exported shell, where the task runbook says so.
 
 ## Routine operations
 
@@ -416,7 +495,7 @@ These recur during and after the build. Run only what the occasion calls for.
 |---|---|
 | Before AWS work | [Sign in](operator-access.md#sign-in), [Verify the resolved identity](operator-access.md#verify-the-resolved-identity), [Check the account before AWS commands](operator-access.md#check-the-account-before-aws-commands) (PASS: `True` twice and `ACCOUNT_MATCH=PASS` on the profile the work uses; then return to the work) |
 | Before a long or sensitive operation | [Check session headroom before long operations](operator-access.md#check-session-headroom-before-long-operations), then [Export role credentials once](operator-access.md#export-role-credentials-once) |
-| Every change to a root | Steps 1 to 13 of the [Normal path](terraform-operations.md#normal-path) of terraform-operations.md, with the root's read-back. PASS: step 12 exits 0 with `No changes.` and step 13 has sealed the evidence set; then return to the work that needed the change. From public material a later change currently stops before apply on every root; see its root table and [Known reproducibility gaps](#known-reproducibility-gaps) |
+| Every change to a root | Steps 1 to 13 of the [Normal path](terraform-operations.md#normal-path) of terraform-operations.md: static checks, initialization, state inspection, debug logging off, a saved plan with its review and binding, the owner's approval, one apply, the root's read-back, convergence and the sealed evidence set. PASS: step 12 exits 0 with `No changes.` and step 13 has sealed the evidence set; then return to the work that needed the change. From public material a later change currently stops before apply on every root; see its root table and [Known reproducibility gaps](#known-reproducibility-gaps) |
 | Before each billable change | [Budget check](cost-and-residue.md#read-back-the-budget-and-its-alert-states), [Price check](cost-and-residue.md#re-check-prices-before-billable-work) |
 | Every campaign | Steps 1 to 7 of the [Normal path](evidence-handling.md#normal-path) of evidence-handling.md: capture with redaction, a sweep with its planted positive control, handling hits, sealing. Open the set before the operation and seal it when the operation ends. PASS: step 7's manifest check reports every entry OK, the set holds no file the manifest does not list, and the manifest's full SHA-256 is in the private record outside the set; then return to the work that opened the campaign. Steps 8 to 10 run only around a teardown (next row) |
 | Around every teardown | [Export the sealed set before teardown](evidence-handling.md#export-the-sealed-set-before-teardown); after the teardown, [Orphan census](cost-and-residue.md#run-the-orphan-census), export the final set and [Read back exported evidence after destruction](evidence-handling.md#read-back-exported-evidence-after-destruction). The teardown itself belongs to runtime windows |
@@ -436,7 +515,7 @@ These recur during and after the build. Run only what the occasion calls for.
 | Prepare a shell for a long or sensitive operation | [operator-access.md](operator-access.md) | [Check session headroom before long operations](operator-access.md#check-session-headroom-before-long-operations), [Export role credentials once](operator-access.md#export-role-credentials-once) |
 | Retire a human IAM user's access key or console password | [operator-access.md](operator-access.md) | [Retire legacy IAM user credentials](operator-access.md#retire-legacy-iam-user-credentials) |
 | Build the state backend | [terraform-operations.md](terraform-operations.md) | [Build the state backend and migrate into it](terraform-operations.md#build-the-state-backend-and-migrate-into-it) |
-| Change a Terraform root | [terraform-operations.md](terraform-operations.md) | [Normal path](terraform-operations.md#normal-path), steps 1 to 13, done when step 12 exits 0 with `No changes.` and step 13 has sealed the evidence set; then return to the work that needed the change (currently stops before apply on every root; see the path's root table) |
+| Change a Terraform root | [terraform-operations.md](terraform-operations.md) | [Normal path](terraform-operations.md#normal-path), steps 1 to 13, as in [Routine operations](#routine-operations) (currently stops before apply on every root; see the path's root table) |
 | Read state without writing it, or plan without taking the lock | [terraform-operations.md](terraform-operations.md) | [Inspect state without writing it](terraform-operations.md#inspect-state-without-writing-it), [Plan without taking the state lock](terraform-operations.md#plan-without-taking-the-state-lock) |
 | Change resource addresses in a refactor | [terraform-operations.md](terraform-operations.md) | [Move resource addresses with moved blocks](terraform-operations.md#move-resource-addresses-with-moved-blocks) (stops as the Normal path's root table says; see [Known reproducibility gaps](#known-reproducibility-gaps)) |
 | Find out whether state lags AWS, and reconcile it | [terraform-operations.md](terraform-operations.md) | [Detect state drift](terraform-operations.md#detect-state-drift), [Reconcile explained state-only drift](terraform-operations.md#reconcile-explained-state-only-drift) |
@@ -525,6 +604,19 @@ DESIGNED-NOT-EXECUTED or UNEXERCISED has never run. Read the list before relying
   as procedures, the weekly review, the budget-level responses and most cleanup classes.
 - [evidence-handling.md](evidence-handling.md#not-yet-exercised): export as published, the planted
   positive control, the remediation checks and the retention review.
+
+**The Build order, end to end.** The first builds recorded for the bootstrap, foundation and Dev
+roots ran on earlier shapes of those roots. The first-build forms for the current configuration are
+listed under Not yet exercised in
+[terraform-operations.md](terraform-operations.md#not-yet-exercised),
+[persistent-foundations.md](persistent-foundations.md#not-yet-exercised),
+[public-dns-and-certificate.md](public-dns-and-certificate.md#not-yet-exercised) and
+[dev-network.md](dev-network.md#not-yet-exercised), and the datastore's build order is in its
+[README](../../terraform/dev-datastore/README.md#what-it-creates). That README's `-target` example
+has never run; the published
+[Stage 1](dev-datastore.md#stage-1-create-the-network-boundary-and-the-empty-secret-containers)
+plans the root at commit `aeb1622` instead
+([dev-datastore.md](dev-datastore.md#not-yet-exercised)).
 
 ## Validation labels
 
@@ -622,6 +714,20 @@ reviewed decision is taken under explicit approval.
 
 ## Conventions
 
+- **How a runbook is laid out.** Every runbook except [cost-and-residue.md](cost-and-residue.md)
+  opens with its purpose and **When to use this runbook**, then has the same sections: **Normal
+  path**, the procedures in the order a normal run uses them; **Before you start**; **Procedures**,
+  normal path first, then checks, then failure and recovery; **Not yet exercised**;
+  **Reproducibility gaps**; and **Background prerequisites**. Every procedure opens with its
+  validation label and what it does. Then, where they apply, come **Before you start.**, **Safety
+  and authority.** and numbered step headings, each step with its command, **Expected:** and **If
+  not:**. The procedure closes with **Expected result.**, **PASS when.**, **STOP if.**, **If it
+  fails.**, **Evidence to keep.** and **Next step.** Its **Engineering notes** hold the audit
+  detail: the validation table, then the rationale and history kept out of the main path.
+  cost-and-residue.md uses a compact operator layout: a trigger table, one precondition list, one
+  pattern per procedure (validation line, steps, PASS, STOP or HOLD, evidence), one **Engineering
+  notes** table for all its procedures, and **Known limitations** holding its **Not yet exercised**
+  and **Reproducibility gaps** lists.
 - **Placeholders.** Angle brackets stand wherever a real value would go, for example `<profile>`,
   `<allowed-account-id>`, `<state-bucket>`, `<evidence-bucket>`, `<apex>`, `<private-dir>`,
   `<plan-file>` and `<commit>`. Each runbook defines the ones it uses; the Terraform placeholders
