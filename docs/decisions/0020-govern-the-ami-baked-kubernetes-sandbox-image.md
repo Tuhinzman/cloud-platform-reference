@@ -8,7 +8,7 @@ This record makes narrow changes to two Accepted decisions, named exactly in
 **Supersession** below and bounded to one image: the Kubernetes pod sandbox
 image baked into the EKS-optimized Amazon Linux 2023 AMI that the dev node
 group selects by a pinned release. It supersedes one sentence and one clause of
-ADR-0017's Decision, and three sentences of ADR-0019, only as they apply to
+ADR-0017's Decision, and four sentences of ADR-0019, only as they apply to
 that image. For that image it also adds the stricter empty-scan disposition in
 the Decision, which removes nothing from ADR-0015.
 
@@ -32,23 +32,23 @@ runs in every pod. On this project's node path, the EKS-optimized Amazon
 Linux 2023 AMI chosen by `ami_type`, no Kubernetes object selects that
 image. It comes with the AMI.
 
-Two measurements, made before any node-bearing window on this release and with
-no node joining a cluster, established the following.
+Two bodies of retained evidence, gathered before any node-bearing window on
+this release and with no node joining a cluster, established the following.
 
-A read-only control-surface measurement, from the provider schema, AWS's
-published release parameters, the AMI metadata and the AMI's public build
-source:
+A read-only control-surface reading, which exercised no control and is not
+ADR-0019's node/AMI measurement, from the provider schema, AWS's published
+release parameters, the AMI metadata and the AMI's public build source:
 
 - **Provider controls.** The pinned AWS provider exposes `release_version`
   on the managed node group, and `image_id` and `user_data` on the launch
   template.
 - **Release pinning.** For Kubernetes 1.36, AWS publishes one parameter set
   per AMI release; 18 releases were listed. An unpinned node group takes
-  whichever release AWS recommends when the group is created (AWS-documented,
-  not measured), and that recommendation's parameter was at its eighteenth
-  version. Release `1.36.4-20260923` names one public, immutable AMI per
-  region, `amazon-eks-node-al2023-x86_64-standard-1.36-v20260923`, measured in
-  us-east-1.
+  the latest release for the cluster version when the group is created
+  (AWS-documented, not measured), and AWS's recommended-release parameter was
+  at its eighteenth version. Release `1.36.4-20260923` names one public,
+  immutable AMI per region,
+  `amazon-eks-node-al2023-x86_64-standard-1.36-v20260923`, read in us-east-1.
 - **How the image is baked.** The AMI's public build source at the release
   tag of the same name, matched by name (`awslabs/amazon-eks-ami`, tag
   `v20260923`, commit
@@ -60,9 +60,10 @@ source:
   - At node start, the node agent sets containerd's sandbox image to that
     local tag.
   - So, from source, node startup does not pull it.
-- **Cost of a project-owned sandbox.** A project-owned sandbox is possible
-  only by taking over node bootstrap, through a custom AMI or a containerd
-  override in launch-template user data.
+- **Cost of a project-owned sandbox.** From the build source and the provider
+  schema, with neither control exercised, a project-owned sandbox would require
+  taking over node bootstrap, through a custom AMI or a containerd override in
+  launch-template user data.
   - The AMI build needs explicit ECR credentials to pull a sandbox image
     from an ECR registry.
   - The node agent's source records that on one path, its SOCI snapshotter
@@ -79,8 +80,9 @@ A pre-window probe and two registry retrievals:
   and the baked image was read from its containerd store and exported archive:
   - the store holds two tag records for it, `localhost/kubernetes/pause:latest`
     and its recorded source reference, both naming the same index;
-  - its recorded source is `eks/pause:3.10` in the AWS EKS image registry for
-    us-west-2, not the build template's default,
+  - its recorded source is `eks/pause:3.10` in a us-west-2 Amazon ECR registry
+    whose account the probe masked, taken to be AWS's EKS image registry but
+    not compared, and not the build template's default,
     `public.ecr.aws/eks-distro/kubernetes/pause:3.10`, whose digest was never
     resolved;
   - the archive's index is
@@ -92,7 +94,7 @@ A pre-window probe and two registry retrievals:
     and one layer,
     `sha256:6ea5d75b35fc7de260b98abfe408883d215ad7c91588fc40ce603d40878c7951`,
     each re-hashed from the stored bytes;
-  - the store holds no digest-named record for the image.
+  - the store holds no `@sha256:` repository-digest record for either name.
 - **Retrieval by digest.** The probe's index was retrieved by digest, never by
   tag, from the AWS EKS image registry for us-east-1 in two separate sessions.
   Both times it recomputed from its bytes and its single `linux/amd64` entry
@@ -106,9 +108,9 @@ A pre-window probe and two registry retrievals:
   analyze: the single layer holds one ELF file, `pause`, and no package
   database, language manifest, archive or embedded dependency metadata. The
   gate reported no finding. That records the absence of an analyzable surface,
-  not the absence of vulnerabilities. The first evaluation held as an
-  unexplained empty scan; the second, with an independent inventory of the
-  layer, met the five conditions in the Decision.
+  not the absence of vulnerabilities. The first evaluation held,
+  because that window's grant made any empty scan a HOLD; the second, with an
+  independent inventory of the layer, met the five conditions in the Decision.
 
 No Kubernetes node has run this AMI in this project; only the probe instance,
 which joined no cluster, has booted it. That node startup uses the baked image
@@ -117,12 +119,14 @@ and pulls no other is source-derived, not measured.
 So the exact baked identity of a pinned release can be measured, retrieved and
 put through ADR-0015's fixed gate before any node of the release runs; for this
 image the gate finds nothing to analyze. What cannot be measured before a node
-exists is how the kubelet reports the image, and with no digest-named record in
-the store, `node.status.images` may not expose its digest.
+exists is how the kubelet reports the image, and with no repository-digest
+record in the store, `node.status.images` may not expose its digest.
 
-ADR-0017's revisit trigger for an unmirrorable surface is not literally met.
-This image can be mirrored, but only by taking over node bootstrap, which
-this record declines for the reasons below. Without this record, ADR-0017
+ADR-0017's revisit trigger for an unmirrorable surface is not met: nothing has
+shown this image to be unmirrorable. The read-only reading indicates, from
+source and schema and with no control exercised, that mirroring it would
+require taking over node bootstrap, which this record declines for the reasons
+below. Without this record, ADR-0017
 would require this image to be mirrored before any node-bearing window, which
 is option A; with option A declined, no component that runs a pod could run.
 
@@ -160,8 +164,8 @@ image baked into the EKS-optimized Amazon Linux 2023 AMI named by the node
 group's pinned `release_version`. It applies only while the node group
 selects that AMI through `ami_type` and `release_version`, with no custom AMI
 and no containerd sandbox override. It covers no other image of any kind. Any
-other image found delivered by the node/AMI mechanism stays under ADR-0017
-unchanged and blocks as ADR-0017 requires.
+other image found delivered by the node/AMI mechanism is governed by ADR-0017
+and ADR-0019 exactly as they stand, and this record changes nothing for it.
 
 **ADR-0015.** The sandbox image is a non-workload runtime component that the
 platform operates on every node, so ADR-0015 governs it, unchanged. **This
@@ -189,13 +193,15 @@ window on a pinned release, with no node of that release running:
    one `linux/amd64` entry, and that the entry, its config and its layers
    equal the probe's.
 
-The probe is valid only when the node agent's configuration step has failed for
-want of a node configuration, and neither its run step nor the kubelet is
-active; that boot's containerd journal shows no pull and no pause image created
-or deleted; the store holds exactly two records for the image, the local tag and
-its recorded source reference, both naming the index, and no digest-named
-record; and the store and the exported archive name the same index. Any other
-probe result is a HOLD, and a release that cannot be probed validly is BLOCKED.
+The probe is valid only when the node agent's configuration step has failed,
+with no node configuration in the user data or the node agent's drop-in
+directory, and neither its run step nor the kubelet is active; that boot's
+containerd journal shows no pull and no pause-named image record created or
+deleted; the store holds exactly two pause-named records, the local tag and its
+recorded source reference, both naming the index, and no `@sha256:`
+repository-digest record; and the store and the exported archive name the same
+index. Any other probe result is a HOLD, and a release that cannot be probed
+validly is BLOCKED.
 
 The probe's identity, with its bytes retrieved and verified as in step 4, is
 the recorded identity for the release. Recording it admits nothing under
@@ -222,14 +228,15 @@ NOT-APPLICABLE-NO-ANALYZABLE-COMPONENTS is a classification, not a gate pass. It
 records that the gate had nothing to evaluate. It is never described as clean,
 vulnerability-free or security-gate-passed, it is neither a gate admission nor
 an ADR-0015 exception, and no claim that depends on the sandbox image says
-otherwise. Whether a node-bearing window may run while the sandbox image
-carries this classification is an owner disposition, recorded for that window
-alone before it opens; without it the window stays closed. The disposition
-exists only for the dev node group in Scope, never in the Production
-Validation role. This record does not make that disposition, and no window
-inherits it. A public claim or evidence chain whose conclusion depends on the
-sandbox image carries the classification as its qualifier. Any other empty
-scan, an unmet condition or a failed scan is a HOLD.
+otherwise. Whether a node-bearing window may run while the sandbox image carries
+this classification is an owner disposition, recorded for that window alone
+before it opens; without it the window stays closed. The disposition exists only
+for the dev node group in Scope, never in the Production Validation role. This
+record does not make that disposition, and no window inherits it. The
+disposition is neither an ADR-0015 admission nor an ADR-0015 exception, and
+admits nothing. A public claim or evidence chain whose conclusion depends on the
+sandbox image carries the classification as its qualifier. Any other empty scan,
+an unmet condition or a failed scan is a HOLD.
 
 **In-window node checks.** Immediately after each node joins, and before any
 workload or GitOps deployment:
@@ -241,18 +248,24 @@ workload or GitOps deployment:
 
 The sandbox identity rests on the probe and on the immutable AMI each node is
 bound to; the retrieval supplies the verified bytes that are evaluated.
-`node.status.images` is recorded but is not the sole identity authority: if it
-reports no digest for the sandbox image, that is recorded, never inferred. If
-it reports, for either name the probe recorded, a digest that is neither the
-recorded index nor its `linux/amd64` entry, that is a mismatch.
+`node.status.images` is recorded as an observation and is not an identity
+authority: if it reports no digest for the sandbox image, that is recorded,
+never inferred. If it reports, for either name the probe recorded, a digest
+that is neither the recorded index nor its `linux/amd64` entry, that is a
+mismatch.
 
 Workload and GitOps validation does not start until those checks pass.
 
-**Windows with no pod.** A window in which no pod runs, including one with no
-node, executes no sandbox container. The checks this record requires for it
-still apply, but the non-execution is evidence of nothing about the image: no
-runtime admission, and no identity beyond each node's binding to the recorded
-AMI, is inferred from it.
+**Windows planned with no pod.** A plan that creates no node or schedules no
+pod does not establish that no sandbox container runs. Whether any node joined,
+and whether any pod, and so any sandbox container, ran on a node, are in-window
+assertions measured from captured output, never inferred from the plan; one
+that is not measured is recorded as not established, and the window is treated
+as one in which the sandbox image ran. Every check this record requires for a
+node-bearing window applies whatever the plan says. A measured absence of
+sandbox execution is evidence of nothing about the image: no runtime
+admission, and no identity beyond each node's binding to the recorded AMI, is
+inferred from it.
 
 **No equivalence by analogy.** No other image and no other AMI is governed by
 analogy. Pinning an AMI release is not mirroring, and this record creates no
@@ -287,10 +300,14 @@ and no project-owned copy.
   baked image.
 - That node startup uses the baked image and pulls no other is source-derived,
   not measured.
+- The probe read the AMI's Kubernetes image store but recorded only the
+  sandbox image's records, so whether that store holds any other image is not
+  established.
 - The scanner finds no analyzable component in this image, so the gate result
   carries no information about vulnerabilities in the `pause` binary.
-- The kubelet reports a bounded number of images, largest first. That is why
-  the capture is taken as each node joins.
+- The kubelet reports a bounded number of images, largest first
+  (Kubernetes-documented, not measured here). That is why the capture is taken
+  as each node joins.
 - Pinning the release also freezes the node operating system and kubelet
   patch level until a reviewed change moves it.
 
@@ -325,16 +342,18 @@ Not claimed:
 - that `node.status.images` exposes the sandbox digest;
 - that any Kubernetes node has run this AMI; no node-bearing runtime has
   happened under this record at proposal;
+- that the control-surface reading is ADR-0019's node/AMI measurement, or that
+  any node/AMI control was exercised;
 - that this image belongs to ADR-0019's AWS-delivered class.
 
 ## Evidence
 
-Measurements retained as evidence:
-- a read-only control-surface measurement on 2026-09-27, covering the pinned
-  provider schema, AWS's published Kubernetes 1.36 Amazon Linux 2023 release
-  parameters, the metadata of the AMI for release `1.36.4-20260923`, and the
-  AMI's public build source at tag `v20260923`, with each file hash-matched to
-  its Git blob;
+Retained as evidence:
+- a read-only control-surface reading on 2026-09-27, in which no control was
+  exercised, covering the pinned provider schema, AWS's published Kubernetes
+  1.36 Amazon Linux 2023 release parameters, the metadata of the AMI for
+  release `1.36.4-20260923`, and the AMI's public build source at tag
+  `v20260923`, with each file hash-matched to its Git blob;
 - a pre-window probe on 2026-10-01: one instance launched from that AMI
   outside any cluster, read and terminated, with its security group and volume
   removed and a clean census;
@@ -389,24 +408,47 @@ Supersession, keep images under ADR-0017 unchanged:
 > remain under ADR-0017 unchanged.
 
 > Everything the project can pin or mirror stays under ADR-0017 unchanged,
-> including ...
+> including project-built workload images, project-selected third-party
+> workload images, Helm and controller images chosen by platform desired
+> state, Argo CD, ESO, observability components, Kafka, Valkey, seed and client
+> images, and init containers of all of these.
 
 > For every other image identity both stand unchanged and in full.
 
-In the third, "both" is ADR-0017's A and B. Each is superseded only as applied
-to the image in Scope, for which ADR-0017 reads as changed by this record.
+In the third, "both" is ADR-0017's A and B. Each of these three sentences is
+superseded only as applied to the image in Scope, for which ADR-0017 reads as
+changed by this record.
+
+A fourth sentence, in ADR-0019's Decision, sets when the node/AMI measurement
+is owed:
+
+> The measurement is owed before the first node-bearing runtime window.
+
+ADR-0019's Context gives the measurement's purpose: it is "owed before the
+class is relied on for it". For the image in Scope the sentence is circular:
+every pod runs that image, and exercising the node/AMI controls through the
+managed node group launches nodes, so the first node-bearing window would wait
+on a measurement that is itself node-bearing. The probe measured this image's
+identity before any node-bearing window, and this record relies on no part of
+the AWS-delivered class for it. So the fourth sentence is superseded only as
+applied to the image in Scope: for that image, a node-bearing window needs the
+pre-window identity and the per-window evaluation before it opens and the
+in-window node checks inside it, as the Decision sets out, and the measurement
+stays owed before the class is relied on for it.
+
 Nothing else in ADR-0019 is superseded.
-- The control-surface measurement read, from the pinned provider schema, that
-  the launch template exposes `image_id` and `user_data`, and, from the AMI's
-  hash-matched build source, that a custom AMI or a containerd sandbox
+- The read-only control-surface reading found, in the pinned provider schema,
+  that the launch template exposes `image_id` and `user_data`, and, in the
+  AMI's hash-matched build source, that a custom AMI or a containerd sandbox
   override in user data would replace the baked image. Neither control was
-  exercised.
-- Either way the image is outside the AWS-delivered class: if that reading is
-  ADR-0019's measurement for this image, its second condition fails; if it is
-  not, ADR-0019 keeps the image under ADR-0017 until the measurement exists.
-- This record does not discharge ADR-0019's owed node/AMI measurement, for
-  this image or any other; its requirement that the measurement precede the
-  first node-bearing runtime window stands.
+  exercised, and the reading is not ADR-0019's node/AMI measurement.
+- Until that measurement exists, ADR-0019 keeps this image under ADR-0017,
+  which for this image reads as changed by this record. Nothing in this record
+  claims or relies on the AWS-delivered class for it.
+- For every other image the node/AMI mechanism delivers, all four sentences
+  stand: until the measurement exists such an image stays under ADR-0017
+  unchanged, and the measurement is owed before the first node-bearing runtime
+  window.
 
 ## Revisit Triggers
 
@@ -427,4 +469,7 @@ Revisit if:
   gate definition changes;
 - the node group changes AMI family, adopts a custom AMI, or adds a
   containerd override, any of which ends this record's scope;
+- an exercised measurement shows that the node/AMI mechanism exposes no
+  supported project control over this image, which would make it eligible for
+  ADR-0019's class;
 - any other image is found delivered by the node/AMI mechanism.
