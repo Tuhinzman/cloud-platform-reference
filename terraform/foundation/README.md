@@ -258,14 +258,17 @@ places in this root as a persistent shared foundation; the
 [architecture baseline](../../docs/architecture-baseline.md) records its purpose,
 recovery and lifecycle. The domain is the owner-private input `public_domain` and
 is never committed. Environment records are to be created inside a window by the
-record controller ADR-0018 requires, which is not implemented yet; this root
-creates none.
+record controller ADR-0018 requires, which is not deployed yet; this root creates
+none.
 
-No role this repository declares can write the zone. Until the record
-controller's role exists, scoped to this zone alone, write access comes only from
-administrative access to the account, and whoever can write the zone can have a
-certificate issued for the domain. The zone is needed for as long as the platform
-serves a public HTTPS endpoint under that domain.
+The one role this repository declares that can write the zone is the dev root's
+record controller role, which exists only during a public-entry window and has never
+been applied ([Public entry](../dev/README.md#public-entry)). It can change only the
+environment's hostname and its ownership marker, as `A` and `TXT` records, so it
+cannot write the `CNAME` a certificate's DNS validation uses. Otherwise write access
+comes only from administrative access to the account, and whoever can write the zone
+can have a certificate issued for the domain. The zone is needed for as long as the
+platform serves a public HTTPS endpoint under that domain.
 
 The zone is applied on its own first. The registrar is then pointed at the four
 name servers in the `public_zone_name_servers` output, and the certificate is

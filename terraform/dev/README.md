@@ -64,7 +64,7 @@ None of those carries an hourly charge. The runtime below does.
 | `aws_eks_node_group` | Two `m6a.large` on-demand nodes on the private subnets |
 | `aws_eks_addon` × 4 | `vpc-cni`, `coredns`, `kube-proxy`, `eks-pod-identity-agent`, each pinned |
 
-Finally the environment's identity, secrets and configuration. The first five
+Then the environment's identity, secrets and configuration. The first five
 survive a runtime teardown and are removed only with the Dev environment. The
 Pod Identity association is cluster-scoped and goes when the cluster goes, so in
 lifecycle terms it belongs with the runtime above. Each Secrets Manager entry
@@ -79,6 +79,16 @@ none.
 | `aws_iam_role` + `aws_iam_role_policy` | Workload identity, inline policy scoped to that one secret and that one parameter |
 | `aws_iam_role` + `aws_iam_role_policy` | Secret-synchronisation controller identity, inline policy scoped to those two secrets and nothing else |
 | `aws_eks_pod_identity_association` | Binds the controller identity to one namespace and one ServiceAccount on the cluster |
+
+The public-entry identities exist only when `public_entry_enabled` is true, for a
+public-entry window, and go with its runtime ([Public entry](#public-entry)).
+
+| Resource | Purpose |
+|---|---|
+| `aws_iam_role` + `aws_iam_role_policy` | Record controller identity, inline policy that changes only the environment's two record names, as A and TXT, in the one hosted zone |
+| `aws_eks_pod_identity_association` | Binds it to the `external-dns` ServiceAccount in the `external-dns` namespace |
+| `aws_iam_role` + `aws_iam_role_policy` | Load balancer controller identity, inline policy from the controller's upstream policy less two grants |
+| `aws_eks_pod_identity_association` | Binds it to the `aws-load-balancer-controller` ServiceAccount in `kube-system` |
 
 ## Address plan
 
@@ -132,6 +142,13 @@ windows a new address needs only the updated `terraform.tfvars`, with nothing
 applied: a plain `terraform apply` here creates the billable runtime, and the
 retained baseline is built only with targeted plans
 ([Build only the retained baseline](../../docs/runbooks/dev-network.md#build-only-the-retained-baseline)).
+
+Three optional inputs serve the public-entry mode only. `public_entry_enabled` is
+false by default and is accepted as true only with worker capacity and without node
+measurement. `public_hosted_zone_id`, the ID of the hosted zone the foundation root
+created, and `public_domain`, its apex domain, are owner-private and sensitive, and
+each is required only when the mode is on. `tests/public_entry.tftest.hcl` checks
+those rules, and that no other mode creates a public-entry identity, the same way.
 
 `backend.hcl` is a separate value. It carries the state bucket the bootstrap
 root created, which is where this root's own state object goes. This root
@@ -206,7 +223,10 @@ a runtime teardown, and ADR-0013 makes `Lifecycle` the filter an orphan scan
 reads, so left at the default they would look like runtime left behind every
 time a window closed. Nothing else here carries `persistent`. The Pod Identity
 association is the case worth naming, because it is identity by function and
-ephemeral by retention: it is cluster-scoped and goes when the cluster goes.
+ephemeral by retention: it is cluster-scoped and goes when the cluster goes. The
+public-entry roles and associations carry `Component = identity` and keep the
+`ephemeral` default on purpose: like the alerting campaign's, they exist for a window
+and are destroyed with its runtime, so one left behind reads as runtime residue.
 
 `Component` describes function, not retention, and the two questions are
 answered independently. `network` is the provider-level default and no longer
@@ -447,6 +467,47 @@ exist for an alerting window and are destroyed with its runtime. The delivery pa
 has been exercised end to end; what that proved and did not is stated in the
 repository README.
 
+### Public entry
+
+`public-entry-identity.tf` declares the AWS side of the two controllers
+[ADR-0018](../../docs/decisions/0018-define-the-public-entry-implementation-dns-and-certificate-model.md)
+requires: a role, an inline policy and a Pod Identity association for the AWS Load
+Balancer Controller and for the record controller, ExternalDNS. The controllers
+themselves are Kubernetes installs and are not defined here. The six resources exist
+only when `public_entry_enabled` is true, in worker mode without node measurement, and
+are destroyed with that window's runtime, so an ordinary window, node measurement and
+the retained baseline never carry them. Both roles trust `pods.eks.amazonaws.com`
+alone, as the roles above do.
+
+The record controller's policy names the one hosted zone given as
+`public_hosted_zone_id`. In that zone it may list the records, and change records only
+for two names, `dev.<public_domain>` and its ownership marker `a-dev.<public_domain>`,
+and only as `A` and `TXT` records. Those are the names ExternalDNS v0.23.0 writes for
+an alias record when its values exclude `AAAA` and set no TXT prefix or suffix;
+configured otherwise, its writes are denied. No `CNAME` is allowed, so the
+role cannot write a certificate's DNS validation record. One grant is account-wide:
+`route53:ListHostedZones`, which AWS does not scope to a resource and which ExternalDNS
+calls before it applies its zone filter. It returns zone metadata, never records.
+
+The load balancer controller's policy is the upstream
+[`iam_policy.json` of v3.5.0](https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/install/iam_policy.json)
+(sha256 `16f232c9d9f79366fe949c4550ad517a202380058a9e48d45a4e215044a20a6a`), kept as
+[`policies/aws-load-balancer-controller-iam-policy.json`](policies/aws-load-balancer-controller-iam-policy.json)
+with two edits. `iam:CreateServiceLinkedRole` is removed: a service-linked role is
+account-wide and would outlive every teardown, so the Elastic Load Balancing one has
+to exist already. The WAF Classic, WAFv2 and Shield actions are removed: ADR-0018
+adopts no WAF and nothing here uses Shield Advanced, so the controller has to run with
+`enableWaf`, `enableWafv2` and `enableShield` set to false. Every other statement is
+upstream, including the `elbv2.k8s.aws/cluster` tag conditions and the security-group
+ingress statement that upstream itself describes as permissive. Another controller
+version needs its own policy, and its record names checked again.
+
+**What has not been proven.** None of this has been applied, and neither controller
+has run on this cluster. Whether either policy is sufficient, whether the record names
+match what the controller writes, and whether the six ADR-0013 tags reach the
+resources the controllers create are all unmeasured. `terraform test` proves the
+configuration only: the scoping above, and that no other mode creates any of the six.
+
 ## What this root does not create
 
 No security group, no network ACL, no VPC flow logs, no load balancer, no
@@ -455,6 +516,11 @@ OIDC provider, no Terraform module, and no Kubernetes object of any kind. The
 secret store and the identities that read it are declared here; the controller
 that synchronises a secret into a cluster is a Kubernetes install and is not. No
 workload, GitOps stack or observability stack is defined here either.
+
+The two public-entry controllers are declared here only as identities. The load
+balancer, its listeners, target groups and security groups, and the environment's DNS
+records are created by those controllers outside Terraform state, so `terraform
+destroy` does not remove them; ADR-0018 fixes the teardown order that does.
 
 AWS creates a default security group with every VPC, and this root does not
 manage it. That group allows traffic between resources that are members of it
@@ -491,15 +557,16 @@ instance size.
 
 ## Lifecycle and current state
 
-This root declares 43 resources, and they are not all meant to exist at the same
-time. Four classes are worth separating.
+This root declares 49 resources, and they are not all meant to exist at the same
+time. Five classes are worth separating.
 
 | Class | Count | What it is |
 |---|---|---|
-| Declared | 43 | Everything across the `.tf` files in this root |
+| Declared | 49 | Everything across the `.tf` files in this root |
 | Retained | 21 | The network baseline plus the environment's identity, secret and configuration resources. Present between approved windows |
 | Runtime | 17 | The NAT gateway and its Elastic IP, the private default route, the cluster and node service roles with their four policy attachments, the cluster, the launch template, the node group, the four add-ons, and the External Secrets Pod Identity association |
 | Alerting campaign | 5 | The notification topic, its subscription, the role and policy that let the alerting engine publish to it, and the Pod Identity association that binds that role to the engine's service account. Created only when `alerting_campaign_enabled` is true, for an alerting window, and destroyed with its runtime; see Alerting above |
+| Public entry | 6 | The role, inline policy and Pod Identity association of the load balancer controller and of the record controller. Created only when `public_entry_enabled` is true, for a public-entry window, and destroyed with its runtime; see Public entry above |
 
 `worker_capacity_enabled = false` selects observation mode, 7 of the 17 runtime
 resources: the cluster, its role and policy attachment, and the four add-ons. No
