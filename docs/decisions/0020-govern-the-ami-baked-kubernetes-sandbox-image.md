@@ -8,7 +8,7 @@ This record makes narrow changes to two Accepted decisions, named exactly in
 **Supersession** below and bounded to one image: the Kubernetes pod sandbox
 image baked into the EKS-optimized Amazon Linux 2023 AMI that the dev node
 group selects by a pinned release. It supersedes one sentence and one clause of
-ADR-0017's Decision, and four sentences of ADR-0019, only as they apply to
+ADR-0017's Decision, and three sentences of ADR-0019, only as they apply to
 that image. For that image it also adds the stricter empty-scan disposition in
 the Decision, which removes nothing from ADR-0015.
 
@@ -344,6 +344,8 @@ Not claimed:
   happened under this record at proposal;
 - that the control-surface reading is ADR-0019's node/AMI measurement, or that
   any node/AMI control was exercised;
+- that ADR-0019's node/AMI measurement exists or is discharged, for this image
+  or any other;
 - that this image belongs to ADR-0019's AWS-delivered class.
 
 ## Evidence
@@ -417,26 +419,7 @@ Supersession, keep images under ADR-0017 unchanged:
 
 In the third, "both" is ADR-0017's A and B. Each of these three sentences is
 superseded only as applied to the image in Scope, for which ADR-0017 reads as
-changed by this record.
-
-A fourth sentence, in ADR-0019's Decision, sets when the node/AMI measurement
-is owed:
-
-> The measurement is owed before the first node-bearing runtime window.
-
-ADR-0019's Context gives the measurement's purpose: it is "owed before the
-class is relied on for it". For the image in Scope the sentence is circular:
-every pod runs that image, and exercising the node/AMI controls through the
-managed node group launches nodes, so the first node-bearing window would wait
-on a measurement that is itself node-bearing. The probe measured this image's
-identity before any node-bearing window, and this record relies on no part of
-the AWS-delivered class for it. So the fourth sentence is superseded only as
-applied to the image in Scope: for that image, a node-bearing window needs the
-pre-window identity and the per-window evaluation before it opens and the
-in-window node checks inside it, as the Decision sets out, and the measurement
-stays owed before the class is relied on for it.
-
-Nothing else in ADR-0019 is superseded.
+changed by this record. Nothing else in ADR-0019 is superseded.
 - The read-only control-surface reading found, in the pinned provider schema,
   that the launch template exposes `image_id` and `user_data`, and, in the
   AMI's hash-matched build source, that a custom AMI or a containerd sandbox
@@ -445,10 +428,11 @@ Nothing else in ADR-0019 is superseded.
 - Until that measurement exists, ADR-0019 keeps this image under ADR-0017,
   which for this image reads as changed by this record. Nothing in this record
   claims or relies on the AWS-delivered class for it.
-- For every other image the node/AMI mechanism delivers, all four sentences
-  stand: until the measurement exists such an image stays under ADR-0017
-  unchanged, and the measurement is owed before the first node-bearing runtime
-  window.
+- This record does not discharge ADR-0019's node/AMI measurement, for this
+  image or any other, and supersedes nothing in when it is owed: the
+  measurement is owed before the first node-bearing runtime window, so
+  accepting this record does not allow a node-bearing window before that
+  measurement exists.
 
 ## Revisit Triggers
 
