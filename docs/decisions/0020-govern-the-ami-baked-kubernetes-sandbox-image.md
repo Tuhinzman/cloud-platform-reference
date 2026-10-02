@@ -2,19 +2,16 @@
 
 ## Status
 
-Proposed (2026-09-27)
+Proposed (2026-09-27, revised 2026-10-02)
 
-This record makes two narrow changes to Accepted decisions, both named exactly
-in **Supersession** below and both bounded to one image: the Kubernetes pod
-sandbox image baked into the EKS-optimized Amazon Linux 2023 AMI that the dev
-node group selects by a pinned release.
-- It supersedes one sentence and one clause of ADR-0017's Decision for that
-  image.
-- It narrows ADR-0015's exact-digest admission for that image, in one
-  discovery window per pinned release.
+This record makes one narrow change to an Accepted decision, named exactly in
+**Supersession** below and bounded to one image: the Kubernetes pod sandbox
+image baked into the EKS-optimized Amazon Linux 2023 AMI that the dev node
+group selects by a pinned release. It supersedes one sentence and one clause of
+ADR-0017's Decision for that image.
 
-Everything else in ADR-0017 and ADR-0015 remains Accepted and authoritative.
-ADR-0006 and ADR-0019 are unchanged.
+Everything else in ADR-0017 remains Accepted and authoritative. ADR-0006,
+ADR-0015 and ADR-0019 are unchanged.
 
 ## Context
 
@@ -33,8 +30,12 @@ runs in every pod. On this project's node path, the EKS-optimized Amazon
 Linux 2023 AMI chosen by `ami_type`, no Kubernetes object selects that
 image. It comes with the AMI.
 
-A read-only control-surface measurement, made before any node-bearing window
-and without running a node, established the following.
+Two measurements, made before any node-bearing window and with no node joining
+a cluster, established the following.
+
+A read-only control-surface measurement, from the provider schema, AWS's
+published release parameters, the AMI metadata and the AMI's public build
+source:
 
 - **Provider controls.** The pinned AWS provider exposes `release_version`
   on the managed node group, and `image_id` and `user_data` on the launch
@@ -55,11 +56,6 @@ and without running a node, established the following.
   - At node start, the node agent sets containerd's sandbox image to that
     local tag.
   - So, from source, node startup does not pull it.
-- **Unestablished source.** The build template's default source reference
-  is `public.ecr.aws/eks-distro/kubernetes/pause:3.10`. AWS's own build can
-  override that default, so the source reference and digest of the image
-  actually baked into the published AMI are not established before a node
-  exists.
 - **Cost of a project-owned sandbox.** A project-owned sandbox is possible
   only by taking over node bootstrap, through a custom AMI or a containerd
   override in launch-template user data.
@@ -72,14 +68,45 @@ and without running a node, established the following.
     platform registry would need a credentialed pre-pull, completed before
     the kubelet creates the first pod sandbox.
 
-These findings come from four sources: the provider schema, AWS's published
-release parameters, the AMI metadata, and the AMI's public build source.
-None of them is a runtime observation, and no node has run this AMI in this
-project.
+A pre-window probe and two registry retrievals:
 
-So the exact identity of this image cannot be evaluated under ADR-0015
-before a node of the release has run. The first node-bearing use of a
-release necessarily runs the image before its exact digest is known.
+- **Measured baked identity.** One instance was launched from the AMI of
+  release `1.36.4-20260923` outside any cluster, with the kubelet not running,
+  and the baked image was read from its containerd store and exported archive:
+  - its record is `localhost/kubernetes/pause:latest`;
+  - its recorded source is `eks/pause:3.10` in the AWS-owned EKS image
+    registry, not the build template's default,
+    `public.ecr.aws/eks-distro/kubernetes/pause:3.10`, whose digest was never
+    resolved;
+  - the archive's index is
+    `sha256:76040a49ba6fc50056e8ff0a6c276baeb633fb12685540aaea884b717f31eddb`,
+    with exactly one `linux/amd64` manifest,
+    `sha256:7f2bdf4f52f04199c2fc9eec14cc4593b327deedbad2b9a399f127bb63a69577`,
+    config
+    `sha256:c1e1b3bcc801fdaf723cb41eb5ec402f294c9d84bdbc0dcf175d68c13a6865b9`
+    and one layer,
+    `sha256:6ea5d75b35fc7de260b98abfe408883d215ad7c91588fc40ce603d40878c7951`,
+    each re-hashed from the stored bytes;
+  - the store holds no digest-named record for the image.
+- **Independent retrieval.** The same index was retrieved by digest from the
+  AWS-owned EKS image registry in us-east-1 in two separate sessions. Each time
+  it recomputed from its bytes, and its single `linux/amd64` entry, config and
+  layer equalled the probe's.
+- **Evaluation.** The retrieved artifact was scanned with ADR-0015's fixed gate
+  on a fresh vulnerability database. The scanner found nothing it could
+  analyze: the single layer holds one ELF file, `pause`, and no package
+  database, language manifest, archive or embedded dependency metadata. The
+  gate reported no finding. That records the absence of an analyzable surface,
+  not the absence of vulnerabilities.
+
+No node has run this AMI in this project. That node startup uses the baked
+image and pulls no other is source-derived, not measured.
+
+So the exact baked identity of a pinned release can be measured, retrieved and
+evaluated under ADR-0015 before any node of the release runs. What cannot be
+measured before a node exists is how the kubelet reports the image, and with
+no digest-named record in the store, `node.status.images` may not expose its
+digest.
 
 ADR-0017's revisit trigger for an unmirrorable surface is not literally met.
 This image can be mirrored, but only by taking over node bootstrap, which
@@ -91,7 +118,8 @@ blocking clause would block every component that runs a pod.
 | Option | Assessment | Outcome |
 |---|---|---|
 | A. Project-owned sandbox: mirror a pause image to the platform registry, pin it by digest, scan it, and point containerd at it through launch-template user data with a credentialed pre-pull, or through a custom AMI | Satisfies ADR-0017 and ADR-0015 literally, but takes over the node bootstrap contract that the launch template deliberately leaves to EKS. Adds a foundation registry repository, user data, and a pre-pull step that must finish before the first pod sandbox; if it fails, the node cannot run pods. None of it has been measured here | Rejected |
-| B. Keep the AWS-baked sandbox image, fixed by a pinned AMI release, with one bounded discovery window per release and the controls below | Keeps the node bootstrap contract with EKS and adds no join-time dependency. The exact digest is observed in the discovery window, detectively, and then evaluated under ADR-0015 before any later use | Selected |
+| B. Keep the AWS-baked sandbox image, fixed by a pinned AMI release, with its exact identity measured by a pre-window probe, retrieved by digest and evaluated under ADR-0015 before every window | Keeps the node bootstrap contract with EKS and adds no join-time dependency. The identity is known before any node of the release runs, and in the window each node is bound to the recorded AMI and release that carry it | Selected |
+| C. Keep the AWS-baked sandbox image with one discovery window per release: evaluate the build source's declared image before the window and observe the baked digest in it | The probe recorded a different source than the build source declares, and the two were never shown to be the same artifact. Observing the baked digest in the window depends on `node.status.images` exposing it, which is not established. It also needed a narrowing of ADR-0015 that the probe makes unnecessary | Rejected |
 
 ## Decision
 
@@ -103,6 +131,8 @@ and block rule.
 - The image is baked into an immutable AMI and, on the build path shown by
   its source, is not pulled during node startup.
 - `release_version` pins the exact AMI release, and with it the image.
+- Its exact identity is measured, retrieved and evaluated before any node of
+  the release runs.
 - Option A would add custom, credentialed bootstrap logic and a new way for
   a node to fail to run pods. That costs more than the identity it would
   gain over the controls below.
@@ -121,129 +151,113 @@ other image found delivered by the node/AMI mechanism stays under ADR-0017
 unchanged and blocks as ADR-0017 requires.
 
 **ADR-0015.** The sandbox image is a non-workload runtime component that the
-platform operates on every node, so ADR-0015 governs it. Only one requirement
-is narrowed: in the discovery window below, the identity evaluated is the
-source-declared one, not the exact running digest. **This record creates no
-new security exception path.** Any fixable HIGH or CRITICAL finding on an
-identity that can be evaluated holds by default and is admissible only
-through ADR-0015's full exception contract. No discovery window runs in the
+platform operates on every node, so ADR-0015 governs it, unchanged. **This
+record creates no new security exception path and narrows nothing in
+ADR-0015.** Any fixable HIGH or CRITICAL finding holds by default and is
+admissible only through ADR-0015's full exception contract, and never in the
 Production Validation role.
 
 **Release pin.** The node group's `release_version` is pinned to one exact
-AMI release. A change of release is a reviewed code change. A release that
-has never had a discovery window starts this lifecycle with one; a release
-that has had one keeps its recorded outcome, including BLOCKED.
+AMI release. A change of release is a reviewed code change. A release with no
+measured identity starts with the pre-window identity below, and every release
+keeps its recorded outcome, including BLOCKED.
 
-**Discovery window.** The first node-bearing use of a pinned release is a
-discovery window for this image. It is not pre-admitted execution. It runs in
-a Development or Validation role only, and it exists to observe the baked
-identity. Before it opens, all of these must hold:
-1. `release_version` is pinned to the exact release.
-2. The release's exact immutable AMI identity is recorded: its AMI ID for
-   the region, from AWS's published parameter for that release.
-3. The source-declared sandbox identity is resolved by immutable digest,
-   including its `linux/amd64` child where the reference is an index. That
-   identity is the sandbox image reference in the AMI build source at the
-   release tag.
-4. That `linux/amd64` identity has been evaluated under ADR-0015. If it is
-   on HOLD, the discovery window does not open unless ADR-0015's full
-   exception contract admits that identity for that window.
-5. No workload or GitOps deployment is part of the window.
+**Pre-window identity, once per release.** Before the first node-bearing
+window on a pinned release, with no node of that release running:
+1. Record the release's exact immutable AMI ID for the region, from AWS's
+   published parameter for that release.
+2. Launch one probe instance from that AMI ID, outside any cluster, and read
+   the baked sandbox image's record, its recorded source and its exported
+   archive.
+3. Record the index digest, the single `linux/amd64` manifest, its config and
+   its layers, each re-hashed from the stored bytes.
+4. Retrieve that exact index independently by digest from the AWS-owned EKS
+   image registry, and confirm that it recomputes from its bytes, has exactly
+   one `linux/amd64` entry, and that the entry, its config and its layers
+   equal the probe's.
 
-In the window, immediately after each node joins, capture `node.status.images`
-and confirm that the node group's `releaseVersion` is the pinned release and
-that every node runs the recorded AMI ID
-(`eks.amazonaws.com/nodegroup-image`). This observation is **detective** for
-the exact baked digest: it reports what the AMI carries once a node exists,
-and nothing before that window establishes the baked bytes.
+The retrieved identity is the admitted identity for the release. No node joins
+a cluster during the probe, and the probe instance is terminated and censused
+before any node-bearing window.
 
-**Match rule.** The observed digest matches only when every node reports
-`linux` and `amd64` and the digest satisfies one of these:
-- it equals the evaluated `linux/amd64` identity;
-- it equals the index digest resolved before the window, where the exact
-  index bytes are retained, the digest recomputes from those bytes, and the
-  single `linux/amd64` entry in those bytes is the evaluated identity.
+**Before every window.** The admitted identity is evaluated fresh under
+ADR-0015's fixed gate, on a vulnerability database current for that window,
+from bytes retrieved by digest. A prior evaluation, and a prior window's
+disposition, are never evidence for a later window.
 
-Anything else is a mismatch, including a different index with the same child.
+**Empty-scan disposition.** The fixed gate may find no analyzable component in
+this image. The result is classified NOT-APPLICABLE-NO-ANALYZABLE-COMPONENTS
+only when all five of these hold:
+1. the scanned artifact is the admitted identity, by immutable digest;
+2. its index, `linux/amd64` manifest, config and layers equal the probe's;
+3. its provenance to the pinned AMI is measured;
+4. the scan ran fresh for the window, with the fixed gate unchanged and a
+   current database that did not change during the scan;
+5. an independent inventory of its layers finds no package database, language
+   manifest, archive or embedded dependency metadata.
 
-**On a match.**
-- The observed identity is recorded.
-- The window proves identity, not prior admission. The source-declared
-  evaluation stood in for the exact digest, and the window is never described
-  as pre-admitted execution.
-- From the next window on, the sandbox image is evaluated under ADR-0015's
-  normal contract.
+NOT-APPLICABLE-NO-ANALYZABLE-COMPONENTS is a classification, not a gate pass. It
+records that the gate had nothing to evaluate. It is never described as clean,
+vulnerability-free or security-gate-passed, it is neither a gate admission nor
+an ADR-0015 exception, and no claim that depends on the sandbox image says
+otherwise. Whether a window may run with an image carrying
+it is an owner disposition recorded for that window alone; this record does
+not make that disposition and no window inherits it. Any other empty scan, an
+unmet condition or a failed scan is a HOLD.
 
-**On a mismatch or an unobservable identity.**
-- HOLD immediately.
-- Capture evidence.
-- No workload or GitOps deployment.
-- Tear down.
+**In-window node checks.** Immediately after each node joins, and before any
+workload or GitOps deployment:
+- confirm that the node group's `releaseVersion` equals the pinned release;
+- confirm that every node's `eks.amazonaws.com/nodegroup-image` label equals
+  the recorded AMI ID;
+- capture `node.status.images` as an observation.
 
-No owner approval given in the same window can continue it. The release is
-BLOCKED. It is used again only after a recorded decision on the revisit
-trigger, and only once the exact image it runs has been retrieved and
-evaluated as below.
+The sandbox identity rests on the probe, the retrieval and the immutable AMI
+each node is bound to. `node.status.images` is recorded but is not the sole
+identity authority: if it reports no digest for the sandbox image, that is
+recorded, never inferred. If it reports, for the sandbox image's tag, a digest
+that is neither the admitted index nor its `linux/amd64` entry, that is a
+mismatch.
 
-**Exact observed-image evaluation.** An observed digest is not assumed to be
-retrievable. A node-local tag or digest is not, by itself, a retrievable
-identity.
-- Before any later window on a release, the exact observed image must be
-  retrieved independently by immutable identity and evaluated under
-  ADR-0015.
-- If the exact observed bytes cannot be retrieved and evaluated, the release
-  remains BLOCKED.
-- Owner approval does not substitute for retrieval, for the scan, or for the
-  ADR-0015 disposition.
+Workload and GitOps validation does not start until those checks pass.
 
-Once retrieved and evaluated, the exact observed identity, with its
-`linux/amd64` entry where it is an index, is the admitted identity for the
-release.
-
-**Later windows.** Every later window on the release must satisfy all of
-these:
-- It runs the same pinned release. The node group's `releaseVersion` equals
-  the pinned release, and each node's `eks.amazonaws.com/nodegroup-image`
-  label equals the recorded AMI ID.
-- The admitted identity is evaluated fresh under ADR-0015 before the window.
-- Every node reports the admitted identity, captured at the same point as in
-  the discovery window, under the same match rule.
-
-Workload and GitOps validation does not start until that check passes.
+**Windows with no pod.** A node-bearing window in which no pod runs executes no
+sandbox container. Its pre-window evaluation and in-window node checks still
+apply, but the non-execution is evidence of nothing about the image: no runtime
+admission, and no identity beyond each node's binding to the recorded AMI, is
+inferred from it.
 
 **No equivalence by analogy.** No other image and no other AMI is governed by
 analogy. Pinning an AMI release is not mirroring, and this record creates no
 general AMI-mirror equivalence.
 
 **HOLD and BLOCKED.** Each of the following is a HOLD:
-- the source-declared identity cannot be resolved or evaluated before the
-  discovery window;
-- the observed digest does not match;
-- the sandbox tag is absent, or appears without a digest, in
-  `node.status.images`;
+- the admitted identity cannot be retrieved, verified or evaluated before a
+  window;
+- the sandbox image holds under ADR-0015 without an approved exception, or an
+  empty scan of it is not classified as above;
 - the node group's `releaseVersion` differs from the pinned release, or a
   node's AMI label differs from the recorded AMI ID;
-- the sandbox image holds under ADR-0015 without an approved exception.
+- `node.status.images` reports a mismatching digest for the sandbox image's
+  tag.
 
 A HOLD before a window keeps it closed. A HOLD inside a window stops workload
 and GitOps validation, and the window continues only to capture evidence and
-tear down. A release whose exact observed image cannot be
-retrieved and evaluated is BLOCKED. Every HOLD and BLOCKED outcome is
-recorded, never waived, and never resolved by inference.
+tear down. A release whose baked identity cannot be measured, or whose exact
+bytes cannot be retrieved and verified, is BLOCKED. Every HOLD and BLOCKED
+outcome is recorded, never waived, and never resolved by inference.
 
 **Declared limitation.** For this image the project has no pull-time control
 and no project-owned copy.
-- In each discovery window the image runs before its exact digest is
-  evaluated. There, the ADR-0015 evaluation covers the source-declared
-  identity, not the bytes that ran, and evidence from that window carries
-  that qualifier.
-- The identity control is detective, not preventive.
-- The source-declared reference is a tag, resolved when the check runs,
-  which is later than the AMI build. It may have moved since, which fails
-  closed as a HOLD.
+- The in-window identity control is detective and indirect. It binds each node
+  to the AMI whose baked image was measured; it does not read the bytes the
+  runtime uses.
 - It is not established that `node.status.images` exposes a digest for the
-  baked image, or that the observed image can be retrieved independently.
-  Either gap holds or blocks the release rather than being inferred away.
+  baked image.
+- That node startup uses the baked image and pulls no other is source-derived,
+  not measured.
+- The scanner finds no analyzable component in this image, so the gate result
+  carries no information about vulnerabilities in the `pause` binary.
 - The kubelet reports a bounded number of images, largest first. That is why
   the capture is taken as each node joins.
 - Pinning the release also freezes the node operating system and kubelet
@@ -255,39 +269,42 @@ Gained:
 - node image selection that is fixed and reviewable, rather than whatever
   release AWS recommends on the day of the apply;
 - no project-owned node bootstrap and no join-time registry dependency;
-- a sandbox identity the project observes, and must retrieve and evaluate
-  before reuse, instead of assuming.
+- a sandbox identity measured, retrieved and evaluated before any node of the
+  release runs, instead of assumed.
 
 Paid for:
-- one discovery window per release, during which the image runs before its
-  exact evaluation;
-- a scan of the source-declared identity before that window, and of the
-  exact identity before every later one;
-- a release that cannot be used again if its baked image cannot be retrieved
-  and evaluated.
+- one probe instance per release before its first node-bearing window;
+- a fresh evaluation of the admitted identity before every window;
+- a release that cannot be used if its baked identity cannot be measured,
+  retrieved and verified.
 
 Not claimed:
 - that the sandbox image is project-built, mirrored, or under pull-time
   project control;
-- that the discovery window's sandbox was admitted before it ran;
-- that the source-declared identity equals the baked one; the discovery
-  window decides that;
-- that any node has run this AMI; no runtime validation has happened under
+- that the empty scan shows the image to be free of vulnerabilities, or that
+  the gate passed;
+- that `node.status.images` exposes the sandbox digest;
+- that any node has run this AMI; no node-bearing runtime has happened under
   this record at proposal;
 - that this image belongs to ADR-0019's AWS-delivered class.
 
 ## Evidence
 
-A read-only control-surface measurement on 2026-09-27, retained as evidence,
-covered four sources:
-- the pinned provider schema;
-- AWS's published Kubernetes 1.36 Amazon Linux 2023 release parameters;
-- the metadata of the AMI for release `1.36.4-20260923`;
-- the AMI's public build source at tag `v20260923`, with each file
-  hash-matched to its Git blob.
+Measurements retained as evidence:
+- a read-only control-surface measurement on 2026-09-27, covering the pinned
+  provider schema, AWS's published Kubernetes 1.36 Amazon Linux 2023 release
+  parameters, the metadata of the AMI for release `1.36.4-20260923`, and the
+  AMI's public build source at tag `v20260923`, with each file hash-matched to
+  its Git blob;
+- a pre-window probe on 2026-10-01: one instance launched from that AMI
+  outside any cluster, read and terminated, with its security group and volume
+  removed and a clean census;
+- two independent retrievals of the probed identity from the AWS-owned EKS
+  image registry on 2026-10-01, each followed by a fixed-gate scan on a fresh
+  database.
 
-No node was created and no AWS resource was changed. This record states the
-conclusions and does not reproduce the evidence.
+No node joined a cluster. This record states the conclusions and does not
+reproduce the evidence.
 
 ## Supersession
 
@@ -303,8 +320,8 @@ in Scope**.
 > and scanned before the runtime window opens
 
 For the image in Scope, that obligation becomes the release pin, the
-discovery window, the exact observed-image evaluation and the later-window
-checks in the Decision.
+pre-window identity, the per-window evaluation and the in-window node checks in
+the Decision.
 
 **B**, the blocking clause that enforces A:
 
@@ -319,44 +336,14 @@ Between A and B sits one sentence that is **not** superseded: init-container
 images are inside the rule. Nothing else in ADR-0017 is superseded, and every
 other image class is unchanged by this record.
 
-**ADR-0015.** ADR-0015 admits a measured artifact by its exact digest, on
-the premise that the artifact measured before a window is the one that runs
-in it. Three clauses bind that:
-- the Admission rule for Development and validation roles, a "per-digest,
-  window-bounded security exception";
-- exception-contract field 2, "Exact linux/amd64 immutable digest the
-  exception binds";
-- binding rules 1 and 2: an exception is per-digest and "never inherited by
-  another digest".
-
-For the image in Scope, that premise is narrowed only in a bounded case:
-- in one discovery window per exact pinned release;
-- before any workload or GitOps validation;
-- never in the Production Validation role.
-
-In that case the artifact measured, and the digest any exception binds, is
-the source-declared `linux/amd64` identity, because the exact running digest
-cannot be known before the window. Whether it is the one that runs is
-established only in the window, by the match rule, and a running identity
-that fails the match rule is a HOLD.
-
-Nothing else in ADR-0015 is narrowed:
-- the fixed gate and the severities;
-- the default HOLD;
-- the full exception contract and every other binding rule, including
-  rule 5's fresh evaluation, which the discovery window meets on the
-  source-declared identity;
-- necessity, currency and lowest debt;
-- window-bound exceptions and disclosure;
-- the Production Validation rule.
-
-From the next window on, ADR-0015 applies to the exact observed identity
-unchanged.
+**ADR-0015.** ADR-0015 is not superseded, narrowed or reinterpreted by this
+record. It applies to the image in Scope unchanged, to its exact admitted
+identity, fresh before every window.
 
 **ADR-0019.** ADR-0019 is not superseded. Its effect narrows for this one
 image, because the ADR-0017 rule it keeps node/AMI images under is itself
 narrowed here.
-- The pre-window measurement found that the node/AMI mechanism exposes
+- The control-surface measurement found that the node/AMI mechanism exposes
   supported project control over this image: a custom AMI through
   `image_id`, or a containerd override through `user_data`.
 - So, under ADR-0019's second condition, the image is outside the
@@ -367,20 +354,20 @@ narrowed here.
 ## Revisit Triggers
 
 Revisit if:
-- a discovery window shows a digest different from the source-declared one,
-  a later window shows one different from the admitted one, or the digest
-  cannot be observed;
-- the exact observed image cannot be retrieved independently or evaluated
-  under ADR-0015;
+- a node reports, for the sandbox image's tag, a digest different from the
+  admitted identity, or runs an AMI other than the recorded one;
+- the baked identity of a release cannot be measured, or its exact bytes
+  cannot be retrieved and verified;
 - AWS publishes authoritative per-release metadata for the baked sandbox
-  digest, which would remove the need for detective discovery and move the
-  exact evaluation before the first window;
+  digest, which would replace the probe;
 - the AMI or node agent changes so that the sandbox image is pulled at node
   start rather than baked;
 - AWS offers a supported sandbox override that needs no credentialed
   pre-pull, which would make option A cheap;
 - a sandbox digest carries a fixable HIGH or CRITICAL finding and no newer
   release clears it;
+- the scanner begins to report analyzable components for the image, or the
+  gate definition changes;
 - the node group changes AMI family, adopts a custom AMI, or adds a
   containerd override, any of which ends this record's scope;
 - any other image is found delivered by the node/AMI mechanism.
