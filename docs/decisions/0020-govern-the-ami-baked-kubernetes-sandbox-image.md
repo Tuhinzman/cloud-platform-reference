@@ -189,12 +189,13 @@ window on a pinned release, with no node of that release running:
    one `linux/amd64` entry, and that the entry, its config and its layers
    equal the probe's.
 
-The probe is valid only when the kubelet and the node agent have not run; that
-boot's containerd journal shows no pull and no pause image created or deleted;
-the store holds exactly two records for the image, the local tag and its
-recorded source reference, both naming the index, and no digest-named record;
-and the store and the exported archive name the same index. Any other probe
-result is a HOLD, and a release that cannot be probed validly is BLOCKED.
+The probe is valid only when the node agent's configuration step has failed for
+want of a node configuration, and neither its run step nor the kubelet is
+active; that boot's containerd journal shows no pull and no pause image created
+or deleted; the store holds exactly two records for the image, the local tag and
+its recorded source reference, both naming the index, and no digest-named
+record; and the store and the exported archive name the same index. Any other
+probe result is a HOLD, and a release that cannot be probed validly is BLOCKED.
 
 The probe's identity, with its bytes retrieved and verified as in step 4, is
 the recorded identity for the release. Recording it admits nothing under
@@ -265,9 +266,9 @@ general AMI-mirror equivalence.
   empty scan of it is not classified as above;
 - the sandbox image is classified NOT-APPLICABLE-NO-ANALYZABLE-COMPONENTS and
   no owner disposition is recorded for the window;
-- the node group's `releaseVersion` differs from the pinned release, or a
-  node's AMI label or its instance's EC2 image differs from the recorded AMI
-  ID;
+- the node group's `releaseVersion` differs from the pinned release, a node is
+  not bound to an instance of the node group, or a node's AMI label or its
+  instance's EC2 image differs from the recorded AMI ID;
 - `node.status.images` reports a mismatching digest for either name the probe
   recorded.
 
@@ -310,8 +311,8 @@ Paid for:
 - one probe instance per release before its first node-bearing window;
 - a fresh evaluation of the recorded identity before every node-bearing
   window;
-- a release that cannot be used if its baked identity cannot be measured,
-  retrieved and verified.
+- a release that cannot be used if its baked identity cannot be measured or
+  the registry does not serve its exact digests.
 
 Not claimed:
 - that the sandbox image is project-built, mirrored, or under pull-time
@@ -381,18 +382,20 @@ that finds no analyzable component; for this image only, the empty-scan
 disposition in the Decision treats such a run more strictly than a gate exit
 of 0, and removes nothing from ADR-0015.
 
-**ADR-0019.** Three sentences of ADR-0019 keep images under ADR-0017
-unchanged:
+**ADR-0019.** Three sentences of ADR-0019, two in its Decision and one in its
+Supersession, keep images under ADR-0017 unchanged:
 
 > Until that measurement exists, images delivered by the node/AMI mechanism
 > remain under ADR-0017 unchanged.
 
-> Everything the project can pin or mirror stays under ADR-0017 unchanged
+> Everything the project can pin or mirror stays under ADR-0017 unchanged,
+> including ...
 
 > For every other image identity both stand unchanged and in full.
 
-Each is superseded only as applied to the image in Scope, for which ADR-0017
-reads as changed by this record. Nothing else in ADR-0019 is superseded.
+In the third, "both" is ADR-0017's A and B. Each is superseded only as applied
+to the image in Scope, for which ADR-0017 reads as changed by this record.
+Nothing else in ADR-0019 is superseded.
 - The control-surface measurement read, from the pinned provider schema, that
   the launch template exposes `image_id` and `user_data`, and, from the AMI's
   hash-matched build source, that a custom AMI or a containerd sandbox
@@ -402,7 +405,8 @@ reads as changed by this record. Nothing else in ADR-0019 is superseded.
   ADR-0019's measurement for this image, its second condition fails; if it is
   not, ADR-0019 keeps the image under ADR-0017 until the measurement exists.
 - This record does not discharge ADR-0019's owed node/AMI measurement, for
-  this image or any other.
+  this image or any other; its requirement that the measurement precede the
+  first node-bearing runtime window stands.
 
 ## Revisit Triggers
 
