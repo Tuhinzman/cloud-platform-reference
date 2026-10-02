@@ -19,7 +19,7 @@ resource "aws_eks_addon" "coredns" {
   addon_version               = "v1.14.6-eksbuild.4"
   resolve_conflicts_on_create = "OVERWRITE"
 
-  # Observation mode has no node and node measurement runs no pod: zero replicas creates the
+  # Observation mode has no node and node measurement asks for no pod: zero replicas creates the
   # Deployment without scheduling a pod.
   configuration_values = var.worker_capacity_enabled && !var.node_measurement_only ? null : jsonencode({ replicaCount = 0 })
 

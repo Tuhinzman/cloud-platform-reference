@@ -512,8 +512,10 @@ no node EKS can report it DEGRADED, which the provider keeps waiting on.
 13 of the 17 runtime resources: everything worker mode creates except the
 `vpc-cni`, `kube-proxy` and Pod Identity agent add-ons and the External Secrets
 Pod Identity association. CoreDNS is created at zero replicas with the same
-bounded wait, so nodes join and no pod is scheduled on them. Whether a managed
-node group completes with no running CNI has not been measured.
+bounded wait, so nothing in the configuration asks for a pod. Whether nodes join
+with no running CNI, whether the managed node group completes, and that no pod
+runs have not been measured; a node-measurement window measures them rather than
+assuming them.
 
 The retained figure is what Terraform state lists, and what the plan taken after
 the last teardown converged on. It is a statement about managed state rather than

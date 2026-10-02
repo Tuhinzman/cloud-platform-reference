@@ -32,7 +32,7 @@ variable "worker_capacity_enabled" {
 }
 
 variable "node_measurement_only" {
-  description = "With worker_capacity_enabled, creates the node group with no add-on that schedules a pod: no vpc-cni, kube-proxy or Pod Identity agent add-on, no External Secrets Pod Identity association, and CoreDNS at zero replicas. Nodes join, and no pod runs on them."
+  description = "With worker_capacity_enabled, creates the node group with no add-on that schedules a pod: no vpc-cni, kube-proxy or Pod Identity agent add-on, no External Secrets Pod Identity association, and CoreDNS at zero replicas. Whether nodes join, and that no pod runs, are measured in the window, never assumed."
   type        = bool
   default     = false
 
