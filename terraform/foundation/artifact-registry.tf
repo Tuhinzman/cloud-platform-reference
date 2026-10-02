@@ -12,6 +12,13 @@ locals {
     "payment",
     "product-catalog",
     "currency",
+    "accounting",
+    "ad",
+    "email",
+    "flagd-ui",
+    "fraud-detection",
+    "product-reviews",
+    "recommendation",
   ])
 }
 
