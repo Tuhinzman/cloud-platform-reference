@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (2026-09-27, revised 2026-10-02)
+Accepted (2026-10-02)
 
 This record makes narrow changes to two Accepted decisions, named exactly in
 **Supersession** below and bounded to one image: the Kubernetes pod sandbox
