@@ -22,3 +22,10 @@ operator_cidr = "203.0.113.10/32"
 # alerting_campaign_enabled           = true
 # alerting_email_subscription_enabled = true
 # alerting_email_endpoint             = "<the address that receives alerts>"
+
+# Public entry. Off by default; the controller identities are created only for a
+# public-entry window, in worker mode. The zone ID and the domain are private
+# inputs and never enter the repository.
+# public_entry_enabled  = true
+# public_hosted_zone_id = "<the ID of the hosted zone the foundation root created>"
+# public_domain         = "<the registered apex domain>"
