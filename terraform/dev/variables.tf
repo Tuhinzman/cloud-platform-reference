@@ -31,6 +31,17 @@ variable "worker_capacity_enabled" {
   default     = true
 }
 
+variable "node_measurement_only" {
+  description = "With worker_capacity_enabled, creates the node group with no add-on that schedules a pod: no vpc-cni, kube-proxy or Pod Identity agent add-on, no External Secrets Pod Identity association, and CoreDNS at zero replicas. Nodes join, and no pod runs on them."
+  type        = bool
+  default     = false
+
+  validation {
+    condition     = !var.node_measurement_only || var.worker_capacity_enabled
+    error_message = "node_measurement_only needs worker_capacity_enabled: it measures the node group."
+  }
+}
+
 variable "alerting_campaign_enabled" {
   description = "Creates the REQ-015 alerting campaign: the topic, the publish role and policy, and the Pod Identity association. Off by default so an ordinary window apply does not create it."
   type        = bool

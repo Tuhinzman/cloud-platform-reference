@@ -384,6 +384,7 @@ cluster is created without them in both modes
 from a version-pinned managed add-on. The node group is therefore created only
 after the `vpc-cni`, `kube-proxy` and Pod Identity agent add-ons exist, and
 `coredns` only after the node group, because it needs schedulable capacity.
+Node measurement, below, creates none of those three add-ons.
 `resolve_conflicts_on_create = "OVERWRITE"` has nothing to adopt and only
 settles a conflicting object if one ever appears.
 
@@ -506,6 +507,13 @@ node group, NAT path or Pod Identity association is created, so the add-ons'
 workload objects can be read without any of their containers running. CoreDNS is
 set to zero replicas and its create wait is bounded at five minutes, because with
 no node EKS can report it DEGRADED, which the provider keeps waiting on.
+
+`node_measurement_only = true`, with worker capacity, selects node measurement,
+13 of the 17 runtime resources: everything worker mode creates except the
+`vpc-cni`, `kube-proxy` and Pod Identity agent add-ons and the External Secrets
+Pod Identity association. CoreDNS is created at zero replicas with the same
+bounded wait, so nodes join and no pod is scheduled on them. Whether a managed
+node group completes with no running CNI has not been measured.
 
 The retained figure is what Terraform state lists, and what the plan taken after
 the last teardown converged on. It is a statement about managed state rather than
