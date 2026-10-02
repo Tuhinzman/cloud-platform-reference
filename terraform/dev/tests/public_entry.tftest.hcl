@@ -9,7 +9,10 @@ run "worker_mode_creates_no_public_entry_identity" {
   command = plan
 
   assert {
-    condition     = length(aws_iam_role.record_controller) + length(aws_iam_role_policy.record_controller) + length(aws_eks_pod_identity_association.record_controller) == 0
+    condition = 0 == sum([
+      length(aws_iam_role.record_controller), length(aws_iam_role_policy.record_controller), length(aws_eks_pod_identity_association.record_controller),
+      length(aws_iam_role.aws_load_balancer_controller), length(aws_iam_role_policy.aws_load_balancer_controller), length(aws_eks_pod_identity_association.aws_load_balancer_controller),
+    ])
     error_message = "Without public_entry_enabled, worker mode must create no public-entry identity."
   }
 }
@@ -22,7 +25,10 @@ run "node_measurement_creates_no_public_entry_identity" {
   }
 
   assert {
-    condition     = length(aws_iam_role.record_controller) + length(aws_iam_role_policy.record_controller) + length(aws_eks_pod_identity_association.record_controller) == 0
+    condition = 0 == sum([
+      length(aws_iam_role.record_controller), length(aws_iam_role_policy.record_controller), length(aws_eks_pod_identity_association.record_controller),
+      length(aws_iam_role.aws_load_balancer_controller), length(aws_iam_role_policy.aws_load_balancer_controller), length(aws_eks_pod_identity_association.aws_load_balancer_controller),
+    ])
     error_message = "Node measurement must create no public-entry identity."
   }
 }
@@ -35,7 +41,10 @@ run "observation_mode_creates_no_public_entry_identity" {
   }
 
   assert {
-    condition     = length(aws_iam_role.record_controller) + length(aws_iam_role_policy.record_controller) + length(aws_eks_pod_identity_association.record_controller) == 0
+    condition = 0 == sum([
+      length(aws_iam_role.record_controller), length(aws_iam_role_policy.record_controller), length(aws_eks_pod_identity_association.record_controller),
+      length(aws_iam_role.aws_load_balancer_controller), length(aws_iam_role_policy.aws_load_balancer_controller), length(aws_eks_pod_identity_association.aws_load_balancer_controller),
+    ])
     error_message = "Observation mode must create no public-entry identity."
   }
 }
@@ -89,6 +98,51 @@ run "public_entry_creates_the_record_controller_identity" {
       statement.Resource == (statement.Action == ["route53:ListHostedZones"] ? ["*"] : ["arn:aws:route53:::hostedzone/Z0000000000EXAMPLE"])
     ])
     error_message = "Every grant except ListHostedZones must name the one zone, and only ListHostedZones may be account-wide."
+  }
+}
+
+run "public_entry_creates_the_load_balancer_controller_identity" {
+  command = plan
+
+  variables {
+    public_entry_enabled  = true
+    public_hosted_zone_id = "Z0000000000EXAMPLE"
+    public_domain         = "example.com"
+  }
+
+  assert {
+    condition     = aws_iam_role.aws_load_balancer_controller[0].name == "cloud-platform-reference-dev-aws-load-balancer-controller" && aws_eks_pod_identity_association.aws_load_balancer_controller[0].namespace == "kube-system" && aws_eks_pod_identity_association.aws_load_balancer_controller[0].service_account == "aws-load-balancer-controller"
+    error_message = "The load balancer controller role must be bound to the aws-load-balancer-controller ServiceAccount in kube-system."
+  }
+
+  assert {
+    condition     = jsondecode(aws_iam_role.aws_load_balancer_controller[0].assume_role_policy).Statement == [{ Effect = "Allow", Action = ["sts:AssumeRole", "sts:TagSession"], Principal = { Service = "pods.eks.amazonaws.com" } }]
+    error_message = "The load balancer controller role must trust only the Pod Identity service principal."
+  }
+
+  assert {
+    condition = alltrue([
+      for action in flatten([for statement in jsondecode(aws_iam_role_policy.aws_load_balancer_controller[0].policy).Statement : statement.Action]) :
+      action != "iam:CreateServiceLinkedRole" && !startswith(action, "waf-regional:") && !startswith(action, "wafv2:") && !startswith(action, "shield:")
+    ])
+    error_message = "The load balancer controller must not create a service-linked role or manage WAF or Shield."
+  }
+
+  assert {
+    condition = length([
+      for statement in jsondecode(aws_iam_role_policy.aws_load_balancer_controller[0].policy).Statement : statement
+      if contains(flatten([statement.Action]), "elasticloadbalancing:CreateLoadBalancer") || contains(flatten([statement.Action]), "elasticloadbalancing:CreateTargetGroup")
+      ]) > 0 && alltrue([
+      for statement in jsondecode(aws_iam_role_policy.aws_load_balancer_controller[0].policy).Statement :
+      try(statement.Condition.Null["aws:RequestTag/elbv2.k8s.aws/cluster"], null) == "false"
+      if contains(flatten([statement.Action]), "elasticloadbalancing:CreateLoadBalancer") || contains(flatten([statement.Action]), "elasticloadbalancing:CreateTargetGroup")
+    ])
+    error_message = "Load balancer and target group creation must keep the upstream elbv2.k8s.aws/cluster request-tag condition."
+  }
+
+  assert {
+    condition     = length(jsonencode(jsondecode(aws_iam_role_policy.aws_load_balancer_controller[0].policy))) <= 10240
+    error_message = "The policy must fit the 10,240-character inline role policy quota."
   }
 }
 
