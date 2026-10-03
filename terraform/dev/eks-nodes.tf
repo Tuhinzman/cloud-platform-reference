@@ -139,7 +139,8 @@ resource "aws_eks_node_group" "dev" {
   }
 
   # Node registration and image pulls leave through the NAT route. With no self-managed copies,
-  # the node group is created only after the CNI, kube-proxy and Pod Identity agent add-ons exist.
+  # the node group is created only after the CNI, kube-proxy and Pod Identity agent add-ons exist;
+  # node measurement creates none of them, so nothing is waited on.
   depends_on = [
     aws_iam_role_policy_attachment.eks_node_worker,
     aws_iam_role_policy_attachment.eks_node_cni,

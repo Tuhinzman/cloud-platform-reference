@@ -668,7 +668,7 @@ runtime table below is the reviewed list, each address a `create`.
 | Runtime class | Addresses |
 |---|---|
 | Created only when `worker_capacity_enabled` is true (10) | `aws_eip.nat[0]`, `aws_nat_gateway.dev[0]`, `aws_route.private_default[0]`, `aws_iam_role.eks_node[0]`, `aws_iam_role_policy_attachment.eks_node_worker[0]`, `aws_iam_role_policy_attachment.eks_node_cni[0]`, `aws_iam_role_policy_attachment.eks_node_ecr_pull[0]`, `aws_launch_template.eks_node[0]`, `aws_eks_node_group.dev[0]`, `aws_eks_pod_identity_association.external_secrets[0]` |
-| Created by every apply that is not targeted (7) | `aws_iam_role.eks_cluster`, `aws_iam_role_policy_attachment.eks_cluster_policy`, `aws_eks_cluster.dev`, `aws_eks_addon.vpc_cni`, `aws_eks_addon.coredns`, `aws_eks_addon.kube_proxy`, `aws_eks_addon.pod_identity_agent` |
+| Created by every apply that is not targeted, except node measurement (7) | `aws_iam_role.eks_cluster`, `aws_iam_role_policy_attachment.eks_cluster_policy`, `aws_eks_cluster.dev`, `aws_eks_addon.vpc_cni[0]`, `aws_eks_addon.coredns`, `aws_eks_addon.kube_proxy[0]`, `aws_eks_addon.pod_identity_agent[0]` |
 
 With `worker_capacity_enabled = false`, the plan shows 7 to add: the second row only. The
 five alerting-campaign addresses ([Alerting](../../terraform/dev/README.md#alerting)) appear
