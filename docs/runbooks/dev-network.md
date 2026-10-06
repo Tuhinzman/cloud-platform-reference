@@ -30,7 +30,7 @@ runbook adds the measured address lists and the procedures around them.
 | Check an existing state: exactly the retained set in state, exactly the runtime set in a plan | [Confirm the retained and runtime split](#confirm-the-retained-and-runtime-split) |
 | Check the network in AWS, not in state | [Read back the retained network](#read-back-the-retained-network) |
 | Check the two Secrets Manager entries without reading a value | [Read back the two Secrets Manager entries](#read-back-the-two-secrets-manager-entries) |
-| Check the VPC once the datastore root is built | [Verify the retained side with the datastore present](#verify-the-retained-side-with-the-datastore-present) |
+| Check the VPC while the datastore instance exists | [Verify the retained side with the datastore present](#verify-the-retained-side-with-the-datastore-present) |
 
 Topics covered in other runbooks are listed at the end of [Before you start](#before-you-start).
 

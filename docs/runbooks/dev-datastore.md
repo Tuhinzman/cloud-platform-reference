@@ -950,7 +950,7 @@ aws rds describe-db-instances --profile <profile> --region us-east-1 \
   --query 'DBInstances[0].[DBInstanceStatus,DeletionProtection]' --output text 2>&1 \
   | sed -E 's/^.*An error occurred \(([A-Za-z]+)\).*$/error: \1/'
 aws rds describe-db-snapshots --profile <profile> --region us-east-1 \
-  --db-snapshot-identifier cloud-platform-reference-dev-datastore-final \
+  --db-snapshot-identifier cloud-platform-reference-dev-datastore-final-2 \
   --query 'DBSnapshots[0].Status' --output text 2>&1 \
   | sed -E 's/^.*An error occurred \(([A-Za-z]+)\).*$/error: \1/'
 aws ssm get-parameter --profile <profile> --region us-east-1 \
@@ -1173,10 +1173,11 @@ and [Confirm convergence](#confirm-convergence).
   creates (`CreateDBInstance` and `PutParameter`) and, as AWS service side effects of the create,
   KMS grants and the instance's network interface. A reproducer has no published command for that
   check.
-- **Teardown / decommission.** Not exercised; see
+- **Teardown / decommission.** Exercised once, on 2026-10-06, for the owner pause, with private
+  tooling that is not published; see
   [Decommission](../../terraform/dev-datastore/README.md#decommission), which gives an order only:
-  no command-level procedure exists, and each of its state changes runs only as a reviewed saved
-  plan under a separate explicit owner grant.
+  no command-level procedure is published, and each of its state changes runs only as a reviewed
+  saved plan under a separate explicit owner grant.
 
 ### Read back the instance and its endpoint parameter
 
@@ -1286,7 +1287,7 @@ Run [Verify the secret containers](#verify-the-secret-containers-without-reading
 | Storage key | `AWS Enabled` |
 | Tags | The six tags in [providers.tf](../../terraform/dev-datastore/providers.tf) on the instance and the parameter |
 | Parameter | One line, `String Standard 1`; `MATCH` |
-| State | `true`, `false`, `cloud-platform-reference-dev-datastore-final`; `password` and `password_wo` `null`; `password_wo_version` `1` |
+| State | `true`, `false`, `cloud-platform-reference-dev-datastore-final-2` (`-final` before the 2026-10-06 decommission); `password` and `password_wo` `null`; `password_wo_version` `1` |
 
 **PASS when.**
 
@@ -2067,10 +2068,10 @@ an owner grant, and each plan uses a new `<private-dir>`.
 | Stage 1 from the current checkout with `-target` | UNEXERCISED | The README's alternative to planning commit `aeb1622`; never run. |
 | Master rotation | UNEXERCISED | An operational procedure with no reviewed form. Here rotation means a new master version together with a `password_wo_version` increment in [database.tf](../../terraform/dev-datastore/database.tf). A placement never writes to a non-empty container, so rotation needs its own reviewed procedure and grant. The rotation exercise [ADR-0008](../decisions/0008-define-the-secrets-and-workload-identity-model.md) requires was met on the dev secret path ([Identity, secrets and configuration](../../terraform/dev/README.md#identity-secrets-and-configuration)) and does not cover this secret. |
 | Stop and start the instance | UNEXERCISED | No procedure exists. |
-| Restore from a snapshot or an automated backup | UNEXERCISED | The workload-data restore exercise that [ADR-0011](../decisions/0011-define-the-backup-and-recovery-model.md) requires is owed now that the datastore exists. It runs only under a separately reviewed recovery package. A retained snapshot or an automated backup is not restore proof. |
+| Restore from a snapshot or an automated backup | UNEXERCISED | The workload-data restore exercise that [ADR-0011](../decisions/0011-define-the-backup-and-recovery-model.md) requires is owed for the datastore; while the project is paused, its data exists only in the final snapshot `cloud-platform-reference-dev-datastore-final`. It runs only under a separately reviewed recovery package. A retained snapshot or an automated backup is not restore proof. |
 | Secret accidental-deletion recovery | UNEXERCISED | [ADR-0011](../decisions/0011-define-the-backup-and-recovery-model.md) requires a secret to be retrieved after a simulated accidental deletion. The seven-day recovery window is configured and has never been verified. |
 | Maintenance | UNEXERCISED | Minor-version upgrades (automatic upgrades are off), pending maintenance actions and CA certificate rotation. No procedure exists. |
-| Decommission, including the final snapshot's retention and deletion | UNEXERCISED | Designed in [Decommission](../../terraform/dev-datastore/README.md#decommission) as one reviewed change in three steps; no reviewed command sheet exists, and it needs a separate owner grant. No final snapshot exists. |
+| The final snapshot's retention and deletion | UNEXERCISED | The decommission itself ran on 2026-10-06 for the owner pause, in the three steps of [Decommission](../../terraform/dev-datastore/README.md#decommission), with private tooling that is not published, and kept the final snapshot `cloud-platform-reference-dev-datastore-final`. Deleting that snapshot under its retention rule has not run; no reviewed command sheet exists, and it needs a separate owner grant. |
 | Application value and application database role | UNEXERCISED, DEFERRED | The application container stays empty until its consumer path is designed and independently reviewed. |
 
 ## Reproducibility gaps

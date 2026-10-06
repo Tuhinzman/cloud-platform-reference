@@ -198,7 +198,9 @@ is why the answer to what exists right now has two halves.
 What persists is the Terraform state backend and the durable evidence destination, which
 outlive every environment, together with the retained part of the Dev environment: its
 network baseline, the identity, secret, and configuration resources scoped to that
-environment, and its datastore, a PostgreSQL instance that bills for as long as it exists.
+environment, and the datastore's network boundary and credential containers. The datastore's
+PostgreSQL instance was removed on 2026-10-06 while the project is paused; its final snapshot is
+kept, and recreating the instance has not been exercised.
 What is not running is the billable Dev runtime, meaning the EKS control
 plane, the managed node group, and the NAT gateway. Those are declared in Terraform,
 created inside an approved window, and destroyed when it closes. They have been built and

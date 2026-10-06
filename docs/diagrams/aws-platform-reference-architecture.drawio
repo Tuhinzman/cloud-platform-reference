@@ -245,7 +245,7 @@ S3, versioned" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeC
 Route 53, with the ACM certificate and its validation record" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2C6049;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1226" y="368" width="448" height="46" as="geometry"/></mxCell>
 <mxCell id="pf6" value="Durable workload datastore
 
-RDS for PostgreSQL 17, deletion-protected, final snapshot on delete" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2C6049;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1226" y="416" width="448" height="46" as="geometry"/></mxCell>
+RDS for PostgreSQL 17, removed for the pause; final snapshot kept" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2C6049;strokeWidth=1.5;fontSize=11.5;fontColor=#1B2733;fontFamily=Helvetica;align=center;verticalAlign=middle;arcSize=8;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1226" y="416" width="448" height="46" as="geometry"/></mxCell>
 <mxCell id="ro1" value="SSM Parameter Store
 
 non-sensitive runtime configuration; declared in

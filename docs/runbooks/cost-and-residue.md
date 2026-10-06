@@ -452,8 +452,10 @@ Write these seven entries:
      --query 'DBSnapshots[].[starts_with(DBSnapshotIdentifier, `"cloud-platform-reference-dev-datastore-final"`), Status, SnapshotCreateTime]' --output text
    ```
 
-   **Expected:** instance `available`; 4 secrets (the Dev network's two, the datastore's two), none
-   scheduled for deletion; 1 hosted zone, not private; no manual snapshot before a decommission.
+   **Expected:** instance `available`, or the error `DBInstanceNotFound` while the datastore is
+   decommissioned; 4 secrets (the Dev network's two, the datastore's two), none scheduled for
+   deletion; 1 hosted zone, not private; no manual snapshot before a decommission, and after one
+   only that decommission's final snapshot, `True` and `available`.
 
    Each manual snapshot prints one line: `True` when its name starts with the datastore's
    final-snapshot name (so `-final-2` counts), then its status and creation time. This tracks the
@@ -513,7 +515,8 @@ authoritative.
    > that must survive a destroy first and read it back after
    > ([Export the sealed set before teardown](evidence-handling.md#export-the-sealed-set-before-teardown),
    > [Read back exported evidence after destruction](evidence-handling.md#read-back-exported-evidence-after-destruction)).
-   > Decommissioning the datastore has not been exercised.
+   > The datastore was decommissioned once, on 2026-10-06, for the owner pause. Recreating it and
+   > restoring its final snapshot have not been exercised.
 
 4. Record the decision and the evidence it rests on.
 
