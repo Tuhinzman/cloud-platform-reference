@@ -10,7 +10,7 @@ Dev runtime's: a window's teardown never reaches this state.
 |---|---|
 | `network.tf` | DB subnet group over the two Dev private subnets, looked up by `Name` tag; a security group admitting TCP 5432 from those two subnet ranges, with no egress rule |
 | `secrets.tf` | Secrets Manager containers for the master password and the application role password, created without a value; values are placed out of band and never written by Terraform |
-| `database.tf` | A PostgreSQL 17.11 instance on `db.t4g.micro` with 20 GiB of encrypted gp3 storage, single-AZ and not publicly accessible, in the subnet group and behind the security group above, with seven-day automated backups, deletion protection and a final snapshot on deletion; and a Standard Parameter Store entry holding the instance address |
+| `database.tf` | A PostgreSQL 17.11 instance on `db.t4g.micro` with 20 GiB of encrypted gp3 storage, single-AZ and not publicly accessible, in the subnet group and behind the security group above, with seven-day automated backups and a final snapshot on deletion; and a Standard Parameter Store entry holding the instance address |
 
 The master password is read from the master container at plan and apply time and sent to RDS
 as a write-only argument, so it is stored in neither the state nor a plan file.
@@ -54,18 +54,21 @@ Write-only handling keeps it out of state and plan files, not out of debug outpu
 
 ## Decommission
 
-Decommission has not been exercised. The instance is protected twice: deletion protection is
-on in AWS, and `prevent_destroy` makes Terraform refuse any plan that would destroy it. Removing
-it is therefore a reviewed change in three steps: remove `prevent_destroy` and set
-`deletion_protection = false`, apply that change, then destroy. Deletion takes the final
-snapshot `cloud-platform-reference-dev-datastore-final`. AWS refuses the deletion if a snapshot
-with that name already exists, so a later decommission names its final snapshot `-final-2`,
-`-final-3` and so on, in the same reviewed change.
+Decommission has not been exercised. It is a reviewed change in three steps: remove
+`prevent_destroy` and set `deletion_protection = false`, apply that change, then destroy. This
+configuration makes the first step, to remove the instance and its cost while the project is
+paused. Until that change is applied, deletion protection stays on in AWS. The destroy for the
+pause targets only the instance and its endpoint parameter; the subnet group, the security group
+and its rules, and the two secret containers stay. Deletion takes the final snapshot
+`cloud-platform-reference-dev-datastore-final` and deletes the automated backups. AWS refuses the
+deletion if a snapshot with that name already exists, so a later decommission names its final
+snapshot `-final-2`, `-final-3` and so on, in the same reviewed change.
 
 The final snapshot is kept for 30 days after the evidence of the ADR-0017 validation programme
 is closed, and is then deleted, or kept longer, only on an explicit owner review. Restoring from
 a snapshot or from the automated backups has not been exercised, so a retained snapshot is not
-proof that the data can be recovered.
+proof that the data can be recovered. Recreating the instance from this root after the pause has
+not been exercised either.
 
 Destroy this root before the dev network, whose VPC and private subnets it references. A
 deleted secret stays recoverable for 7 days, and its name stays reserved until the deletion
