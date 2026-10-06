@@ -41,10 +41,14 @@ resource "aws_db_instance" "datastore" {
   engine_lifecycle_support = "open-source-rds-extended-support-disabled"
   apply_immediately        = true
 
-  # Off, with prevent_destroy removed, for the decommission in README.md.
-  deletion_protection       = false
-  skip_final_snapshot       = false
-  final_snapshot_identifier = "cloud-platform-reference-dev-datastore-final"
+  deletion_protection = true
+  skip_final_snapshot = false
+  # -final is the kept snapshot of the 2026-10-06 decommission; see README.md.
+  final_snapshot_identifier = "cloud-platform-reference-dev-datastore-final-2"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_ssm_parameter" "endpoint" {

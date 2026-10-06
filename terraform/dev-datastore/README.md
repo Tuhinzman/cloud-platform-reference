@@ -10,7 +10,7 @@ Dev runtime's: a window's teardown never reaches this state.
 |---|---|
 | `network.tf` | DB subnet group over the two Dev private subnets, looked up by `Name` tag; a security group admitting TCP 5432 from those two subnet ranges, with no egress rule |
 | `secrets.tf` | Secrets Manager containers for the master password and the application role password, created without a value; values are placed out of band and never written by Terraform |
-| `database.tf` | A PostgreSQL 17.11 instance on `db.t4g.micro` with 20 GiB of encrypted gp3 storage, single-AZ and not publicly accessible, in the subnet group and behind the security group above, with seven-day automated backups and a final snapshot on deletion; and a Standard Parameter Store entry holding the instance address |
+| `database.tf` | A PostgreSQL 17.11 instance on `db.t4g.micro` with 20 GiB of encrypted gp3 storage, single-AZ and not publicly accessible, in the subnet group and behind the security group above, with seven-day automated backups, deletion protection and a final snapshot on deletion; and a Standard Parameter Store entry holding the instance address |
 
 The master password is read from the master container at plan and apply time and sent to RDS
 as a write-only argument, so it is stored in neither the state nor a plan file.
@@ -54,21 +54,22 @@ Write-only handling keeps it out of state and plan files, not out of debug outpu
 
 ## Decommission
 
-Decommission has not been exercised. It is a reviewed change in three steps: remove
-`prevent_destroy` and set `deletion_protection = false`, apply that change, then destroy. This
-configuration makes the first step, to remove the instance and its cost while the project is
-paused. Until that change is applied, deletion protection stays on in AWS. The destroy for the
-pause targets only the instance and its endpoint parameter; the subnet group, the security group
-and its rules, and the two secret containers stay. Deletion takes the final snapshot
-`cloud-platform-reference-dev-datastore-final` and deletes the automated backups. AWS refuses the
-deletion if a snapshot with that name already exists, so a later decommission names its final
-snapshot `-final-2`, `-final-3` and so on, in the same reviewed change.
+Decommission is a reviewed change in three steps: remove `prevent_destroy` and set
+`deletion_protection = false`, apply that change, then destroy. It ran once, on 2026-10-06, to
+remove the instance and its cost while the project is paused; the apply and the destroy each ran
+as a reviewed saved plan.
+The destroy targeted only the instance and its endpoint parameter; the subnet group, the security
+group and its rules, and the two secret containers stayed. Deletion took the final snapshot
+`cloud-platform-reference-dev-datastore-final` and deleted the automated backups, so that snapshot
+is now the only copy of the instance's data. This configuration restores both protections for a
+later recreation. AWS refuses a deletion when a snapshot already holds the final-snapshot name,
+so it names the next one `cloud-platform-reference-dev-datastore-final-2`, and a decommission
+after that names `-final-3`, in the same reviewed change.
 
 The final snapshot is kept for 30 days after the evidence of the ADR-0017 validation programme
 is closed, and is then deleted, or kept longer, only on an explicit owner review. Restoring from
-a snapshot or from the automated backups has not been exercised, so a retained snapshot is not
-proof that the data can be recovered. Recreating the instance from this root after the pause has
-not been exercised either.
+the final snapshot has not been exercised, so it is not proof that the data can be recovered.
+Recreating the instance from this root after the pause has not been exercised either.
 
 Destroy this root before the dev network, whose VPC and private subnets it references. A
 deleted secret stays recoverable for 7 days, and its name stays reserved until the deletion
@@ -84,8 +85,7 @@ security group and the Standard parameter carry no charge.
 
 ## Status
 
-The network boundary, the two secret containers, the instance and its endpoint parameter are
-applied. The first apply added the subnet group, the security group, its two ingress rules and
+The network boundary and the two secret containers are applied. The first apply added the subnet group, the security group, its two ingress rules and
 the two containers, and nothing else, and AWS read-back verified each of them with the six
 mandatory tags. The master container then received one value, placed out of band; the
 application container holds none.
@@ -96,5 +96,12 @@ under an AWS-managed key, single-AZ, not publicly accessible, in the subnet grou
 security group above, with seven-day backups, deletion protection on, extended support disabled,
 no RDS-managed master secret and the six mandatory tags, and a parameter holding the instance
 address. The plan after apply reported no changes. A search of the state, the saved plan and
-every log of that plan, apply and read-back found no copy of the master value. No workload uses
-the instance yet.
+every log of that plan, apply and read-back found no copy of the master value. No workload used
+the instance: its connection count stayed at 0 from creation to deletion.
+
+The instance and its endpoint parameter were destroyed on 2026-10-06 for the owner pause. AWS
+read-back found both gone and no automated backup retained. The final snapshot
+`cloud-platform-reference-dev-datastore-final` is available and encrypted, and carries the six
+mandatory tags. The subnet group, the security group and its rules, and the two secret containers
+read back unchanged, and the master container still holds its one value. Nothing has been
+recreated.

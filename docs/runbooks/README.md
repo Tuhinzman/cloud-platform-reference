@@ -771,8 +771,9 @@ stands is recorded in the runbook linked beside it.
 
 - The Terraform-state recovery exercise is mandatory before ADR-0011 is complete
   ([terraform-operations.md](terraform-operations.md#not-yet-exercised)).
-- The workload-data restore exercise is mandatory now that the datastore exists, and runs only
-  under a separately reviewed recovery package ([dev-datastore.md](dev-datastore.md#not-yet-exercised)).
+- The workload-data restore exercise is mandatory for the datastore, whose data exists only in its
+  final snapshot while the project is paused, and runs only under a separately reviewed recovery
+  package ([dev-datastore.md](dev-datastore.md#not-yet-exercised)).
 - Secret accidental-deletion recovery must be verified
   ([dev-datastore.md](dev-datastore.md#not-yet-exercised),
   [dev-network.md](dev-network.md#not-yet-exercised)).
