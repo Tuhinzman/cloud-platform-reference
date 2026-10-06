@@ -202,14 +202,19 @@ and the Collector repository is declared because that work requires its image
 mirrored into this registry rather than pulled from an external one at pod
 start. All three have since been performed: shipping and quote publish through
 their own pipelines by digest, and the Collector image is mirrored into its
-repository. `astroshop/image-provider` now holds one image, published by its
-own pipeline and read back from this registry by digest; `astroshop/frontend-proxy`
-is wired for the same path and holds no image yet. `astroshop/cart`,
-`astroshop/frontend`, `astroshop/payment` and `astroshop/product-catalog` are
-declared because each now has a build-and-scan pipeline; none holds an image until
-its publication is separately authorized. Components without a pipeline are
-absent: membership follows the delivery path ADR-0009 describes, not the fleet
-inventory.
+repository. `astroshop/image-provider` and `astroshop/frontend-proxy` publish
+the same way. `astroshop/cart`, `astroshop/frontend`, `astroshop/payment` and
+`astroshop/product-catalog` are declared because each now has a build-and-scan
+pipeline, and so are `astroshop/accounting`, `astroshop/ad`,
+`astroshop/currency`, `astroshop/email`, `astroshop/flagd-ui`,
+`astroshop/fraud-detection`, `astroshop/product-reviews` and
+`astroshop/recommendation`, which have not been applied yet. None of these twelve
+holds an image until its publication is separately authorized. All seventeen
+project-built components in the workload's
+[SERVICE-INVENTORY.md](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/SERVICE-INVENTORY.md)
+now have that pipeline, so the set covers each of them. Membership still
+follows the delivery path ADR-0009 describes, not the fleet inventory: a
+component without a build-and-scan pipeline stays absent.
 
 ## CI push identity
 
