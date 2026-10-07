@@ -11,6 +11,7 @@ locals {
     "frontend",
     "payment",
     "product-catalog",
+    "currency",
   ])
 }
 
