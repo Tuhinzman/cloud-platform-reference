@@ -31,11 +31,13 @@ The platform is delivered from three repositories, each with one responsibility
 ([ADR-0009](docs/decisions/0009-define-the-software-delivery-model.md)). This one is the
 place to start.
 
-| Repository | Holds | Visibility |
-|---|---|---|
-| **cloud-platform-reference** (this repository, GitHub) | Architecture, decisions, the Terraform that provisions AWS, implementation and validation documentation | Public |
-| [**cloud-platform-workload**](https://gitlab.com/tuinzaman/cloud-platform-workload) (GitLab) | The reference workload, its container builds and the CI/CD pipelines that build, scan and publish it: [`.gitlab-ci.yml`](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/.gitlab-ci.yml), [shared templates](https://gitlab.com/tuinzaman/cloud-platform-workload/-/tree/main/ci/templates), per-service `ci.yml` | Public |
-| **cloud-platform-gitops** (GitLab) | The authoritative desired state Argo CD reconciles: values layers and the image digest each environment runs | Private, because its pins carry live registry coordinates. The model it implements is documented in [GitOps Delivery](docs/implementation/gitops-delivery.md) |
+| Repository | Host | Holds | Visibility |
+|---|---|---|---|
+| **cloud-platform-reference** (this repository) | GitHub, authoritative. The place to start | Architecture, decisions, the Terraform that provisions AWS, implementation and validation documentation | Public |
+| [**cloud-platform-workload**](https://gitlab.com/tuinzaman/cloud-platform-workload) | GitLab, authoritative: merge requests and CI live there. A [read-only mirror on GitHub](https://github.com/Tuhinzman/cloud-platform-workload) exists for browsing | The reference workload, its container builds and the CI/CD pipelines that build, scan and publish it: [`.gitlab-ci.yml`](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/.gitlab-ci.yml), [shared templates](https://gitlab.com/tuinzaman/cloud-platform-workload/-/tree/main/ci/templates), per-service `ci.yml` | Public |
+| **cloud-platform-gitops** | GitLab, private, not mirrored | The authoritative desired state Argo CD reconciles: values layers and the image digest each environment runs | Private, because its pins carry live registry coordinates. The model it implements is documented in [GitOps Delivery](docs/implementation/gitops-delivery.md) |
+
+The hosting model, mirror included, is drawn in [Repository Model](docs/diagrams/repository-model.md).
 
 The platform, meaning the Terraform, the CI templates, the GitOps desired state and the
 validation harness, is original to this project. The workload, AstroShop, is a derivation
@@ -65,8 +67,12 @@ editable source, [aws-platform-reference-architecture.drawio](docs/diagrams/aws-
 - [AWS Platform and Request Flow](docs/diagrams/aws-platform-request-flow.svg): the account, the per-environment network, and what is retained across teardown
 - [Identity, Secrets, Observability, Evidence and Lifecycle](docs/diagrams/identity-observability-evidence-lifecycle.svg): the four platform concerns and what each has proven
 
+One smaller view is Mermaid source rather than an export:
+[Repository Model](docs/diagrams/repository-model.md), the three repositories, their
+authoritative hosts and the read-only workload mirror.
+
 Every significant choice is recorded in [docs/decisions](docs/decisions/), one decision per
-record, each with its alternatives, consequences, and a revisit trigger. All eighteen are
+record, each with its alternatives, consequences, and a revisit trigger. All twenty are
 accepted.
 
 | Record | Decision |
@@ -261,11 +267,12 @@ application's dependency graph, and that is a limitation rather than a finding o
 The pipeline holds no cloud credential: it exchanges a short-lived identity token for
 temporary credentials at the moment it needs them, and the image is
 [published to the registry by digest](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/ci/templates/ecr-publish.yml).
-Coverage is partial and stated as measured. Of the seventeen justified project-built
-components, some carry the full path through build, scan, SBOM and publication, some
-reach lint only, and the rest are not wired. ADR-0017 makes the full justified
-inventory the programme target, so the
-unwired components are selected work rather than work ruled out, and full-fleet CI/CD is
+Coverage is partial and stated as measured. All seventeen justified project-built
+components are wired to the shared pipeline through build, scan and SBOM, and four have
+published an artifact: checkout, shipping, quote and image-provider. The rest have
+published nothing, and several have no publication stage yet. ADR-0017 makes the full
+justified inventory the programme target, so the
+unpublished components are selected work rather than work ruled out, and full-fleet CI/CD is
 not claimed. Which component is in which state changes as the programme runs, so the
 current per-component record is kept in one place rather than restated here: the workload
 repository's [SERVICE-INVENTORY.md](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/SERVICE-INVENTORY.md). Checkout's first published digest was read back
@@ -280,7 +287,11 @@ recorded validation windows. This is a point-in-time scan result rather than a c
 vulnerability attestation. Checkout source has since received a HIGH gRPC remediation,
 CVE-2026-84445, by moving to grpc v1.83.2; that change was merged after the deployed
 artifact was built and has not been republished as that artifact, which has not been
-rescanned against a current vulnerability database.
+rescanned against a current vulnerability database. On 2026-10-13 the checkout and
+product-catalog container definitions were rewritten and their Go modules moved to
+`golang.org/x/net` v0.60.0. The merge-request pipeline for that change passed, and no image
+built from the rewritten definitions has been published, so every published checkout digest
+described here was built from an earlier definition.
 
 Two publications have had the pipeline retain that provenance itself rather than leaving
 it to be reconstructed: shipping first, then image-provider. Each bundle keeps the registry
