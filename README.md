@@ -72,9 +72,9 @@ the overview and the CI pipeline also link to the full-size image.
 - [AWS Platform and Request Flow](docs/diagrams/aws-platform-request-flow.svg): the account, the per-environment network, and what is retained across teardown
 - [Identity, Secrets, Observability, Evidence and Lifecycle](docs/diagrams/identity-observability-evidence-lifecycle.svg): the four platform concerns and what each has proven
 
-One smaller view is Mermaid source rather than an export:
-[Repository Model](docs/diagrams/repository-model.md), the three repositories, their
-authoritative hosts and the read-only workload mirror.
+One smaller view, [Repository Model](docs/diagrams/repository-model.md), shows the three
+repositories, their authoritative hosts and the read-only workload mirror. It is a static SVG
+exported from page 6 of the same draw.io source.
 
 Every significant choice is recorded in [docs/decisions](docs/decisions/), one decision per
 record, each with its alternatives, consequences, and a revisit trigger. All twenty are
