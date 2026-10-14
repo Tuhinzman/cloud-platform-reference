@@ -63,10 +63,11 @@ exercised implementation without reading the records first. The overview and the
 exported from one editable source,
 [aws-platform-reference-architecture.drawio](docs/diagrams/aws-platform-reference-architecture.drawio).
 The other three are earlier renderings: the file holds a page for each, but those pages are not
-the source of the published images.
+the source of the published images. GitHub's file preview shows wide diagrams scaled down, so
+the overview and the CI pipeline also link to the full-size image.
 
-- [End-to-end Platform Overview](docs/diagrams/platform-high-level-flow.svg): the whole platform on one page, from a commit to an observed workload on AWS, with each part's status taken from evidence
-- [GitLab CI Pipeline](docs/diagrams/gitlab-ci-pipeline.svg): the merge request and main pipelines, the owner-triggered publish to Amazon ECR, and the separate mirror path
+- [End-to-end Platform Overview](docs/diagrams/platform-high-level-flow.svg): the whole platform on one page, from a commit to an observed workload on AWS, with each part's status taken from evidence ([open full-size diagram](docs/diagrams/platform-high-level-flow.svg?raw=true))
+- [GitLab CI Pipeline](docs/diagrams/gitlab-ci-pipeline.svg): the merge request and main pipelines, the owner-triggered publish to Amazon ECR, and the separate mirror path ([open full-size diagram](docs/diagrams/gitlab-ci-pipeline.svg?raw=true))
 - [Control, Delivery and GitOps](docs/diagrams/control-delivery-gitops.svg): source to runtime, the CI federation path, and human infrastructure control
 - [AWS Platform and Request Flow](docs/diagrams/aws-platform-request-flow.svg): the account, the per-environment network, and what is retained across teardown
 - [Identity, Secrets, Observability, Evidence and Lifecycle](docs/diagrams/identity-observability-evidence-lifecycle.svg): the four platform concerns and what each has proven

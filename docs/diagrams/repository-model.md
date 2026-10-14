@@ -1,9 +1,11 @@
 # Repository Model
 
 Three repositories carry the platform, each with one responsibility and one authoritative
-host ([ADR-0009](../decisions/0009-define-the-software-delivery-model.md)). The GitHub copy of
-the workload repository is a one-way mirror kept for browsing: merge requests, pipelines and
-the authoritative history stay on GitLab, and nothing is developed in the mirror.
+host ([ADR-0009](../decisions/0009-define-the-software-delivery-model.md)). GitLab holds the
+authoritative workload repository, and merge requests, pipelines and history stay there. The
+GitHub copy is a one-way presentation mirror that GitLab pushes to, with GitHub Actions
+disabled. Not developing in the mirror is an owner working rule, not an enforced permission
+boundary.
 
 ```mermaid
 flowchart TB
@@ -11,7 +13,7 @@ flowchart TB
         direction LR
         REF["GitHub: cloud-platform-reference<br/>AUTHORITATIVE platform repository<br/>Terraform, decisions, documentation. Start here"]
         WL["GitLab: cloud-platform-workload<br/>AUTHORITATIVE workload source<br/>merge requests and CI"]
-        WLM["GitHub: cloud-platform-workload<br/>MIRROR, read-only<br/>same commits, no pull requests, no Actions"]
+        WLM["GitHub: cloud-platform-workload<br/>PRESENTATION MIRROR<br/>pushed from GitLab, Actions disabled"]
     end
     subgraph PRIVATE
         direction LR
@@ -25,5 +27,5 @@ flowchart TB
 ```
 
 Solid arrows carry Git objects or artifact identity in one direction. Dotted arrows are
-documentation links. The mirror is never ahead of GitLab and shows nothing that has not been
-pushed there.
+documentation links. Mirror updates can lag behind GitLab, and a branch deleted on GitLab can
+remain on GitHub.
