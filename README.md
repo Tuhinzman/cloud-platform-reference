@@ -17,12 +17,14 @@ Status as of 2026-10-16. Nothing in this repository is a production-readiness cl
   gateway) exists only inside an approved window. Between windows only the persistent foundations,
   the retained Dev baseline, and the datastore's network boundary, credential containers and final
   snapshot remain.
-- **Validated on AWS in six Dev windows, 2026-08-14 to 2026-09-13.** Each window created the
-  runtime from Terraform and destroyed it with a zero-residual census; one was aborted at its first
-  gate on a measured defect. Argo CD reconciled a three-service workload slice and its
-  observability stack from Git, the running shipping image matched its published digest on four
-  independent signals, an alert reached the operator, and an induced fault was restored through
-  Git ([Runtime Validation](docs/validation/runtime-validation.md)).
+- **Validated on AWS in six Dev windows, 2026-08-14 to 2026-09-13.** They are the publicly
+  documented historical validation set in
+  [Runtime Validation](docs/validation/runtime-validation.md), not necessarily the complete window
+  history. Each created the runtime from Terraform and destroyed it with a zero-residual census;
+  one was aborted at its first gate on a measured defect. Argo CD reconciled a three-service
+  workload slice and its observability stack from Git, the running shipping image matched its
+  published digest on four independent signals, an alert reached the operator, and an induced
+  fault was restored through Git.
 - **Delivery coverage is partial.** All seventeen project-built components are wired through
   build, scan and SBOM in CI. Five have published images to Amazon ECR, and three of them,
   checkout, shipping and quote, ran in the validation windows. No image built from the container
@@ -76,17 +78,18 @@ images, and ADR-0020 narrows ADR-0017 and ADR-0019 for the sandbox image baked i
 
 ## Engineering Capabilities
 
-**PROVEN** rests on retained runtime evidence, and **PARTIALLY PROVEN** names its boundary.
-**IMPLEMENTED** means the code exists, and is applied where stated, with no runtime proof claimed.
-**DESIGNED** means decided in an Accepted ADR and not built. Raw evidence stays private; the
-linked pages are its sanitized summaries.
+**PROVEN** rests on retained evidence for the scope stated, whether from a runtime window, a
+pipeline run or an AWS exercise, and **PARTIALLY PROVEN** names its boundary. **IMPLEMENTED** means
+the code exists, and is applied where stated, with no validation claimed. **DESIGNED** means
+decided in an Accepted ADR and not built. Raw evidence stays private; the linked pages are its
+sanitized summaries.
 
 | Capability | What is built | Status | Evidence |
 |---|---|---|---|
-| Infrastructure as code | Four Terraform roots split by responsibility, S3 remote state, a reviewed plan before every apply | IMPLEMENTED; each applied root read back from AWS | [Root READMEs](terraform/) |
-| Runtime lifecycle and teardown | The 17-resource Dev runtime, created for each window and removed by a targeted destroy and an orphan census by resource class | PROVEN in all six windows; evidence read back after destruction in the two most recent | [Windows](docs/validation/runtime-validation.md#windows) |
+| Infrastructure as code | Four Terraform roots split by responsibility, S3 remote state, a reviewed plan before every apply | IMPLEMENTED and applied; the root READMEs record AWS read-back for the registry, CI push identity, DNS zone, certificate, Dev network baseline and datastore, and a clean post-apply plan with recorded settings for the state and evidence buckets | [Root READMEs](terraform/) |
+| Runtime lifecycle and teardown | The 17-resource Dev runtime, created for each window and removed by a targeted destroy and an orphan census by resource class | PROVEN in all six documented windows; evidence read back after destruction in the last two of them | [Windows](docs/validation/runtime-validation.md#windows) |
 | Build and scan | Shared GitLab CI templates: image build, Trivy image and source-dependency gates that block fixable HIGH and CRITICAL findings, SBOM, container health check | Build, scan and SBOM IMPLEMENTED for 17 of 17 components; health checks vary by component | [trivy-scan.yml](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/ci/templates/trivy-scan.yml), [SERVICE-INVENTORY.md](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/SERVICE-INVENTORY.md) |
-| Publication by digest | OIDC token exchange with no stored AWS credential, immutable ECR tags, a manual publish job on `main` | PROVEN for the checkout push path; 5 of 17 components published | [ecr-publish.yml](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/ci/templates/ecr-publish.yml), [Foundation status](terraform/foundation/README.md#status) |
+| Publication by digest | OIDC token exchange with no stored AWS credential, immutable ECR tags, a manual publish job on `main` | PROVEN for the checkout push path; 5 of 17 components published | [ecr-publish.yml](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/ci/templates/ecr-publish.yml), [SERVICE-INVENTORY.md](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/SERVICE-INVENTORY.md) |
 | GitOps delivery | Argo CD with three value layers, digest pins and manual sync | Reconciliation PROVEN; image identity PROVEN for shipping, PARTIALLY PROVEN for quote and checkout | [GitOps Delivery](docs/implementation/gitops-delivery.md), [Results](docs/validation/runtime-validation.md#what-has-been-demonstrated) |
 | Workload identity and secrets | EKS Pod Identity, External Secrets Operator reading AWS Secrets Manager, IMDSv2 with a hop limit of 1 | PROVEN for the alerting publisher; secret synchronisation PARTIALLY PROVEN; an ordinary pod observed failing to obtain node credentials | [Dev identity](terraform/dev/README.md#identity-secrets-and-configuration), [Results](docs/validation/runtime-validation.md#what-has-been-demonstrated) |
 | Telemetry | OpenTelemetry Collector gateway; Prometheus, Loki and Tempo; Grafana views; 2-hour retention | Kubernetes identity on metrics, logs and traces PROVEN; retention PROVEN as combined evidence; views PARTIALLY PROVEN | [Results](docs/validation/runtime-validation.md#what-has-been-demonstrated) |
@@ -111,9 +114,12 @@ start.
 
 Mirror updates can lag behind GitLab; [Repository Model](docs/diagrams/repository-model.md) draws
 the hosting model. The platform, meaning the Terraform, the CI templates, the GitOps desired state
-and the validation harness, is original to this project. AstroShop is a derivation of the
-OpenTelemetry Demo; what was taken, changed and excluded is recorded in the workload repository's
-[DERIVATION.md](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/DERIVATION.md).
+and the validation harness, is this project's work. Several CI templates were adapted from a prior
+project by the same author, while registry publication, federated pipeline credentials and SBOM
+generation are new here. AstroShop is a derivation of the OpenTelemetry Demo. The workload
+repository's [DERIVATION.md](https://gitlab.com/tuinzaman/cloud-platform-workload/-/blob/main/DERIVATION.md)
+records what was carried from the prior project and what was taken from upstream, changed and
+excluded.
 
 | Path | Contents |
 |---|---|
