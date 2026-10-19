@@ -87,7 +87,7 @@ public-entry window, and go with its runtime ([Public entry](#public-entry)).
 |---|---|
 | `aws_iam_role` + `aws_iam_role_policy` | Record controller identity, inline policy that changes only the environment's two record names, as A and TXT, in the one hosted zone |
 | `aws_eks_pod_identity_association` | Binds it to the `external-dns` ServiceAccount in the `external-dns` namespace |
-| `aws_iam_role` + `aws_iam_role_policy` | Load balancer controller identity, inline policy from the controller's upstream policy less two grants |
+| `aws_iam_role` + `aws_iam_role_policy` | Load balancer controller identity, inline policy from the controller's upstream policy less two grants, with its security-group writes bound to this cluster |
 | `aws_eks_pod_identity_association` | Binds it to the `aws-load-balancer-controller` ServiceAccount in `kube-system` |
 
 ## Address plan
@@ -493,14 +493,26 @@ The load balancer controller's policy is the upstream
 [`iam_policy.json` of v3.5.0](https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.5.0/docs/install/iam_policy.json)
 (sha256 `16f232c9d9f79366fe949c4550ad517a202380058a9e48d45a4e215044a20a6a`), kept as
 [`policies/aws-load-balancer-controller-iam-policy.json`](policies/aws-load-balancer-controller-iam-policy.json)
-with two edits. `iam:CreateServiceLinkedRole` is removed: a service-linked role is
+with three edits. `iam:CreateServiceLinkedRole` is removed: a service-linked role is
 account-wide and would outlive every teardown, so the Elastic Load Balancing one has
 to exist already. The WAF Classic, WAFv2 and Shield actions are removed: ADR-0018
 adopts no WAF and nothing here uses Shield Advanced, so the controller has to run with
-`enableWaf`, `enableWafv2` and `enableShield` set to false. Every other statement is
-upstream, including the `elbv2.k8s.aws/cluster` tag conditions and the security-group
-ingress statement that upstream itself describes as permissive. Another controller
-version needs its own policy, and its record names checked again.
+`enableWaf`, `enableWafv2` and `enableShield` set to false. The security-group
+statements are bound to this cluster rather than only to the VPC, because the
+datastore's security group shares that VPC. The controller can create a group only
+with `elbv2.k8s.aws/cluster` set to the cluster name, and the statement for the VPC
+resource names only this VPC. AWS lists that VPC resource as optional for
+`CreateSecurityGroup`, so it is not shown to bind a request that names no VPC. Inside
+this VPC the controller can change ingress rules on groups carrying that tag value and
+on the EKS cluster security group, which EKS tags `aws:eks:cluster-name`, and it can
+delete only groups carrying that tag value. It can reconcile other tags on those
+groups, but a request that adds, changes or removes `elbv2.k8s.aws/cluster`, or names
+no tag keys, is refused. Tag changes carry no VPC condition, so a group in another VPC
+that carries this cluster's tag could still have its other tags changed, though not its
+rules, and it could not be deleted. Every other statement is upstream. The load balancer
+statements check only that `elbv2.k8s.aws/cluster` is present, and some carry no
+condition, so they do not limit the controller to load balancers it created. Another
+controller version needs its own policy, and its record names checked again.
 
 **What has not been proven.** None of this has been applied, and neither controller
 has run on this cluster. Whether either policy is sufficient, whether the record names

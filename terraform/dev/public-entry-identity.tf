@@ -110,13 +110,17 @@ resource "aws_iam_role" "aws_load_balancer_controller" {
   }
 }
 
-# Upstream v3.5.0 less its service-linked-role, WAF and Shield grants; the README records the source.
+# Upstream v3.5.0 less its service-linked-role, WAF and Shield grants, with its security-group writes bound to this
+# cluster; the README records the source and which of those writes are also bound to the VPC.
 resource "aws_iam_role_policy" "aws_load_balancer_controller" {
   count = var.public_entry_enabled ? 1 : 0
 
-  name   = "cloud-platform-reference-dev-aws-load-balancer-controller-ingress"
-  role   = aws_iam_role.aws_load_balancer_controller[0].name
-  policy = file("${path.module}/policies/aws-load-balancer-controller-iam-policy.json")
+  name = "cloud-platform-reference-dev-aws-load-balancer-controller-ingress"
+  role = aws_iam_role.aws_load_balancer_controller[0].name
+  policy = templatefile("${path.module}/policies/aws-load-balancer-controller-iam-policy.json", {
+    cluster_name = aws_eks_cluster.dev.name
+    vpc_arn      = aws_vpc.dev.arn
+  })
 }
 
 resource "aws_eks_pod_identity_association" "aws_load_balancer_controller" {

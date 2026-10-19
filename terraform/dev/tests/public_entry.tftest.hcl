@@ -5,6 +5,15 @@ variables {
   operator_cidr      = "203.0.113.10/32"
 }
 
+# The policy names the dev VPC's ARN, which a mocked plan leaves unknown.
+override_resource {
+  target          = aws_vpc.dev
+  override_during = plan
+  values = {
+    arn = "arn:aws:ec2:us-east-1:000000000000:vpc/vpc-0123456789abcdef0"
+  }
+}
+
 run "worker_mode_creates_no_public_entry_identity" {
   command = plan
 
@@ -126,6 +135,42 @@ run "public_entry_creates_the_load_balancer_controller_identity" {
       action != "iam:CreateServiceLinkedRole" && !startswith(action, "waf-regional:") && !startswith(action, "wafv2:") && !startswith(action, "shield:")
     ])
     error_message = "The load balancer controller must not create a service-linked role or manage WAF or Shield."
+  }
+
+  assert {
+    condition = length([
+      for statement in jsondecode(aws_iam_role_policy.aws_load_balancer_controller[0].policy).Statement : statement
+      if contains(flatten([statement.Action]), "ec2:CreateSecurityGroup")
+      ]) == 2 && length([
+      for statement in jsondecode(aws_iam_role_policy.aws_load_balancer_controller[0].policy).Statement : statement
+      if contains(flatten([statement.Action]), "ec2:CreateSecurityGroup") && statement.Resource == aws_vpc.dev.arn
+      ]) == 1 && length([
+      for statement in jsondecode(aws_iam_role_policy.aws_load_balancer_controller[0].policy).Statement : statement
+      if contains(flatten([statement.Action]), "ec2:CreateSecurityGroup") && statement.Resource == "arn:aws:ec2:*:*:security-group/*" && try(statement.Condition.StringEquals["aws:RequestTag/elbv2.k8s.aws/cluster"], null) == aws_eks_cluster.dev.name
+    ]) == 1
+    error_message = "CreateSecurityGroup must have separate permissions for the exact dev VPC ARN and security-group resources requiring this cluster's ownership tag."
+  }
+
+  assert {
+    condition = alltrue([
+      for statement in jsondecode(aws_iam_role_policy.aws_load_balancer_controller[0].policy).Statement :
+      try(statement.Condition.ArnEquals["ec2:Vpc"], null) == aws_vpc.dev.arn && anytrue([
+        for key in ["aws:ResourceTag/aws:eks:cluster-name", "aws:ResourceTag/elbv2.k8s.aws/cluster"] :
+        try(statement.Condition.StringEquals[key], null) == aws_eks_cluster.dev.name
+      ])
+      if length(setintersection(flatten([statement.Action]), ["ec2:AuthorizeSecurityGroupIngress", "ec2:RevokeSecurityGroupIngress", "ec2:DeleteSecurityGroup"])) > 0
+    ])
+    error_message = "Ingress-rule changes and deletion must name this cluster's exact tag value and the dev VPC."
+  }
+
+  assert {
+    condition = alltrue([
+      for statement in jsondecode(aws_iam_role_policy.aws_load_balancer_controller[0].policy).Statement :
+      (try(statement.Condition.StringEquals["ec2:CreateAction"], null) == "CreateSecurityGroup" && try(statement.Condition.StringEquals["aws:RequestTag/elbv2.k8s.aws/cluster"], null) == aws_eks_cluster.dev.name) ||
+      (try(statement.Condition.StringEquals["aws:ResourceTag/elbv2.k8s.aws/cluster"], null) == aws_eks_cluster.dev.name && try(statement.Condition.Null["aws:TagKeys"], null) == "false" && contains(try(statement.Condition["ForAllValues:StringNotEquals"]["aws:TagKeys"], []), "elbv2.k8s.aws/cluster"))
+      if length(setintersection(flatten([statement.Action]), ["ec2:CreateTags", "ec2:DeleteTags"])) > 0
+    ])
+    error_message = "Security-group tags may be set at creation with this cluster's tag, or changed on its own groups only when the request names keys and none is the ownership key."
   }
 
   assert {

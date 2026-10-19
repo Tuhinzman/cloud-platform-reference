@@ -53,14 +53,34 @@
                 "ec2:AuthorizeSecurityGroupIngress",
                 "ec2:RevokeSecurityGroupIngress"
             ],
-            "Resource": "*"
+            "Resource": "arn:aws:ec2:*:*:security-group/*",
+            "Condition": {
+                "StringEquals": {
+                    "aws:ResourceTag/aws:eks:cluster-name": "${cluster_name}"
+                },
+                "ArnEquals": {
+                    "ec2:Vpc": "${vpc_arn}"
+                }
+            }
         },
         {
             "Effect": "Allow",
             "Action": [
                 "ec2:CreateSecurityGroup"
             ],
-            "Resource": "*"
+            "Resource": "arn:aws:ec2:*:*:security-group/*",
+            "Condition": {
+                "StringEquals": {
+                    "aws:RequestTag/elbv2.k8s.aws/cluster": "${cluster_name}"
+                }
+            }
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:CreateSecurityGroup"
+            ],
+            "Resource": "${vpc_arn}"
         },
         {
             "Effect": "Allow",
@@ -70,10 +90,8 @@
             "Resource": "arn:aws:ec2:*:*:security-group/*",
             "Condition": {
                 "StringEquals": {
-                    "ec2:CreateAction": "CreateSecurityGroup"
-                },
-                "Null": {
-                    "aws:RequestTag/elbv2.k8s.aws/cluster": "false"
+                    "ec2:CreateAction": "CreateSecurityGroup",
+                    "aws:RequestTag/elbv2.k8s.aws/cluster": "${cluster_name}"
                 }
             }
         },
@@ -85,9 +103,16 @@
             ],
             "Resource": "arn:aws:ec2:*:*:security-group/*",
             "Condition": {
+                "StringEquals": {
+                    "aws:ResourceTag/elbv2.k8s.aws/cluster": "${cluster_name}"
+                },
                 "Null": {
-                    "aws:RequestTag/elbv2.k8s.aws/cluster": "true",
-                    "aws:ResourceTag/elbv2.k8s.aws/cluster": "false"
+                    "aws:TagKeys": "false"
+                },
+                "ForAllValues:StringNotEquals": {
+                    "aws:TagKeys": [
+                        "elbv2.k8s.aws/cluster"
+                    ]
                 }
             }
         },
@@ -98,10 +123,13 @@
                 "ec2:RevokeSecurityGroupIngress",
                 "ec2:DeleteSecurityGroup"
             ],
-            "Resource": "*",
+            "Resource": "arn:aws:ec2:*:*:security-group/*",
             "Condition": {
-                "Null": {
-                    "aws:ResourceTag/elbv2.k8s.aws/cluster": "false"
+                "StringEquals": {
+                    "aws:ResourceTag/elbv2.k8s.aws/cluster": "${cluster_name}"
+                },
+                "ArnEquals": {
+                    "ec2:Vpc": "${vpc_arn}"
                 }
             }
         },
