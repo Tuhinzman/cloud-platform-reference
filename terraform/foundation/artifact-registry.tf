@@ -81,6 +81,43 @@ resource "aws_ecr_repository" "collector" {
   }
 }
 
+# Mirrors of the ADR-0018 public-entry controller images, outside the set like the Collector.
+resource "aws_ecr_repository" "aws_load_balancer_controller" {
+  name                 = "platform/aws-load-balancer-controller"
+  image_tag_mutability = "IMMUTABLE"
+  force_delete         = false
+
+  encryption_configuration {
+    encryption_type = "AES256"
+  }
+
+  image_scanning_configuration {
+    scan_on_push = false
+  }
+
+  tags = {
+    Component = "artifact-registry"
+  }
+}
+
+resource "aws_ecr_repository" "external_dns" {
+  name                 = "platform/external-dns"
+  image_tag_mutability = "IMMUTABLE"
+  force_delete         = false
+
+  encryption_configuration {
+    encryption_type = "AES256"
+  }
+
+  image_scanning_configuration {
+    scan_on_push = false
+  }
+
+  tags = {
+    Component = "artifact-registry"
+  }
+}
+
 # The three original repositories hold published images, including the digest the GitOps
 # desired state references. These blocks move their state addresses into the set above without
 # touching anything in AWS. They can be removed once the move has been applied.
