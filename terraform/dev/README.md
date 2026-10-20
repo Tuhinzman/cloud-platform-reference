@@ -517,7 +517,7 @@ controller version needs its own policy, and its record names checked again.
 **What has not been proven.** None of this has been applied, and neither controller
 has run on this cluster. Whether either policy is sufficient, whether the record names
 match what the controller writes, and whether the six ADR-0013 tags reach the
-resources the controllers create are all unmeasured. `terraform test` proves the
+ALB, target groups and security groups are all unmeasured. `terraform test` proves the
 configuration only: the scoping above, and that no other mode creates any of the six.
 
 ## What this root does not create
