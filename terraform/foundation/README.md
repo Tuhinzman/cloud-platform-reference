@@ -150,24 +150,26 @@ declares Amazon ECR a persistent shared foundation: one repository per owned
 service, created when that service enters the implemented delivery path.
 checkout is the approved first-digest service. This root declares the
 `astroshop/` workload repositories over one set, because they differ only by
-name, and one `platform/` repository for the mirrored OpenTelemetry Collector
-image separately. Every `astroshop/` repository carries the same lifecycle
-policy. `platform/opentelemetry-collector` deliberately carries none and is
-excluded from the CI push policy, because a mirrored image is not published by
-the workload pipeline; keeping it outside the set is what makes that exclusion
-structural rather than a list that happens to omit it.
+name, and three `platform/` repositories separately, for the mirrored images of
+the OpenTelemetry Collector, the AWS Load Balancer Controller and ExternalDNS.
+Every `astroshop/` repository carries the same lifecycle policy. The `platform/`
+repositories deliberately carry none and are excluded from the CI push policy,
+because a mirrored image is not published by the workload pipeline; keeping them
+outside the set is what makes that exclusion structural rather than a list that
+happens to omit them.
 
 The `astroshop/` prefix is the workload-artifact naming convention, covering the
-services this project builds from source. The `platform/` prefix keeps a
-third-party platform component out of that namespace, because the Collector is
-pinned under ADR-0006 through ADR-0010 rather than the ADR-0012 workload rules.
-In both cases the slash is part of the name and nothing more: it creates no
-policy namespace and no security boundary in ECR.
+services this project builds from source. The `platform/` prefix keeps
+third-party platform components out of that namespace, because the Collector is
+pinned under ADR-0006 through ADR-0010 and ADR-0018 puts both controllers under
+ADR-0006 for pinning and ADR-0015 for security admission, rather than the
+ADR-0012 workload rules. In both cases the slash is part of the name and nothing
+more: it creates no policy namespace and no security boundary in ECR.
 
 | Resource | Purpose |
 |---|---|
-| `aws_ecr_repository` | The `astroshop/` workload repositories declared over one set, plus `platform/opentelemetry-collector` declared separately. Immutable tags, encryption at rest under an AWS-managed key, native scan-on-push off because Trivy owns the scanning gate |
-| `aws_ecr_lifecycle_policy` | Bounds storage on every `astroshop/` repository with a count-based rule: the newest 10 tagged images are retained, and older ones expire only once the count passes 10. The Collector repository carries no lifecycle policy, because it is consumed by immutable digest and a tag-count rule could expire a digest still referenced |
+| `aws_ecr_repository` | The `astroshop/` workload repositories declared over one set, plus `platform/opentelemetry-collector`, `platform/aws-load-balancer-controller` and `platform/external-dns` declared separately. Immutable tags, encryption at rest under an AWS-managed key, native scan-on-push off because Trivy owns the scanning gate |
+| `aws_ecr_lifecycle_policy` | Bounds storage on every `astroshop/` repository with a count-based rule: the newest 10 tagged images are retained, and older ones expire only once the count passes 10. The three `platform/` repositories carry no lifecycle policy, because each is consumed by immutable digest and a tag-count rule could expire a digest still referenced |
 
 Its purpose is to retain immutable workload artifacts across environment
 lifecycles, so promotion moves a digest that already passed its gates instead
@@ -211,6 +213,11 @@ its publication is separately authorized. Components without a pipeline are
 absent: membership follows the delivery path ADR-0009 describes, not the fleet
 inventory.
 
+`platform/aws-load-balancer-controller` and `platform/external-dns` are declared
+for the two public-entry controller image mirrors. Applying these declarations,
+mirroring the images and ADR-0015 admission remain pending. Neither repository
+has been read back from AWS.
+
 ## CI push identity
 
 Pushing to those repositories needs an AWS identity, and ADR-0009 puts pipeline
@@ -239,8 +246,8 @@ repositories. The list is derived from the same set that declares them, so a
 repository cannot enter the registry and be forgotten in the policy. Only the registry-level authentication
 call is unscoped, because it accepts no repository ARN. Adding a repository to the set
 widens only that resource list; it adds no action and changes no trust condition.
-`platform/opentelemetry-collector` is absent from that list because it is not
-a member of that set, so this role cannot push the Collector mirror; that mechanism is a separate
+The three `platform/` repositories are absent from that list because none is a
+member of that set, so this role cannot push a mirror; that mechanism is a separate
 identity question and is not implemented here. Nothing here grants repository
 deletion, lifecycle-policy mutation, IAM, or any other service. The permissions
 the observed checkout push path required were exercised successfully by that
