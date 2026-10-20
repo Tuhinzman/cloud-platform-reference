@@ -65,3 +65,38 @@ variable "alerting_email_endpoint" {
     error_message = "alerting_email_endpoint must be one email address."
   }
 }
+
+variable "public_entry_enabled" {
+  description = "Creates the Pod Identity role, inline policy and association of each public-entry controller under ADR-0018. Off by default, so an ordinary window apply, node measurement and the retained baseline create none of them. Needs worker capacity without node measurement, because the controllers run as pods."
+  type        = bool
+  default     = false
+
+  validation {
+    condition     = !var.public_entry_enabled || (var.worker_capacity_enabled && !var.node_measurement_only)
+    error_message = "public_entry_enabled needs worker_capacity_enabled without node_measurement_only: the controllers run as pods."
+  }
+}
+
+variable "public_hosted_zone_id" {
+  description = "ID of the public hosted zone the foundation root created for the apex domain. The record controller can change records in this zone and in no other. An owner-private execution input, never committed. Required only when public_entry_enabled is true."
+  type        = string
+  default     = null
+  sensitive   = true
+
+  validation {
+    condition     = var.public_hosted_zone_id == null ? !var.public_entry_enabled : can(regex("^Z[0-9A-Z]{8,32}$", var.public_hosted_zone_id))
+    error_message = "public_hosted_zone_id must be a Route 53 hosted zone ID such as Z0000000000EXAMPLE, without a path prefix, and is required when public_entry_enabled is true."
+  }
+}
+
+variable "public_domain" {
+  description = "Registered apex domain of that zone, the foundation root's public_domain. The environment is reached at dev beneath it. An owner-private execution input under ADR-0018, never committed. Required only when public_entry_enabled is true."
+  type        = string
+  default     = null
+  sensitive   = true
+
+  validation {
+    condition     = var.public_domain == null ? !var.public_entry_enabled : can(regex("^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+([a-z]{2,63}|xn--[a-z0-9-]{1,59})$", var.public_domain))
+    error_message = "public_domain must be a lowercase domain name such as example.com, without a trailing dot, and is required when public_entry_enabled is true."
+  }
+}
