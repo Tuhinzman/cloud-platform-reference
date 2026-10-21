@@ -1,70 +1,50 @@
 # ADR-0001: Adopt an architecture-first, evidence-backed delivery method
 
-Status: Accepted (2026-07-28)
+Status: Accepted (2026-07-28); revised 2026-10-21 with one policy change: a
+proportional workflow for routine implementation within Accepted decisions.
+Approval requirements and control boundaries remain binding.
 
 ## Context
 
-This repository will grow into a production-inspired cloud platform, built
-and documented so that a reader can follow the reasoning, reproduce the
-work, and check the claims. At this point it contains only its foundation
-files. The first real choice is not a technology but a working method,
-because the method decides what every later piece of work must leave behind.
-
-## Considered Options
-
-**1. Implementation-first, documentation later.**
-Build the platform, then write about it. This gives the fastest visible
-progress and is how most personal infrastructure projects run. It also
-produces documentation written backwards: reasoning is reconstructed from
-memory, rejected alternatives disappear, and the docs tend to justify what
-exists instead of explaining why it should exist.
-
-**2. Lightweight design notes.**
-Keep informal notes alongside the work, with no fixed format or decision
-record. The overhead is low and some reasoning survives. In practice, notes
-scatter and decay, and they rarely say what was rejected or what it would
-take to change course. A reader can see what was done but cannot judge
-whether it was sound.
-
-**3. Architecture-first delivery with recorded decisions and evidence.**
-Document requirements and reasoning before building. Record significant
-choices in focused decision records. Treat a claim as unproven until real
-validation evidence backs it. This is the slowest path to a first running
-system and the most durable path to a system a stranger can trust.
+The platform must be understandable, reproducible and supported by evidence.
+Documentation and review effort must be proportionate to the change.
 
 ## Decision
 
-Adopt option 3. In practice this means:
+Record significant architecture decisions before implementation. Each ADR
+states the problem, selected approach, credible alternatives, consequences
+and conditions for reconsidering it. The owner approves the decision, and
+implementation that depends on it starts only after that approval.
 
-- Requirements and reasoning are documented before implementation begins.
-- Significant choices are recorded in focused ADRs like this one: one
-  decision per record, with credible alternatives, consequences, and a
-  revisit trigger.
-- Implementation starts only after the decision it depends on is approved.
-- Completion and capability claims require validation evidence captured
-  when the work is executed. Failed validation is recorded when it affects
-  the result.
-- Each topic follows the same flow: Why → Requirements → Architecture →
-  Decision → Diagram → Implementation → Validation → Evidence → Lessons
-  Learned.
-- Directories and files are created only when they hold real content.
+For routine implementation within Accepted decisions:
+- Make the smallest change that solves the problem.
+- Run relevant existing checks.
+- Update documentation when behavior or operating instructions change.
+- Create no new ADR or additional review stage unless the change affects
+  an architectural decision or an existing control requires it.
+
+Support completion and capability claims with evidence from execution.
+Retain failures and limitations that affect the result. Reuse valid evidence.
+
+Create documents and diagrams only when they explain something necessary.
+Do not repeat information already maintained elsewhere.
+
+Existing security, authorization, cost, recovery and teardown controls
+remain binding.
+
+## Alternatives
+
+Implementation first and documentation later risks losing the reasoning.
+Informal notes reduce effort but can omit alternatives and decision history.
+Focused ADRs and execution evidence provide a reviewable record.
 
 ## Consequences
 
-Gained: reasoning that can be reviewed rather than taken on trust, work
-that can be reproduced from the repository's documented prerequisites,
-implementation artifacts, and validation steps, claims that can be checked
-against captured evidence, and a record of the alternatives that lost.
+Important choices remain traceable and claims remain checkable.
+Planning and validation still require effort; routine changes carry only
+the documentation and review they need.
 
-Paid for: planning time before any implementation, evidence collection for
-material implementation and capability claims, decision records that must
-be maintained and superseded correctly as choices change, and a standing
-risk of over-documentation that has to be actively resisted rather than
-assumed away.
+## Revisit
 
-## Revisit Trigger
-
-Revisit this method if it repeatedly slows delivery without a matching gain
-in decision quality, reproducibility, evidence quality, or learning value.
-One slow stretch is expected and does not qualify; a repeating pattern
-does.
+Reconsider this method if it repeatedly delays delivery without improving
+decision quality, reproducibility, evidence or learning.

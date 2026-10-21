@@ -1,11 +1,11 @@
 # Cost and Residue Runbook
 
 Operates the cost controls that
-[ADR-0013](../decisions/0013-define-operations-and-cost-guardrails.md#decision) requires and the
+[ADR-0013](../decisions/0013-define-operations-and-cost-guardrails.md#monthly-aws-budget) requires and the
 residue checks that close a
 [runtime window](../validation/runtime-validation.md#windows). ADR-0013 owns the budget levels, review cadence and stop
 conditions;
-[ADR-0018](../decisions/0018-define-the-public-entry-implementation-dns-and-certificate-model.md#decision)
+[ADR-0018](../decisions/0018-define-the-public-entry-implementation-dns-and-certificate-model.md#teardown)
 owns the orphan-scan classes. This runbook does not create the budget, activate tags, or run runtime
 windows. A procedure labeled DESIGNED-NOT-EXECUTED or UNEXERCISED has never run
 ([validation labels](README.md#validation-labels)).
@@ -504,7 +504,7 @@ authorization · **Cost:** USD 0.01 per Cost Explorer request when an entry need
 
 Nothing responds automatically, and no level has been reached. No alert fires while spend approaches
 100 USD; only the weekly review or a window estimate detects it. The levels below follow
-[ADR-0013](../decisions/0013-define-operations-and-cost-guardrails.md#decision), which is
+[ADR-0013](../decisions/0013-define-operations-and-cost-guardrails.md#monthly-aws-budget), which is
 authoritative.
 
 1. Run the [Budget check](#budget-check) and record the figures and states.

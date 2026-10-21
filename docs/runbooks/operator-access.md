@@ -341,7 +341,7 @@ may mean a root-user session.
 #### Step 1 — Enable AWS Organizations
 
 In the account that will hold the platform, enable AWS Organizations, within the scope
-[ADR-0005](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#decision)
+[ADR-0005](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#what-we-will-use)
 sets for it.
 
 #### Step 2 — Enable the Identity Center organization instance
@@ -356,7 +356,7 @@ a root-user session for first-time setup: the reference setup ran in a root-user
 and reviewed as a deviation from ADR-0005.
 
 > **Warning:** Any root session is recorded and reviewed as
-> [ADR-0005](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#decision)
+> [ADR-0005](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#access-rules)
 > requires.
 
 **Expected result.** AWS Organizations enabled in the account, and an IAM Identity Center
@@ -400,7 +400,7 @@ organization instance with its built-in identity store.
 Gives one operator a user, MFA and two permission sets on the project account, through console
 steps, once per operator. Each permission set gives the operator a role in the account, and
 Identity Center derives that role's name from the permission-set name.
-[ADR-0005](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#decision)
+[ADR-0005](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#what-we-will-use)
 sets what each permission set serves.
 
 **Before you start.**
@@ -416,7 +416,7 @@ sets what each permission set serves.
 **Safety and authority.** Mutating and owner-authorized: an identity change.
 
 > **Warning:** Any root session is recorded and reviewed as
-> [ADR-0005](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#decision)
+> [ADR-0005](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#access-rules)
 > requires. The recorded setup ran in one.
 
 #### Step 1 — Create the user and set a password
@@ -437,7 +437,7 @@ Center setting for every user of the instance, not a per-user one.
 Identity Center's default of one hour, so that a long apply, its verification and any teardown
 finish on one exported credential. The reference account keeps `ReadOnlyAccess` at one hour.
 ADR-0005
-[defers](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#deferred-decisions)
+[defers](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#access-rules)
 the exact contents of the permission sets; what the reference account's sets are recorded to hold
 is under Recorded detail in the Engineering notes below.
 
@@ -1190,7 +1190,7 @@ env | sed -n 's/^\([A-Za-z_][A-Za-z0-9_]*\)=.*/\1/p' | sort
 Retires a human IAM user's access key, meaning the access key ID and secret access key pair an
 operator holds, and that user's console password. It does not cover workload identities, CI
 federation or the temporary credentials Identity Center issues. Under
-[ADR-0005](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#decision),
+[ADR-0005](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#access-rules),
 an existing long-lived human key is retired rather than kept as a fallback.
 
 Deactivate before you delete. Deactivation is reversible, so if something still depends on the
@@ -1649,7 +1649,7 @@ The warning at the top of this procedure is the lesson this case carries.
 | The provider's `allowed_account_ids` refusal against a real second account | UNEXERCISED |
 | Deleting the deactivated legacy access key and verifying its absence | UNEXERCISED |
 | Resolving the identity configuration's deviations from the ADR-0005 target model | UNEXERCISED |
-| Break-glass recovery through the account root user ([ADR-0005](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#decision)) | UNEXERCISED |
+| Break-glass recovery through the account root user ([ADR-0005](../decisions/0005-adopt-centralized-identity-and-least-privilege-access.md#access-rules)) | UNEXERCISED |
 | Verifying the root posture: MFA enabled and no root access keys | UNEXERCISED |
 | Revoking operator access: removing the assignment and the user, signing out, and removing local profiles and the SSO cache | UNEXERCISED |
 | Access review after privileged or break-glass use and at milestones; the only record is the review of the 2026-08-08 root session | UNEXERCISED |
